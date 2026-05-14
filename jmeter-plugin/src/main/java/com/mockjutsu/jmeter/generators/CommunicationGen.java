@@ -123,7 +123,7 @@ public final class CommunicationGen {
 
     private static String plate(ThreadLocalRandom rng, String locale) {
         return switch (locale) {
-            case "TR" -> TR_PLATES_PREFIXES[rng.nextInt(81)] + " " + randomAlpha(rng, 2) + " " + String.format("%04d", rng.nextInt(1000,9999));
+            case "TR" -> TR_PLATES_PREFIXES[rng.nextInt(81)] + " " + randomAlpha(rng, 1 + rng.nextInt(3)) + " " + String.format("%04d", rng.nextInt(10, 9999));
             case "US" -> randomAlpha(rng, 3) + rng.nextInt(1000, 9999);
             case "DE" -> randomAlpha(rng, 2) + " " + randomAlpha(rng, 2) + " " + rng.nextInt(100, 9999);
             case "FR" -> String.format("%02d%c%c-%03d-%02c%c", rng.nextInt(10,99), (char)('A'+rng.nextInt(26)),

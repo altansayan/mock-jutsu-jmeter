@@ -128,8 +128,11 @@ public final class BankingGen {
     // ── SEPA Reference (ISO 11649 creditor reference) ────────────────────────
 
     private static String sepaRef(ThreadLocalRandom rng) {
-        // Pattern: SEPA-{4 alphanumeric}-{8 alphanumeric}
-        return "SEPA-" + randomAlphaNum(rng, 4) + "-" + randomAlphaNum(rng, 8);
+        int len = 10 + rng.nextInt(11);
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder("MOCKJ-E2E-");
+        for (int i = 0; i < len; i++) sb.append(chars.charAt(rng.nextInt(chars.length())));
+        return sb.toString();
     }
 
     // ── Creditor Reference (ISO 11649) ────────────────────────────────────────

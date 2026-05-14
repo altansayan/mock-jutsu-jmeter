@@ -60,7 +60,7 @@ public final class MetaGen {
             case "api_key"           -> apiKey(rng);
             case "totp_code"         -> String.format("%06d", rng.nextInt(0, 1000000));
             case "webhook_signature" -> "sha256=" + hash();
-            case "transaction_id"    -> "txn-" + UUID.randomUUID().toString().replace("-","").substring(0, 20);
+            case "transaction_id"    -> "TXN" + randomHex(rng, 8).toUpperCase();
             default                  -> "ERROR: Unknown meta type '" + type + "'";
         };
     }
@@ -156,15 +156,28 @@ public final class MetaGen {
         return Base64.getEncoder().encodeToString(bytes);
     }
 
-    // ── App Password (16 chars, groups of 4) ──────────────────────────────────
+    // ── App Password — 6-digit PIN, no consecutive repeats, no sequential run of 3+ ──
 
     private static String appPassword(ThreadLocalRandom rng) {
-        StringBuilder sb = new StringBuilder(19);
-        for (int g = 0; g < 4; g++) {
-            if (g > 0) sb.append('-');
-            for (int i = 0; i < 4; i++) sb.append(BASE62.charAt(rng.nextInt(BASE62.length())));
-        }
+        int[] d;
+        do {
+            d = new int[6];
+            for (int i = 0; i < 6; i++) d[i] = rng.nextInt(10);
+        } while (hasConsecutiveRepeat(d) || hasSequentialRun(d));
+        StringBuilder sb = new StringBuilder(6);
+        for (int v : d) sb.append(v);
         return sb.toString();
+    }
+
+    private static boolean hasConsecutiveRepeat(int[] d) {
+        for (int i = 0; i < d.length - 1; i++) if (d[i] == d[i + 1]) return true;
+        return false;
+    }
+
+    private static boolean hasSequentialRun(int[] d) {
+        for (int i = 0; i < d.length - 2; i++)
+            if (d[i + 1] == d[i] + 1 && d[i + 2] == d[i] + 2) return true;
+        return false;
     }
 
     // ── MAC address ───────────────────────────────────────────────────────────

@@ -92,7 +92,8 @@ public final class IdentityGen {
     };
 
     private static final String[] NATIONALITIES = {
-        "TR","US","DE","FR","UK","RU","IT","ES","PL","NL"
+        "TUR","USA","GBR","DEU","FRA","RUS","ITA","ESP","POL","NLD",
+        "CHN","IND","BRA","JPN","KOR","AUS","CAN","MEX","ARG","ZAF"
     };
 
     // ── NIN helpers ──────────────────────────────────────────────────────────
@@ -143,7 +144,7 @@ public final class IdentityGen {
             case "passport"     -> passport(rng, locale);
             case "license"      -> license(rng, locale);
             case "age"          -> String.valueOf(rng.nextInt(18, 80));
-            case "gender"       -> rng.nextBoolean() ? "M" : "F";
+            case "gender"       -> rng.nextBoolean() ? "Male" : "Female";
             case "birthdate"    -> birthdate(rng);
             case "nationality"  -> NATIONALITIES[rng.nextInt(NATIONALITIES.length)];
             case "vat_number"   -> vatNumber(rng, locale);

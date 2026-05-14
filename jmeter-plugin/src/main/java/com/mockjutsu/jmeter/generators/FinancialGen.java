@@ -202,15 +202,8 @@ public final class FinancialGen {
     // ── Balance ───────────────────────────────────────────────────────────────
 
     private static String balance(ThreadLocalRandom rng, String locale) {
-        double amount = rng.nextDouble(0.01, 50000.00);
-        String ccy = switch (locale) {
-            case "DE","FR" -> "EUR";
-            case "UK"      -> "GBP";
-            case "US"      -> "USD";
-            case "RU"      -> "RUB";
-            default        -> "TRY";
-        };
-        return String.format("%.2f %s", amount, ccy);
+        double amount = rng.nextDouble(10.0, 50000.00);
+        return String.format("%.2f", amount);
     }
 
     // ── Credit score ──────────────────────────────────────────────────────────
