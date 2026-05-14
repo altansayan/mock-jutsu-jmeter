@@ -32,11 +32,11 @@ public final class MetaGen {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
             case "uuid"              -> UUID.randomUUID().toString();
-            case "requestid"         -> "req-" + UUID.randomUUID().toString().substring(0, 18);
-            case "correlationid"     -> "corr-" + UUID.randomUUID().toString().substring(0, 18);
-            case "sessionid"         -> "sess-" + randomHex(rng, 16);
+            case "requestid"         -> UUID.randomUUID().toString();
+            case "correlationid"     -> UUID.randomUUID().toString();
+            case "sessionid"         -> UUID.randomUUID().toString();
             case "idempotencykey"    -> UUID.randomUUID().toString();
-            case "deviceid"          -> "dev-" + randomHex(rng, 12);
+            case "deviceid"          -> UUID.randomUUID().toString().toUpperCase();
             case "ipv4"              -> ipv4(rng);
             case "ipv6"              -> ipv6(rng);
             case "public_ip"         -> ipv4Public(rng);
