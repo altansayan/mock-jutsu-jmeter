@@ -2,9 +2,9 @@ package com.mockjutsu.jmeter;
 
 /**
  * Generic catch-all: ${__mockjutsu(type,locale,varName)}
- * Single type  → returns the generated value as a string.
- * Multi types  → ${__mockjutsu(tckn|iban|cardnum|uuid,,)} returns a JSON object.
- *   Use pipe (|) to separate multiple types — no escaping needed in JMeter.
+ * Single type  → ${__mockjutsu(tckn,,)}              returns the generated value.
+ * Multi types  → ${__mockjutsu(tckn,iban,cardnum,uuid,,)} returns a JSON object.
+ *   Pass types as separate comma-separated JMeter params; last two are locale and varName.
  *   If varName is set, each type is also stored as varName_tckn, varName_iban, etc.
  */
 public final class MockJutsuFunction extends MockJutsuBaseFunction {
@@ -15,6 +15,6 @@ public final class MockJutsuFunction extends MockJutsuBaseFunction {
     @Override
     protected String typeDescription() {
         return "type — any type — tckn | iban | cardnum | uuid | email | ... (all ~251 types supported); " +
-               "use tckn|iban|cardnum for multi-type JSON output (pipe separator, no escaping)";
+               "for multi-type: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — types as separate params, last two = locale, varName";
     }
 }

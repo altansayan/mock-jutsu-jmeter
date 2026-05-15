@@ -16,30 +16,52 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
 
     protected abstract String typeDescription();
 
+    /**
+     * Parameter convention:
+     *   1 param : ${__mockjutsu(tckn)}                     → type only
+     *   2 params: ${__mockjutsu(tckn,TR)}                  → type, locale
+     *   3 params: ${__mockjutsu(tckn,TR,myVar)}            → type, locale, varName  (original API)
+     *   4+ params: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} → types..., locale, varName
+     *              last = varName, second-to-last = locale, rest = types → JSON object output
+     */
     @Override
     public String execute(SampleResult prev, Sampler current) throws InvalidVariableException {
-        String type    = params.length > 0 ? params[0].execute().trim() : "";
-        String locale  = params.length > 1 ? params[1].execute().trim().toUpperCase() : "TR";
-        String varName = params.length > 2 ? params[2].execute().trim() : "";
+        int n = params.length;
+
+        String[] types;
+        String locale;
+        String varName;
+
+        if (n <= 3) {
+            // Original single-type API — fully backward compatible
+            types   = new String[]{ n > 0 ? params[0].execute().trim().toLowerCase() : "" };
+            locale  = n > 1 ? params[1].execute().trim().toUpperCase() : "";
+            varName = n > 2 ? params[2].execute().trim() : "";
+        } else {
+            // Multi-type: last two params are locale and varName, rest are types
+            varName = params[n - 1].execute().trim();
+            locale  = params[n - 2].execute().trim().toUpperCase();
+            types   = new String[n - 2];
+            for (int i = 0; i < n - 2; i++)
+                types[i] = params[i].execute().trim().toLowerCase();
+        }
+
         if (locale.isEmpty()) locale = "TR";
 
         String result;
-        if (type.contains("|")) {
-            // Multi-type: ${__mockjutsu(tckn|iban|cardnum|uuid,,)} → {"tckn":"...","iban":"..."}
-            String[] types = type.split("\\|");
+        if (types.length == 1) {
+            result = MockJutsuRegistry.generate(types[0], locale);
+        } else {
             StringBuilder sb = new StringBuilder("{");
             JMeterVariables vars = varName.isEmpty() ? null : getVariables();
             for (int i = 0; i < types.length; i++) {
-                String t   = types[i].trim().toLowerCase();
-                String val = MockJutsuRegistry.generate(t, locale);
-                sb.append('"').append(t).append("\":").append(toJsonValue(val));
+                String val = MockJutsuRegistry.generate(types[i], locale);
+                sb.append('"').append(types[i]).append("\":").append(toJsonValue(val));
                 if (i < types.length - 1) sb.append(',');
-                if (vars != null) vars.put(varName + "_" + t, val);
+                if (vars != null) vars.put(varName + "_" + types[i], val);
             }
             sb.append('}');
             result = sb.toString();
-        } else {
-            result = MockJutsuRegistry.generate(type.toLowerCase(), locale);
         }
 
         if (!varName.isEmpty()) {
@@ -67,7 +89,7 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
 
     @Override
     public void setParameters(Collection<CompoundVariable> parameters) throws InvalidVariableException {
-        checkParameterCount(parameters, 1, 3);
+        checkParameterCount(parameters, 1, 255);
         params = parameters.toArray(new CompoundVariable[0]);
     }
 }
