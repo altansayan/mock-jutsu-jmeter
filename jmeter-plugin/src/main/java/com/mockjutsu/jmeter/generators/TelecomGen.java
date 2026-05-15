@@ -2,7 +2,7 @@ package com.mockjutsu.jmeter.generators;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Telecom — IMEI (Luhn), ICCID, IMSI, MSISDN. Mirrors telecom.py. */
+/** Telecom — IMEI (Luhn), ICCID, IMSI, MSISDN, IMEI2. Mirrors telecom.py. */
 public final class TelecomGen {
 
     private TelecomGen() {}
@@ -23,12 +23,12 @@ public final class TelecomGen {
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "imei"  -> imei(rng, locale);
-            case "imei2" -> imei(rng, locale);  // second SIM slot
-            case "iccid" -> iccid(rng, locale);
-            case "imsi"  -> imsi(rng, locale);
-            case "msisdn"-> msisdn(rng, locale);
-            default      -> "ERROR: Unknown telecom type '" + type + "'";
+            case "imei"   -> imei(rng, locale);
+            case "imei2"  -> imei2(rng, locale);
+            case "iccid"  -> iccid(rng, locale);
+            case "imsi"   -> imsi(rng, locale);
+            case "msisdn" -> msisdn(rng, locale);
+            default       -> "ERROR: Unknown telecom type '" + type + "'";
         };
     }
 
@@ -36,17 +36,24 @@ public final class TelecomGen {
 
     static String imei(ThreadLocalRandom rng, String locale) {
         String[] tacs = switch (locale) { case "US" -> TAC_US; case "DE" -> TAC_DE; default -> TAC_TR; };
-        String tac    = tacs[rng.nextInt(tacs.length)];
+        String tac = tacs[rng.nextInt(tacs.length)];
         StringBuilder sb = new StringBuilder(tac);
         while (sb.length() < 14) sb.append(rng.nextInt(0, 10));
         sb.append(IdentityGen.luhnCheckDigit(sb.toString()));
         return sb.toString();
     }
 
+    // ── IMEI2 — hyphenated format AA-BBBBBB-CCCCCC-D (ISO 3GPP) ─────────────
+
+    private static String imei2(ThreadLocalRandom rng, String locale) {
+        String full = imei(rng, locale);
+        // AA-BBBBBB-CCCCCC-D
+        return full.substring(0,2) + "-" + full.substring(2,8) + "-" + full.substring(8,14) + "-" + full.charAt(14);
+    }
+
     // ── ICCID — 19-20 digits, Luhn valid ─────────────────────────────────────
 
     static String iccid(ThreadLocalRandom rng, String locale) {
-        // Format: MII(89) + CC + MNC + account(12) + Luhn
         String cc = switch (locale) { case "US" -> "1"; case "DE" -> "49"; case "FR" -> "33"; case "UK" -> "44"; case "RU" -> "7"; default -> "90"; };
         StringBuilder sb = new StringBuilder("89").append(cc);
         while (sb.length() < 18) sb.append(rng.nextInt(0, 10));
@@ -68,10 +75,25 @@ public final class TelecomGen {
         return sb.toString();
     }
 
-    // ── MSISDN — international phone number format ────────────────────────────
+    // ── MSISDN — locale-specific prefix + digit count ─────────────────────────
+    // TR: +905 + 9 digits, US: +1 + 10 digits, UK: +447 + 9 digits,
+    // DE: +491 + 9 digits, FR: +336 + 8 digits, RU: +79 + 9 digits
 
     private static String msisdn(ThreadLocalRandom rng, String locale) {
-        String cc = switch (locale) { case "US" -> "+1"; case "DE" -> "+49"; case "FR" -> "+33"; case "UK" -> "+44"; case "RU" -> "+7"; default -> "+90"; };
-        return cc + String.format("%010d", rng.nextLong(1000000000L, 9999999999L));
+        return switch (locale) {
+            case "TR" -> "+905"  + digits(rng, 9);
+            case "US" -> "+1"    + digits(rng, 10);
+            case "UK" -> "+447"  + digits(rng, 9);
+            case "DE" -> "+491"  + digits(rng, 9);
+            case "FR" -> "+336"  + digits(rng, 8);
+            case "RU" -> "+79"   + digits(rng, 9);
+            default   -> "+905"  + digits(rng, 9);
+        };
+    }
+
+    private static String digits(ThreadLocalRandom rng, int n) {
+        StringBuilder sb = new StringBuilder(n);
+        for (int i = 0; i < n; i++) sb.append(rng.nextInt(10));
+        return sb.toString();
     }
 }
