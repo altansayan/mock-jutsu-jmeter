@@ -287,22 +287,23 @@ public final class IdentityGen {
             check);
     }
 
-    // ── Turkish SGK — Social Security (10 digits) ────────────────────────────
+    // ── Turkish SGK — Social Security (il-seq-unit.sub-sube) ─────────────────
 
     private static String sgk(ThreadLocalRandom rng) {
-        StringBuilder sb = new StringBuilder(10);
-        sb.append(rng.nextInt(1, 10));
-        for (int i = 1; i < 10; i++) sb.append(rng.nextInt(0, 10));
-        return sb.toString();
+        int il   = rng.nextInt(1, 82);          // province 01-81
+        int seq  = rng.nextInt(1, 10_000_000);  // sequence 1-9999999
+        int unit = rng.nextInt(1, 10);           // unit 1-9
+        int sub  = rng.nextInt(1, 100);          // sub 01-99
+        int sube = rng.nextInt(1, 100);          // sube 01-99
+        return String.format("%02d-%07d-%d.%02d-%02d", il, seq, unit, sub, sube);
     }
 
-    // ── Turkish MERSIS — company registration (16 digits) ────────────────────
+    // ── Turkish MERSIS — company registration: VKN(10) + "0" + 5digits ──────
 
     private static String mersis(ThreadLocalRandom rng) {
-        StringBuilder sb = new StringBuilder(16);
-        sb.append(rng.nextInt(1, 10));
-        for (int i = 1; i < 16; i++) sb.append(rng.nextInt(0, 10));
-        return sb.toString();
+        String vknStr = vkn(rng);
+        String suffix = String.format("%05d", rng.nextInt(0, 100_000));
+        return vknStr + "0" + suffix;  // 10 + 1 + 5 = 16 chars
     }
 
     // ── US EIN — Employer Identification Number ───────────────────────────────

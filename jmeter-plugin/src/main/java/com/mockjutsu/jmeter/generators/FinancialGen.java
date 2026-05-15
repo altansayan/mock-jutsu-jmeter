@@ -209,8 +209,6 @@ public final class FinancialGen {
     // ── Credit score ──────────────────────────────────────────────────────────
 
     private static String creditScore(ThreadLocalRandom rng, String locale) {
-        // TR: 1-1900 (KKB), US: 300-850 (FICO), others: 300-850
-        if ("TR".equals(locale)) return String.valueOf(rng.nextInt(1, 1901));
         return String.valueOf(rng.nextInt(300, 851));
     }
 

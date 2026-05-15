@@ -1,5 +1,9 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Banking — SWIFT/BIC, sort code, routing, BIK. Mirrors banking.py. */
@@ -38,9 +42,40 @@ public final class BankingGen {
         "Volga Capital","Neva Finance","Ural Kredit","Ob Bank","Lena Trust"
     };
 
-    private static final String[] TX_TYPES = {
-        "DEBIT","CREDIT","TRANSFER","REVERSAL","CHARGEBACK","FEE","INTEREST","REFUND"
+    private static final String[] TX_DESC_TR = {
+        "Fatura ödemesi","Market alışverişi","FAST transferi","EFT havalesi",
+        "Kredi kartı ödemesi","Kira ödemesi","Sigorta primi","Maaş ödemesi"
     };
+    private static final String[] TX_DESC_US = {
+        "Utility payment","Online purchase","Wire transfer","ACH payment",
+        "Rent payment","Credit card payment","Payroll deposit","Insurance premium"
+    };
+    private static final String[] TX_DESC_UK = {
+        "Utility bill payment","Online shopping","Faster Payment","Standing order",
+        "Direct debit","Salary credit","Mortgage payment","Council tax"
+    };
+    private static final String[] TX_DESC_DE = {
+        "Rechnung bezahlen","Online-Einkauf","SEPA-Überweisung","Dauerauftrag",
+        "Lastschrift","Gehalt","Miete","Versicherungsprämie"
+    };
+    private static final String[] TX_DESC_FR = {
+        "Paiement facture","Achat en ligne","Virement SEPA","Prélèvement automatique",
+        "Loyer","Salaire","Assurance","Remboursement"
+    };
+    private static final String[] TX_DESC_RU = {
+        "Оплата услуг ЖКХ","Покупка в интернете","Перевод СБП","Оплата кредита",
+        "Аренда квартиры","Зарплата","Страховой взнос","Возврат средств"
+    };
+
+    private static final String[] TX_CHAN_TR = {"FAST","EFT","Havale","SWIFT","Kart"};
+    private static final String[] TX_CHAN_US = {"ACH","Wire","Zelle","SWIFT","Check"};
+    private static final String[] TX_CHAN_UK = {"Faster Payments","BACS","CHAPS","SWIFT"};
+    private static final String[] TX_CHAN_DE = {"SEPA Credit Transfer","SEPA Direct Debit","SWIFT","Lastschrift"};
+    private static final String[] TX_CHAN_FR = {"Virement SEPA","Prélèvement SEPA","SWIFT","TIP"};
+    private static final String[] TX_CHAN_RU = {"СБП","Межбанк","SWIFT","Карточный перевод"};
+
+    private static final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'+00:00'");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     // Country codes by locale
     private static String countryCode(String locale) {
@@ -102,13 +137,60 @@ public final class BankingGen {
         return "04" + String.format("%07d", rng.nextInt(1000000, 9999999));
     }
 
-    // ── Transaction description ───────────────────────────────────────────────
+    // ── Transaction — JSON dict matching banking.py output ───────────────────
 
     private static String transaction(ThreadLocalRandom rng, String locale) {
-        String type = pick(rng, TX_TYPES);
-        double amount = rng.nextDouble(1.0, 10000.0);
         String ccy = switch (locale) { case "DE","FR" -> "EUR"; case "UK" -> "GBP"; case "US" -> "USD"; case "RU" -> "RUB"; default -> "TRY"; };
-        return String.format("%s %.2f %s", type, amount, ccy);
+
+        // Three-tier amount distribution: micro / normal / large
+        int tier = rng.nextInt(10);
+        double amount;
+        if (tier == 0) {
+            amount = Math.round((0.01 + rng.nextInt(100) / 100.0) * 100) / 100.0;
+        } else if (tier <= 8) {
+            amount = Math.round((5.0 + rng.nextDouble() * 9994.99) * 100) / 100.0;
+        } else {
+            amount = 100000.0 + rng.nextInt(900000);
+        }
+
+        // Timestamp: within last 7 days, UTC
+        OffsetDateTime ts = OffsetDateTime.now(ZoneOffset.UTC).minusSeconds(rng.nextLong(0, 7L * 24 * 3600));
+        String timestamp = ts.format(TS_FMT);
+
+        // Reference: MOCKJ-TRN{YYYYMMDD}-{10000-99999}
+        String ref = "MOCKJ-TRN" + LocalDate.now().format(DATE_FMT) + "-" + (rng.nextInt(90000) + 10000);
+
+        // IBAN (non-US) or routing (US)
+        String senderIban, receiverIban;
+        if ("US".equals(locale)) {
+            senderIban   = "RT:" + routingNumber(rng);
+            receiverIban = "RT:" + routingNumber(rng);
+        } else {
+            senderIban   = FinancialGen.iban(rng, locale);
+            receiverIban = FinancialGen.iban(rng, locale);
+        }
+
+        // Description and channel pools
+        String[] descs = switch (locale) {
+            case "US" -> TX_DESC_US; case "UK" -> TX_DESC_UK; case "DE" -> TX_DESC_DE;
+            case "FR" -> TX_DESC_FR; case "RU" -> TX_DESC_RU; default   -> TX_DESC_TR;
+        };
+        String[] chans = switch (locale) {
+            case "US" -> TX_CHAN_US; case "UK" -> TX_CHAN_UK; case "DE" -> TX_CHAN_DE;
+            case "FR" -> TX_CHAN_FR; case "RU" -> TX_CHAN_RU; default   -> TX_CHAN_TR;
+        };
+
+        // Status: 80% COMPLETED, 15% PENDING, 5% FAILED
+        int r = rng.nextInt(20);
+        String status = r < 16 ? "COMPLETED" : r < 19 ? "PENDING" : "FAILED";
+
+        return String.format(
+            "{\"ref\":\"%s\",\"sender_iban\":\"%s\",\"receiver_iban\":\"%s\",\"amount\":%.2f," +
+            "\"currency\":\"%s\",\"description\":\"%s\",\"channel\":\"%s\",\"timestamp\":\"%s\",\"status\":\"%s\"}",
+            ref, senderIban, receiverIban, amount, ccy,
+            pick(rng, descs).replace("\"", "\\\""),
+            pick(rng, chans), timestamp, status
+        );
     }
 
     // ── Bank name ─────────────────────────────────────────────────────────────

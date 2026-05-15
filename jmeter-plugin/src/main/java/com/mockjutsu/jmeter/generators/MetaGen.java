@@ -180,15 +180,18 @@ public final class MetaGen {
         return false;
     }
 
-    // ── MAC address ───────────────────────────────────────────────────────────
+    // ── MAC address (IEEE OUI prefix + 3 random bytes) ───────────────────────
+
+    private static final String[] OUI_PREFIXES = {
+        "A4:C3:F0","3C:22:FB","B8:27:EB","DC:2C:6E","00:50:56","08:00:27",
+        "D8:BB:2C","28:6F:7F","F0:18:98","00:1C:42","00:23:AE","AC:BC:32",
+        "F4:5C:89","70:F0:96","CC:46:D6","00:0C:29","44:38:39","2C:F0:5D"
+    };
 
     private static String macAddress(ThreadLocalRandom rng) {
-        StringBuilder sb = new StringBuilder(17);
-        for (int i = 0; i < 6; i++) {
-            if (i > 0) sb.append(':');
-            sb.append(String.format("%02X", rng.nextInt(0, 256)));
-        }
-        return sb.toString();
+        return OUI_PREFIXES[rng.nextInt(OUI_PREFIXES.length)] + ":" +
+               String.format("%02X:%02X:%02X",
+                   rng.nextInt(256), rng.nextInt(256), rng.nextInt(256));
     }
 
     // ── Domain & URL ─────────────────────────────────────────────────────────
