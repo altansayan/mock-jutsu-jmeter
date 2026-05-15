@@ -613,6 +613,164 @@ class FormatValidationTest {
     @RepeatedTest(10) void cardowner_uppercase()   { String co = g("cardowner","TR"); assertEquals(co, co.toUpperCase()); }
     @RepeatedTest(10) void regex_string_not_empty(){ assertNoError(g("regex_string","TR")); }
 
+    // ── Identity (additional / alias types) ───────────────────────────────────
+
+    @RepeatedTest(10) void ykn_starts_9()           { String y = g("ykn","TR"); assertMatches(y, "\\d{11}"); assertEquals('9', y.charAt(0)); }
+    @RepeatedTest(10) void nationalid_not_empty()   { assertNoError(g("nationalid","TR")); }
+    @RepeatedTest(10) void taxid_10_digits()        { assertMatches(g("taxid","TR"), "\\d{10}"); }
+    @RepeatedTest(10) void inn_10_digits()          { assertMatches(g("inn","RU"), "\\d{10}"); }
+    @RepeatedTest(10) void inn_individual_12()      { assertMatches(g("inn_individual","RU"), "\\d{12}"); }
+    @RepeatedTest(10) void snils_format()           { assertMatches(g("snils","RU"), "\\d{3}-\\d{3}-\\d{3} \\d{2}"); }
+    @RepeatedTest(10) void ogrn_13_digits()         { assertMatches(g("ogrn","RU"), "\\d{13}"); }
+    @RepeatedTest(10) void kpp_9_digits()           { assertMatches(g("kpp","RU"), "\\d{9}"); }
+    @RepeatedTest(10) void rvn_de_format()          { assertMatches(g("rvn","DE"), "\\d{8}[A-Z]\\d{2}"); }
+    @RepeatedTest(10) void crn_uk_not_empty()       { assertNoError(g("crn","UK")); }
+    @RepeatedTest(10) void hrb_de_prefix()          { assertTrue(g("hrb","DE").startsWith("HRB ")); }
+    @RepeatedTest(10) void paye_uk_format()         { assertMatches(g("paye","UK"), "\\d{3}/[A-Z]\\d{6}"); }
+    @RepeatedTest(10) void utr_uk_10_digits()       { assertMatches(g("utr","UK"), "\\d{10}"); }
+    @RepeatedTest(10) void tva_fr_prefix()          { assertTrue(g("tva","FR").startsWith("FR")); }
+    @RepeatedTest(10) void siren_9_digits()         { assertMatches(g("siren","FR"), "\\d{9}"); }
+    @RepeatedTest(10) void siret_14_digits()        { assertMatches(g("siret","FR"), "\\d{14}"); }
+    @RepeatedTest(10) void patronymic_ru_not_empty(){ assertNoError(g("patronymic","RU")); }
+
+    @ParameterizedTest @ValueSource(strings = {"ust_id","ustid"})
+    void ustid_de_format(String type)               { assertTrue(g(type,"DE").startsWith("DE")); assertMatches(g(type,"DE"), "DE\\d{9}"); }
+
+    @ParameterizedTest @ValueSource(strings = {"vat_number","employer_id","insurance_id"})
+    void identity_structured_not_empty(String type) { assertNoError(g(type,"TR")); }
+
+    // ── Financial (additional / alias types) ─────────────────────────────────
+
+    @RepeatedTest(10) void bic_8_or_11_chars()      { int len = g("bic","TR").length(); assertTrue(len==8||len==11, "BIC len: "+len); }
+
+    @RepeatedTest(10) void expiryyear_range() {
+        int y = Integer.parseInt(g("expiryyear","TR"));
+        assertTrue(y >= 2026 && y <= 2033, "expiryyear out of range: " + y);
+    }
+
+    @RepeatedTest(10) void cardnetwork_valid() {
+        assertTrue(java.util.Set.of("Visa","Mastercard","AmericanExpress","Discover","Troy")
+            .contains(g("cardnetwork","TR")), "Invalid cardnetwork");
+    }
+
+    @RepeatedTest(10) void cardcategory_valid() {
+        assertTrue(java.util.Set.of("classic","gold","platinum","business","infinite")
+            .contains(g("cardcategory","TR")), "Invalid cardcategory");
+    }
+
+    @RepeatedTest(10) void issuer_not_empty()       { assertNoError(g("issuer","TR")); }
+
+    // ── Meta (additional / alias types) ──────────────────────────────────────
+
+    @RepeatedTest(10) void timestamp_iso_has_t_and_z() {
+        String t = g("timestamp_iso","TR");
+        assertTrue(t.contains("T") && (t.endsWith("Z") || t.contains("+")), "ISO timestamp: " + t);
+    }
+
+    @RepeatedTest(10) void browser_name_valid() {
+        assertTrue(java.util.Set.of("Chrome","Firefox","Safari","Edge","Opera")
+            .contains(g("browser_name","TR")));
+    }
+
+    @RepeatedTest(10) void browser_version_dotted() { assertMatches(g("browser_version","TR"), "\\d+\\.\\d+\\.\\d+\\.\\d+"); }
+
+    @RepeatedTest(10) void browser_engine_valid() {
+        assertTrue(java.util.Set.of("Blink","Gecko","WebKit")
+            .contains(g("browser_engine","TR")));
+    }
+
+    @RepeatedTest(10) void signature_base64() {
+        String sig = g("signature","TR");
+        assertMatches(sig, "[A-Za-z0-9+/=]+");
+        assertTrue(sig.length() >= 86, "signature length: " + sig.length());
+    }
+
+    @RepeatedTest(10) void domain_has_dot()         { assertTrue(g("domain","TR").contains(".")); }
+
+    // ── Communication (additional types) ─────────────────────────────────────
+
+    @RepeatedTest(10) void phone_area_digits()      { assertMatches(g("phone_area","TR"), "\\d+"); }
+    @RepeatedTest(10) void phone_country_plus()     { assertTrue(g("phone_country","TR").startsWith("+")); }
+    @RepeatedTest(10) void phone_local_7_digits()   { assertMatches(g("phone_local","TR"), "\\d{7}"); }
+    @RepeatedTest(10) void plate_not_empty()        { assertNoError(g("plate","TR")); }
+
+    // ── Banking (additional types) ────────────────────────────────────────────
+
+    @RepeatedTest(10) void bank_name_not_empty()    { assertNoError(g("bank_name","TR")); }
+
+    // ── Health (alias types) ──────────────────────────────────────────────────
+
+    @RepeatedTest(10) void bloodtype_alias() {
+        assertTrue(java.util.Set.of("A+","A-","B+","B-","AB+","AB-","O+","O-")
+            .contains(g("bloodtype","TR")), "Invalid bloodtype");
+    }
+
+    @RepeatedTest(10) void nhsnumber_alias()        { assertMatches(g("nhsnumber","UK"), "\\d{3} \\d{3} \\d{4}"); }
+
+    // ── Commerce (alias types) ────────────────────────────────────────────────
+
+    @RepeatedTest(10) void taxrate_alias()          { assertKeys(g("taxrate","TR"), "rate","name","type"); }
+
+    @ParameterizedTest @ValueSource(strings = {"TR","US","DE","FR","UK","RU"})
+    void invoicenumber_alias(String locale) {
+        String inv = g("invoicenumber", locale);
+        boolean ok = switch (locale) {
+            case "UK" -> inv.startsWith("INV/");
+            case "DE" -> inv.startsWith("RE-");
+            case "FR" -> inv.startsWith("FACT-");
+            case "RU" -> inv.startsWith("СФ-");
+            default   -> inv.startsWith("INV-");
+        };
+        assertTrue(ok, locale + " invoicenumber wrong prefix: " + inv);
+    }
+
+    // ── IoT (alias / additional types) ────────────────────────────────────────
+
+    @RepeatedTest(10) void rfid_tag_alias()         { assertMatches(g("rfid_tag","TR"), "([0-9A-F]{2}:){3,6}[0-9A-F]{2}"); }
+    @RepeatedTest(10) void nfc_uid_format()         { assertMatches(g("nfc_uid","TR"), "([0-9A-F]{2}:){3,6}[0-9A-F]{2}"); }
+
+    // ── Ecommerce (additional types) ──────────────────────────────────────────
+
+    @RepeatedTest(10) void product_name_not_empty() { assertNoError(g("product_name","TR")); }
+    @RepeatedTest(10) void category_not_empty()     { assertNoError(g("category","TR")); }
+
+    // ── Social (additional types) ─────────────────────────────────────────────
+
+    @RepeatedTest(10) void bio_not_empty()          { assertNoError(g("bio","TR")); }
+
+    // ── CardPhysics (additional types) ────────────────────────────────────────
+
+    @RepeatedTest(10) void emv_atc_4_hex()          { assertMatches(g("emv_atc","TR"), "[0-9A-F]{4}"); }
+
+    @ParameterizedTest @ValueSource(strings = {"emv_qr_p2p","emv_qr_atm","emv_qr_pos"})
+    void emv_qr_format(String type) {
+        String q = g(type,"TR");
+        assertTrue(q.startsWith("000201"), "EMV QR must start with 000201: " + q.substring(0, Math.min(20, q.length())));
+    }
+
+    @RepeatedTest(10) void pin_block_fmt0_fvt() {
+        String pb = g("pin_block","TR");
+        assertEquals(16, pb.length());
+        assertMatches(pb, "[0-9A-F]{16}");
+        assertEquals('0', pb.charAt(0));
+    }
+
+    @RepeatedTest(10) void pin_block_fmt3_fvt() {
+        String pb = g("pin_block_fmt3","TR");
+        assertEquals(16, pb.length());
+        assertMatches(pb, "[0-9A-F]{16}");
+        assertEquals('3', pb.charAt(0));
+    }
+
+    // ── Crypto (additional types) ─────────────────────────────────────────────
+
+    @RepeatedTest(10) void crypto_address_btc_or_eth() {
+        String a = g("crypto_address","TR");
+        boolean btc = a.startsWith("1") || a.startsWith("3") || a.startsWith("bc1");
+        boolean eth = a.startsWith("0x") && a.length() == 42;
+        assertTrue(btc || eth, "crypto_address format invalid: " + a);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static String g(String type, String locale) { return MockJutsuRegistry.generate(type, locale); }
