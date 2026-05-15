@@ -21,12 +21,12 @@ public final class CommunicationGen {
     private static final String[] US_STREETS  = {"Main St","Oak Ave","Maple Dr","Cedar Ln","Elm St","Pine Rd"};
     private static final String[] RU_STREETS  = {"ул. Ленина","ул. Мира","Советская ул.","Пушкинская ул."};
 
-    private static final String[] EMAIL_DOMAINS_TR = {"gmail.com","hotmail.com","yahoo.com","outlook.com","yandex.com"};
-    private static final String[] EMAIL_DOMAINS_US = {"gmail.com","yahoo.com","outlook.com","hotmail.com","icloud.com"};
-    private static final String[] EMAIL_DOMAINS_DE = {"gmail.de","web.de","gmx.de","t-online.de","freenet.de"};
-    private static final String[] EMAIL_DOMAINS_FR = {"gmail.com","laposte.net","orange.fr","free.fr","sfr.fr"};
-    private static final String[] EMAIL_DOMAINS_UK = {"gmail.com","yahoo.co.uk","hotmail.co.uk","outlook.com","btinternet.com"};
-    private static final String[] EMAIL_DOMAINS_RU = {"gmail.com","mail.ru","yandex.ru","rambler.ru","bk.ru"};
+    private static final String[] EMAIL_DOMAINS_TR = {"mockposta.com.tr","testmail.net","ornek.com.tr","dummymail.tr","example.com"};
+    private static final String[] EMAIL_DOMAINS_US = {"mockmail.com","testinbox.net","fakeemail.org","dummypost.com","example.com"};
+    private static final String[] EMAIL_DOMAINS_DE = {"mockpost.de","testmail.de","beispiel.de","dummymail.de","example.com"};
+    private static final String[] EMAIL_DOMAINS_FR = {"mockcourriel.fr","testmail.fr","exemple.fr","fictif.fr","example.com"};
+    private static final String[] EMAIL_DOMAINS_UK = {"mockmail.co.uk","testinbox.uk","dummy.co.uk","example.co.uk","example.com"};
+    private static final String[] EMAIL_DOMAINS_RU = {"mockpochta.ru","testmail.ru","primer.ru","fiktiv.ru","example.com"};
 
     private static final String[] TR_PLATES_PREFIXES;
     static {
