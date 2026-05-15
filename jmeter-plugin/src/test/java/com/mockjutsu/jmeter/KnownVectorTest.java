@@ -104,7 +104,7 @@ class KnownVectorTest {
     void aba_routing_invalid(String rtn) { assertFalse(abaValid(rtn), "Expected invalid ABA: " + rtn); }
 
     @ParameterizedTest
-    @ValueSource(strings = {"4532015112830366", "5425233430109903", "374251018720955"})
+    @ValueSource(strings = {"4532015112830366", "5425233430109903", "378282246310005"})
     void luhn_valid(String card) { assertTrue(luhnValid(card), "Luhn failed: " + card); }
 
     @ParameterizedTest
