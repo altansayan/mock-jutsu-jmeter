@@ -16,45 +16,20 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
 
     protected abstract String typeDescription();
 
-    /**
-     * Parameter convention:
-     *   1 param : ${__mockjutsu(tckn)}                     → type only
-     *   2 params: ${__mockjutsu(tckn,TR)}                  → type, locale
-     *   3 params: ${__mockjutsu(tckn,TR,myVar)}            → type, locale, varName  (original API)
-     *   4+ params: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} → types..., locale, varName
-     *              last = varName, second-to-last = locale, rest = types → JSON object output
-     */
     @Override
     public String execute(SampleResult prev, Sampler current) throws InvalidVariableException {
         int n = params.length;
-
-        String[] types;
-        String locale;
-        String varName;
-
-        if (n <= 3) {
-            // 1-3 params: original API — type may contain comma-separated list (helper dialog escapes commas)
-            String rawType = n > 0 ? params[0].execute().trim() : "";
-            locale  = n > 1 ? params[1].execute().trim().toUpperCase() : "";
-            varName = n > 2 ? params[2].execute().trim() : "";
-            // Split on comma to support "iban, cardnum" entered in helper dialog
-            if (rawType.contains(",")) {
-                String[] parts = rawType.split(",");
-                types = new String[parts.length];
-                for (int i = 0; i < parts.length; i++) types[i] = parts[i].trim().toLowerCase();
-            } else {
-                types = new String[]{ rawType.toLowerCase() };
-            }
-        } else {
-            // 4+ params: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — last two are locale and varName
-            varName = params[n - 1].execute().trim();
-            locale  = params[n - 2].execute().trim().toUpperCase();
-            types   = new String[n - 2];
-            for (int i = 0; i < n - 2; i++)
-                types[i] = params[i].execute().trim().toLowerCase();
-        }
-
+        // params[0] = type(s) — single or comma-separated list, e.g. "tckn, iban, cardnum"
+        // params[1] = locale (optional, default TR)
+        // params[2] = varName (optional)
+        String rawType = n > 0 ? params[0].execute().trim() : "";
+        String locale  = n > 1 ? params[1].execute().trim().toUpperCase() : "";
+        String varName = n > 2 ? params[2].execute().trim() : "";
         if (locale.isEmpty()) locale = "TR";
+
+        String[] parts = rawType.split(",");
+        String[] types = new String[parts.length];
+        for (int i = 0; i < parts.length; i++) types[i] = parts[i].trim().toLowerCase();
 
         String result;
         if (types.length == 1) {
@@ -97,7 +72,7 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
 
     @Override
     public void setParameters(Collection<CompoundVariable> parameters) throws InvalidVariableException {
-        checkParameterCount(parameters, 1, 255);
+        checkParameterCount(parameters, 1, 3);
         params = parameters.toArray(new CompoundVariable[0]);
     }
 }
