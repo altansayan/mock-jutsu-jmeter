@@ -24,9 +24,9 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         if (locale.isEmpty()) locale = "TR";
 
         String result;
-        if (type.contains(",")) {
-            // Multi-type: ${__mockjutsu(tckn\,iban\,cardnum\,uuid,,)} → {"tckn":"...","iban":"..."}
-            String[] types = type.split(",");
+        if (type.contains("|")) {
+            // Multi-type: ${__mockjutsu(tckn|iban|cardnum|uuid,,)} → {"tckn":"...","iban":"..."}
+            String[] types = type.split("\\|");
             StringBuilder sb = new StringBuilder("{");
             JMeterVariables vars = varName.isEmpty() ? null : getVariables();
             for (int i = 0; i < types.length; i++) {
