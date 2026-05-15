@@ -8,18 +8,25 @@ public final class AiVectorGen {
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "ai_embedding"     -> embedding(rng, 768);
-            case "ai_vector"        -> embedding(rng, 1536);
+            case "ai_embedding"     -> embedding(rng, 1536);
+            case "ai_vector"        -> embedding(rng, 384);
             case "ai_sparse_vector" -> sparseVector(rng);
             default -> "ERROR: Unknown AI vector type '" + type + "'";
         };
     }
 
     private static String embedding(ThreadLocalRandom rng, int dim) {
+        double[] values = new double[dim];
+        double norm = 0.0;
+        for (int i = 0; i < dim; i++) {
+            values[i] = -1.0 + rng.nextDouble(2.0);
+            norm += values[i] * values[i];
+        }
+        norm = Math.sqrt(norm);
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < dim; i++) {
             if (i > 0) sb.append(",");
-            sb.append(String.format("%.6f", -1.0 + rng.nextDouble(2)));
+            sb.append(String.format("%.6f", values[i] / norm));
         }
         return sb.append("]").toString();
     }

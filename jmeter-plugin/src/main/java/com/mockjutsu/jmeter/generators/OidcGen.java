@@ -28,12 +28,13 @@ public final class OidcGen {
     }
 
     private static String jwks() {
-        byte[] n = new byte[256]; SEC.nextBytes(n);
-        byte[] e = {0x01, 0x00, 0x01}; // 65537
+        // EC P-256 key: x and y are 32-byte uncompressed point coordinates
+        byte[] x = new byte[32]; SEC.nextBytes(x);
+        byte[] y = new byte[32]; SEC.nextBytes(y);
         String kid = UUID.randomUUID().toString().substring(0, 8);
-        String nB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(n);
-        String eB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(e);
-        return "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"alg\":\"RS256\",\"kid\":\"" + kid + "\"," +
-               "\"n\":\"" + nB64 + "\",\"e\":\"" + eB64 + "\"}]}";
+        String xB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(x);
+        String yB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(y);
+        return "{\"keys\":[{\"kty\":\"EC\",\"use\":\"sig\",\"alg\":\"ES256\",\"kid\":\"" + kid + "\"," +
+               "\"crv\":\"P-256\",\"x\":\"" + xB64 + "\",\"y\":\"" + yB64 + "\"}]}";
     }
 }

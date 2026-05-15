@@ -61,7 +61,7 @@ public final class FinancialMarketsGen {
         StringBuilder sb = new StringBuilder(8);
         for (int i = 0; i < 8; i++) sb.append(ALPHA_NUM[rng.nextInt(36)]);
         String body = sb.toString();
-        // CUSIP check digit
+        // CUSIP check digit: even 1-indexed (odd 0-indexed) positions ×2
         int sum = 0;
         for (int i = 0; i < 8; i++) {
             char c = body.charAt(i);

@@ -21,7 +21,7 @@ public final class CommerceGen {
 
     // tax_rate: locale → {rate, name, type}
     private static final String[][][] TAX_RATES = {
-        {{"TR"},{"18","KDV","VAT"},{"8","KDV İndirimli","reduced VAT"},{"1","KDV Süper İndirimli","super-reduced VAT"}},
+        {{"TR"},{"20","KDV","VAT"},{"10","KDV İndirimli","reduced VAT"},{"1","KDV Süper İndirimli","super-reduced VAT"}},
         {{"DE"},{"19","MwSt","VAT"},{"7","MwSt ermäßigt","reduced VAT"}},
         {{"FR"},{"20","TVA","VAT"},{"10","TVA intermédiaire","intermediate VAT"},{"5.5","TVA réduite","reduced VAT"}},
         {{"UK"},{"20","VAT","VAT"},{"5","VAT reduced","reduced VAT"},{"0","VAT zero","zero VAT"}},

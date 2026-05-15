@@ -62,9 +62,17 @@ public final class IoTGen {
     // ── RFID UID — OUI first byte + random rest ───────────────────────────────
 
     private static String rfidUid(ThreadLocalRandom rng) {
-        int len = rng.nextBoolean() ? 4 : 7;
+        int oui = RFID_OUI[rng.nextInt(RFID_OUI.length)];
+        int len;
+        if (oui == 0xE0) {
+            len = 8; // ISO 15693
+        } else if (oui == 0x04) {
+            len = 7; // NXP/MIFARE
+        } else {
+            len = rng.nextBoolean() ? 4 : 7;
+        }
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%02X", RFID_OUI[rng.nextInt(RFID_OUI.length)]));
+        sb.append(String.format("%02X", oui));
         for (int i = 1; i < len; i++) sb.append(':').append(String.format("%02X", rng.nextInt(256)));
         return sb.toString();
     }

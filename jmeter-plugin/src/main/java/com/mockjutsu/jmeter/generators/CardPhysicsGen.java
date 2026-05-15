@@ -78,7 +78,7 @@ public final class CardPhysicsGen {
         String amount = String.format("%012d", rng.nextInt(100, 9999999));
         String trace  = String.format("%06d", rng.nextInt(1, 1000000));
         String dt     = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
-        String expiry = String.format("%02d%02d", rng.nextInt(1,13), (java.time.LocalDate.now().getYear()%100)+rng.nextInt(1,6));
+        String expiry = String.format("%02d%02d", (java.time.LocalDate.now().getYear()%100)+rng.nextInt(1,6), rng.nextInt(1,13));
         String rrn    = "MOCKJ" + hexRng(rng, 7);
         String authCode = "MOCKJ" + rng.nextInt(1, 10);
         String tid    = "MOCKJT" + String.format("%02d", rng.nextInt(10, 100));

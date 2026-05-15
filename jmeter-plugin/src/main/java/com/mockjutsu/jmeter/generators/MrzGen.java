@@ -44,7 +44,7 @@ public final class MrzGen {
         String dobChk     = String.valueOf(mrzCheck(dob));
         String expiryChk  = String.valueOf(mrzCheck(expiry));
         String personal   = pad("<", 14);
-        String personalChk = "<";  // optional data — no numeric check
+        String personalChk = String.valueOf(mrzCheck(personal));  // ICAO 9303: all-'<' → 0
         String composite  = number + numChk + dob + dobChk + expiry + expiryChk + personal + personalChk;
         String compChk    = String.valueOf(mrzCheck(composite));
         String line2      = number + numChk + cc + dob + dobChk + sex + expiry + expiryChk + personal + personalChk + compChk;

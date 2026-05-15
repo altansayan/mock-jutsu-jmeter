@@ -103,11 +103,16 @@ public final class HealthGen {
     }
 
     // ── DICOM UID ─────────────────────────────────────────────────────────────
+    // Root 2.25 = ISO/IEC 9834-8 UUID-based synthetic UID (mirrors health.py _DICOM_ROOT)
 
     private static String dicomUid(ThreadLocalRandom rng) {
-        return "1.2.840.10008." + rng.nextInt(1,6) + "." +
-               rng.nextInt(1,10000) + "." + rng.nextInt(1,99999) + "." +
-               rng.nextInt(1,9999999) + "." + rng.nextInt(1,99);
+        // Generate a large random integer in [0, 2^128) to fill the UUID numeric space
+        long hi = rng.nextLong(0, Long.MAX_VALUE);
+        long lo = rng.nextLong(0, Long.MAX_VALUE);
+        java.math.BigInteger uid = java.math.BigInteger.valueOf(hi)
+                .shiftLeft(63)
+                .add(java.math.BigInteger.valueOf(lo).abs());
+        return "2.25." + uid.toString();
     }
 
     private static <T> T pick(ThreadLocalRandom rng, T[] arr) {

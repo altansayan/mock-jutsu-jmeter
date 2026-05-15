@@ -59,12 +59,12 @@ public final class NmeaGen {
     private static String nmeaLat(ThreadLocalRandom rng) {
         int deg   = rng.nextInt(0,90);
         double min = rng.nextDouble(60);
-        return String.format("%02d%08.5f", deg, min);
+        return String.format("%02d%07.4f", deg, min);
     }
 
     private static String nmeaLon(ThreadLocalRandom rng) {
         int deg   = rng.nextInt(0,180);
         double min = rng.nextDouble(60);
-        return String.format("%03d%08.5f", deg, min);
+        return String.format("%03d%07.4f", deg, min);
     }
 }

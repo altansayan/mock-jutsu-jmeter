@@ -73,11 +73,18 @@ public final class MetaGen {
     }
 
     private static String ipv4Public(ThreadLocalRandom rng) {
-        // Avoid private/reserved ranges — simplified
-        int a;
-        do { a = rng.nextInt(1, 256); }
-        while (a == 10 || a == 127 || a == 172 || a == 192);
-        return a + "." + rng.nextInt(0,256) + "." + rng.nextInt(0,256) + "." + rng.nextInt(1,255);
+        // Avoid private/reserved ranges (RFC 1918, RFC 5735)
+        int a, b;
+        do {
+            a = rng.nextInt(1, 256);
+            b = rng.nextInt(0, 256);
+        } while (
+            a == 10                          // 10.0.0.0/8
+            || a == 127                      // 127.0.0.0/8 loopback
+            || (a == 172 && b >= 16 && b <= 31) // 172.16.0.0/12
+            || (a == 192 && b == 168)        // 192.168.0.0/16
+        );
+        return a + "." + b + "." + rng.nextInt(0,256) + "." + rng.nextInt(1,255);
     }
 
     private static String ipv4Private(ThreadLocalRandom rng) {

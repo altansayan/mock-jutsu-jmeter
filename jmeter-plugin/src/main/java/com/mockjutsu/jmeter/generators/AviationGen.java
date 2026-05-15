@@ -5,8 +5,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class AviationGen {
     private AviationGen() {}
     private static final String[] AIRPORTS = {"IST","SAW","ESB","ADB","LHR","CDG","FRA","JFK","SVO","DXB","NRT"};
-    private static final String[] IATA_CARRIERS = {"TK","PC","AJ","BA","AF","LH","UA","DL","AA","EK","SU"};
-
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
@@ -18,11 +16,18 @@ public final class AviationGen {
     }
 
     private static String iataTicket(ThreadLocalRandom rng) {
-        String carrier = IATA_CARRIERS[rng.nextInt(IATA_CARRIERS.length)];
-        String origin  = AIRPORTS[rng.nextInt(AIRPORTS.length)];
-        String dest    = AIRPORTS[rng.nextInt(AIRPORTS.length)];
-        return carrier + String.format("%010d", rng.nextLong(1000000000L, 9999999999L)) +
-               "/" + origin + "-" + dest;
+        // IATA ticket: 3-digit numeric airline code (001-999) + 10-digit serial = 13 chars total
+        // Check digit: last digit of serial = sum-of-first-9-digits mod 7
+        String airlineCode = String.format("%03d", rng.nextInt(1, 1000));
+        int[] serial = new int[9];
+        for (int i = 0; i < 9; i++) serial[i] = rng.nextInt(0, 10);
+        int sum = 0;
+        for (int d : serial) sum += d;
+        int checkDigit = sum % 7;
+        StringBuilder sb = new StringBuilder(airlineCode);
+        for (int d : serial) sb.append(d);
+        sb.append(checkDigit);
+        return sb.toString();
     }
 
     // IMO: 7 digits with check digit (weighted sum mod 10)

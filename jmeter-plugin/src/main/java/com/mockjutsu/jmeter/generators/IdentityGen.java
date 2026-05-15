@@ -192,10 +192,26 @@ public final class IdentityGen {
         int[] d = new int[10];
         d[0] = rng.nextInt(1, 10);
         for (int i = 1; i < 9; i++) d[i] = rng.nextInt(0, 10);
-        // d[9]: last digit = (sum of weighted) % 10 — simplified
+        // VKN check digit algorithm (Turkish Tax ID):
+        // for i=0..8: v = (d[i] + (9-i)) % 10
+        //             if v != 0: c = (v * 2^(9-i)) % 9; if c == 0: c = 9
+        //             else: c = 0
+        // check = (10 - sum(c) % 10) % 10
         int sum = 0;
-        for (int i = 0; i < 9; i++) sum += d[i];
-        d[9] = sum % 10;
+        for (int i = 0; i < 9; i++) {
+            int v = (d[i] + (9 - i)) % 10;
+            int c;
+            if (v != 0) {
+                int pow = 1;
+                for (int p = 0; p < (9 - i); p++) pow *= 2;
+                c = (v * pow) % 9;
+                if (c == 0) c = 9;
+            } else {
+                c = 0;
+            }
+            sum += c;
+        }
+        d[9] = (10 - (sum % 10)) % 10;
         StringBuilder sb = new StringBuilder(10);
         for (int v : d) sb.append(v);
         return sb.toString();
@@ -324,7 +340,7 @@ public final class IdentityGen {
     // ── UK CRN — Company Registration Number ─────────────────────────────────
 
     private static String crn(ThreadLocalRandom rng) {
-        String prefix = new String[]{"","SC","NI","OC","SO","NC"}[rng.nextInt(6)];
+        String prefix = new String[]{"","SC","NI"}[rng.nextInt(3)];
         return String.format("%s%08d", prefix, rng.nextInt(1, 99999999));
     }
 
@@ -350,10 +366,39 @@ public final class IdentityGen {
     // ── German RVN ────────────────────────────────────────────────────────────
 
     private static String rvn(ThreadLocalRandom rng) {
-        return String.format("%02d%06d%c%02d", rng.nextInt(10, 99),
-            rng.nextInt(100000, 999999),
-            (char)('A' + rng.nextInt(26)),
-            rng.nextInt(10, 99));
+        // Format: 2 area digits + 6 birthdate digits (DDMMYY) + 1 letter + 3 serial digits = 12 chars
+        // Check digit appended as 13th character.
+        // Each char → numeric value (digit=digit, letter=position 1-26 as two digits).
+        // Weight: i%2==0 → ×2, i%2==1 → ×1; take digit-sum of each product.
+        // checksum = total % 10
+        String area   = String.format("%02d", rng.nextInt(10, 99));
+        String birth  = String.format("%02d%02d%02d",
+            rng.nextInt(1, 32), rng.nextInt(1, 13), rng.nextInt(0, 100));
+        char   letter = (char)('A' + rng.nextInt(26));
+        String serial = String.format("%03d", rng.nextInt(0, 1000));
+        String body   = area + birth + letter + serial;   // 12 chars
+
+        // Expand to digit string: letter → two-digit position (A=01 .. Z=26)
+        StringBuilder expanded = new StringBuilder();
+        for (char c : body.toCharArray()) {
+            if (Character.isLetter(c)) {
+                int pos = c - 'A' + 1;
+                expanded.append(String.format("%02d", pos));
+            } else {
+                expanded.append(c);
+            }
+        }
+        String digits = expanded.toString();
+
+        int total = 0;
+        for (int i = 0; i < digits.length(); i++) {
+            int d = digits.charAt(i) - '0';
+            int product = (i % 2 == 0) ? d * 2 : d * 1;
+            // digit sum of product
+            total += product / 10 + product % 10;
+        }
+        int check = total % 10;
+        return body + check;
     }
 
     // ── French SIREN (9 digits, Luhn) ────────────────────────────────────────

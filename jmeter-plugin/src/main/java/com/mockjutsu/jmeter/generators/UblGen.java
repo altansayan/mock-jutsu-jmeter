@@ -21,17 +21,68 @@ public final class UblGen {
     private static String ublInvoice(ThreadLocalRandom rng, String locale) {
         String invId = "INV-" + String.format("%08d", rng.nextInt(10000000,99999999));
         String date  = java.time.LocalDate.now().toString();
-        double amount = rng.nextDouble(100, 10000);
-        String ccy   = switch (locale) { case "DE","FR" -> "EUR"; case "UK" -> "GBP"; case "US" -> "USD"; case "RU" -> "RUB"; default -> "TRY"; };
+
+        // Locale'e gore para birimi ve KDV orani
+        String ccy    = switch (locale) { case "DE","FR" -> "EUR"; case "UK" -> "GBP"; case "US" -> "USD"; case "RU" -> "RUB"; default -> "TRY"; };
+        double vatPct = switch (locale) { case "DE" -> 19.0; case "US" -> 8.0; default -> 20.0; };
+
+        // Rastgele birim fiyat ve miktar
+        int    qty        = rng.nextInt(1, 20);
+        double unitPrice  = rng.nextDouble(10, 500);
+        double lineExt    = Math.round(qty * unitPrice * 100.0) / 100.0;
+        double taxAmt     = Math.round(lineExt * vatPct / 100.0 * 100.0) / 100.0;
+        double taxInclusive = Math.round((lineExt + taxAmt) * 100.0) / 100.0;
+
         String iban  = FinancialGen.iban(rng, locale);
+
+        // FIX 4 — InvoiceLine (en az 1 adet zorunlu)
+        String invoiceLine =
+               "<cac:InvoiceLine xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\"" +
+               " xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">" +
+               "<cbc:ID>1</cbc:ID>" +
+               "<cbc:InvoicedQuantity unitCode=\"EA\">" + qty + "</cbc:InvoicedQuantity>" +
+               "<cbc:LineExtensionAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", lineExt) + "</cbc:LineExtensionAmount>" +
+               "<cac:Item><cbc:Name>Test Urun</cbc:Name></cac:Item>" +
+               "<cac:Price><cbc:PriceAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", unitPrice) + "</cbc:PriceAmount></cac:Price>" +
+               "</cac:InvoiceLine>";
+
+        // FIX 5 — TaxTotal (zorunlu)
+        String taxTotal =
+               "<cac:TaxTotal xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\"" +
+               " xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">" +
+               "<cbc:TaxAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", taxAmt) + "</cbc:TaxAmount>" +
+               "<cac:TaxSubtotal>" +
+               "<cbc:TaxableAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", lineExt) + "</cbc:TaxableAmount>" +
+               "<cbc:TaxAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", taxAmt) + "</cbc:TaxAmount>" +
+               "<cac:TaxCategory>" +
+               "<cbc:Percent>" + (int) vatPct + "</cbc:Percent>" +
+               "<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>" +
+               "</cac:TaxCategory>" +
+               "</cac:TaxSubtotal>" +
+               "</cac:TaxTotal>";
+
+        // FIX 6 — LegalMonetaryTotal (TaxExclusiveAmount + TaxInclusiveAmount zorunlu, tutarlar tutarli)
+        String legalMonetary =
+               "<cac:LegalMonetaryTotal xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\"" +
+               " xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">" +
+               "<cbc:LineExtensionAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", lineExt) + "</cbc:LineExtensionAmount>" +
+               "<cbc:TaxExclusiveAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", lineExt) + "</cbc:TaxExclusiveAmount>" +
+               "<cbc:TaxInclusiveAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", taxInclusive) + "</cbc:TaxInclusiveAmount>" +
+               "<cbc:PayableAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", taxInclusive) + "</cbc:PayableAmount>" +
+               "</cac:LegalMonetaryTotal>";
+
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-               "<Invoice xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:Invoice-2\">" +
-               "<ID>" + invId + "</ID><IssueDate>" + date + "</IssueDate>" +
-               "<DocumentCurrencyCode>" + ccy + "</DocumentCurrencyCode>" +
-               "<AccountingSupplierParty><Party><PartyName><Name>MOCK SUPPLIER</Name></PartyName></Party></AccountingSupplierParty>" +
-               "<AccountingCustomerParty><Party><PartyName><Name>MOCK BUYER</Name></PartyName></Party></AccountingCustomerParty>" +
-               "<PaymentMeans><PayeeFinancialAccount><ID>" + iban + "</ID></PayeeFinancialAccount></PaymentMeans>" +
-               "<LegalMonetaryTotal><PayableAmount currencyID=\"" + ccy + "\">" + String.format("%.2f", amount) + "</PayableAmount></LegalMonetaryTotal>" +
+               "<Invoice xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:Invoice-2\"" +
+               " xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\"" +
+               " xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">" +
+               "<cbc:ID>" + invId + "</cbc:ID><cbc:IssueDate>" + date + "</cbc:IssueDate>" +
+               "<cbc:DocumentCurrencyCode>" + ccy + "</cbc:DocumentCurrencyCode>" +
+               "<cac:AccountingSupplierParty><cac:Party><cac:PartyName><cbc:Name>MOCK SUPPLIER</cbc:Name></cac:PartyName></cac:Party></cac:AccountingSupplierParty>" +
+               "<cac:AccountingCustomerParty><cac:Party><cac:PartyName><cbc:Name>MOCK BUYER</cbc:Name></cac:PartyName></cac:Party></cac:AccountingCustomerParty>" +
+               "<cac:PaymentMeans><cac:PayeeFinancialAccount><cbc:ID>" + iban + "</cbc:ID></cac:PayeeFinancialAccount></cac:PaymentMeans>" +
+               taxTotal +
+               legalMonetary +
+               invoiceLine +
                "</Invoice>";
     }
 

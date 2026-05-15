@@ -17,19 +17,25 @@ public final class EdiGen {
     private static String edi850(ThreadLocalRandom rng) {
         String ctrl = String.format("%09d", rng.nextInt(100000000, 999999999));
         String po   = "PO-" + rng.nextInt(100000, 999999);
-        return "ISA*00*          *00*          *ZZ*MOCKJUTSU      *ZZ*PARTNER        *240101*1200*^*00401*" + ctrl + "*0*T*|\n" +
+        // ISA segment: 106 karakter (ISA01–ISA16 + segment terminator)
+        // ISA06 sender ID: 15 karakter (sag doldurulmus), ISA08 receiver ID: 15 karakter
+        // ISA16: component element separator (>), ardindan segment terminator (|)
+        // Segment sayisi: ST(1) + BEG(1) + PO1(1) + CTT(1) + SE(1) = 5
+        String sender   = String.format("%-15s", "MOCKJUTSU");
+        String receiver = String.format("%-15s", "PARTNER");
+        return "ISA*00*          *00*          *ZZ*" + sender + "*ZZ*" + receiver + "*240101*1200*^*00401*" + ctrl + "*0*T*>|\n" +
                "GS*PO*MOCKJUTSU*PARTNER*20240101*120000*1*X*004010|\n" +
                "ST*850*0001|\n" +
                "BEG*00*SA*" + po + "**20240101|\n" +
                "PO1*1*100*EA*" + String.format("%.2f", rng.nextDouble(10,1000)) + "*PE*IT*MOCK-SKU-001|\n" +
                "CTT*1|\n" +
-               "SE*6*0001|\n" +
+               "SE*5*0001|\n" +
                "GE*1*1|\n" +
                "IEA*1*" + ctrl + "|";
     }
 
     private static String edifact(ThreadLocalRandom rng) {
-        String ctrl = String.format("%06d", rng.nextInt(100000, 999999));
+        String ctrl = String.format("%09d", rng.nextInt(0, 1000000000));
         String po   = "PO" + rng.nextInt(100000, 999999);
         return "UNB+UNOC:3+MOCKJUTSU+PARTNER+240101:1200+" + ctrl + "++ORDERS'\n" +
                "UNH+" + ctrl + "+ORDERS:D:96A:UN'\n" +

@@ -24,10 +24,17 @@ public final class BankStatementGen {
         return ":20:MOCKJ" + String.format("%06d", rng.nextInt(100000,999999)) + "\n" +
                ":25:" + bic + "/" + iban + "\n" +
                ":28C:00001/001\n" +
-               ":60F:C" + date + ccy + String.format("%,.2f", open) + "\n" +
-               ":61:" + date + date + "CR" + String.format("%.2f", rng.nextDouble(100,5000)) + "NMSC//MOCKREF\n" +
+               ":60F:C" + date + ccy + mt940Amount(open) + "\n" +
+               ":61:" + date + date + "CR" + mt940Amount(rng.nextDouble(100,5000)) + "NMSC//MOCKREF\n" +
                ":86:Test transaction - MOCKJUTSU\n" +
-               ":62F:C" + date + ccy + String.format("%,.2f", close) + "\n-";
+               ":62F:C" + date + ccy + mt940Amount(close) + "\n-";
+    }
+
+    /** MT940 amount format: no thousands separator, comma as decimal mark. e.g. 1234,56 */
+    private static String mt940Amount(double amount) {
+        long whole = (long) amount;
+        int cents = (int) Math.round((amount - whole) * 100);
+        return whole + "," + String.format("%02d", cents);
     }
 
     private static String camt053(ThreadLocalRandom rng, String locale) {
@@ -37,7 +44,7 @@ public final class BankStatementGen {
         String date  = java.time.LocalDate.now().toString();
         String msgId = "MOCKJ-" + java.util.UUID.randomUUID().toString().substring(0,8).toUpperCase();
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-               "<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.053.001.06\">" +
+               "<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.053.001.02\">" +
                "<BkToCstmrStmt><GrpHdr><MsgId>" + msgId + "</MsgId><CreDtTm>" + date + "T12:00:00</CreDtTm></GrpHdr>" +
                "<Stmt><Id>STMT001</Id><Acct><Id><IBAN>" + iban + "</IBAN></Id></Acct>" +
                "<Bal><Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>" +

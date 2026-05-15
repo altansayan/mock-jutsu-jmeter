@@ -15,12 +15,23 @@ public final class GameDevGen {
     }
 
     private static String quaternion(ThreadLocalRandom rng) {
-        // Unit quaternion: x,y,z,w with |q|=1
-        double x = rng.nextDouble(-1, 1);
-        double y = rng.nextDouble(-1, 1);
-        double z = rng.nextDouble(-1, 1);
-        double w = Math.sqrt(Math.max(0, 1 - x*x - y*y - z*z));
-        return String.format("{\"x\":%.6f,\"y\":%.6f,\"z\":%.6f,\"w\":%.6f}", x, y, z, w);
+        // Uniform rotation distribution via Gaussian sampling (Shoemake 1992)
+        // nextDouble(-1,1) produces non-uniform rotations; Gaussian normalisation is correct.
+        double[] q = randomQuaternion(rng);
+        return String.format("{\"x\":%.6f,\"y\":%.6f,\"z\":%.6f,\"w\":%.6f}", q[0], q[1], q[2], q[3]);
+    }
+
+    private static double[] randomQuaternion(ThreadLocalRandom rng) {
+        // Gaussian sampling for uniform rotation distribution (Shoemake 1992)
+        double x, y, z, w, norm;
+        do {
+            x = rng.nextGaussian();
+            y = rng.nextGaussian();
+            z = rng.nextGaussian();
+            w = rng.nextGaussian();
+            norm = Math.sqrt(x*x + y*y + z*z + w*w);
+        } while (norm == 0);
+        return new double[]{x/norm, y/norm, z/norm, w/norm};
     }
 
     private static String navmeshPath(ThreadLocalRandom rng) {

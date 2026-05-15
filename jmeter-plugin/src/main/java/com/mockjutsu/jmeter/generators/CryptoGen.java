@@ -48,13 +48,33 @@ public final class CryptoGen {
         return sb.toString();
     }
 
-    // ── ETH address (0x + 40 hex) ─────────────────────────────────────────────
+    // ── ETH address (0x + 40 hex, mock EIP-55 checksum) ──────────────────────
+    // EIP-55: each hex letter's case is determined by the Keccak-256 hash of the
+    // lowercase address. As a mock implementation without a Keccak library we use
+    // a pseudo-deterministic rule: uppercase if character index is even, lowercase
+    // if odd. This preserves the mixed-case checksum appearance required by EIP-55.
 
     static String ethAddress() {
         byte[] bytes = new byte[20];
         SEC.nextBytes(bytes);
+        // Build raw lowercase hex
+        char[] hex = new char[40];
+        for (int i = 0; i < 20; i++) {
+            int hi = (bytes[i] >> 4) & 0xF;
+            int lo = bytes[i] & 0xF;
+            hex[i * 2]     = "0123456789abcdef".charAt(hi);
+            hex[i * 2 + 1] = "0123456789abcdef".charAt(lo);
+        }
+        // Apply mock EIP-55: even index → uppercase, odd index → lowercase
         StringBuilder sb = new StringBuilder("0x");
-        for (byte b : bytes) sb.append(String.format("%02x", b));
+        for (int i = 0; i < 40; i++) {
+            char c = hex[i];
+            if (c >= 'a' && c <= 'f') {
+                sb.append((i % 2 == 0) ? Character.toUpperCase(c) : c);
+            } else {
+                sb.append(c); // digits stay as-is
+            }
+        }
         return sb.toString();
     }
 
