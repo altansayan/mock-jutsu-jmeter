@@ -33,12 +33,20 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         String varName;
 
         if (n <= 3) {
-            // Original single-type API — fully backward compatible
-            types   = new String[]{ n > 0 ? params[0].execute().trim().toLowerCase() : "" };
+            // 1-3 params: original API — type may contain comma-separated list (helper dialog escapes commas)
+            String rawType = n > 0 ? params[0].execute().trim() : "";
             locale  = n > 1 ? params[1].execute().trim().toUpperCase() : "";
             varName = n > 2 ? params[2].execute().trim() : "";
+            // Split on comma to support "iban, cardnum" entered in helper dialog
+            if (rawType.contains(",")) {
+                String[] parts = rawType.split(",");
+                types = new String[parts.length];
+                for (int i = 0; i < parts.length; i++) types[i] = parts[i].trim().toLowerCase();
+            } else {
+                types = new String[]{ rawType.toLowerCase() };
+            }
         } else {
-            // Multi-type: last two params are locale and varName, rest are types
+            // 4+ params: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — last two are locale and varName
             varName = params[n - 1].execute().trim();
             locale  = params[n - 2].execute().trim().toUpperCase();
             types   = new String[n - 2];
