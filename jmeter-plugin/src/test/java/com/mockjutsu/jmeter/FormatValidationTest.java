@@ -500,13 +500,22 @@ class FormatValidationTest {
     }
 
     private static String extractJsonField(String json, String key) {
-        // Extract value for "key":"value" — works for numeric and string values
+        // Extract value for "key":"value" (string fields, quoted)
         String marker = "\"" + key + "\":\"";
         int start = json.indexOf(marker);
         if (start == -1) return "";
         start += marker.length();
         int end = json.indexOf("\"", start);
         return end == -1 ? "" : json.substring(start, end);
+    }
+
+    private static double extractNumericField(String json, String key) {
+        // Extract value for "key":numeric (unquoted numeric fields)
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("\"" + java.util.regex.Pattern.quote(key) + "\":\\s*([\\d.]+)")
+            .matcher(json);
+        if (!m.find()) return Double.NaN;
+        return Double.parseDouble(m.group(1));
     }
 
     private static void assertMatches(String val, String regex, String msg) {
@@ -834,6 +843,98 @@ class FormatValidationTest {
         boolean btc = a.startsWith("1") || a.startsWith("3") || a.startsWith("bc1");
         boolean eth = a.startsWith("0x") && a.length() == 42;
         assertTrue(btc || eth, "crypto_address format invalid: " + a);
+    }
+
+    // ── Bug-fix regression assertions ────────────────────────────────────────
+
+    /** FR INSEE nationalid month must be 01-12 (never 13-20). */
+    @RepeatedTest(100) void fr_nationalid_month_01_to_12() {
+        String val = g("nationalid", "FR");
+        assertTrue(val.matches("\\d{15}"), "FR nationalid must be 15 digits: " + val);
+        int month = Integer.parseInt(val.substring(3, 5));
+        assertTrue(month >= 1 && month <= 12,
+            "FR nationalid month must be 01-12, got " + month + ": " + val);
+    }
+
+    /** FR insurance_id month must be 01-12. */
+    @RepeatedTest(100) void fr_insurance_id_month_01_to_12() {
+        String val = g("insurance_id", "FR");
+        assertTrue(val.matches("\\d{15}"), "FR insurance_id must be 15 digits: " + val);
+        int month = Integer.parseInt(val.substring(3, 5));
+        assertTrue(month >= 1 && month <= 12,
+            "FR insurance_id month must be 01-12, got " + month + ": " + val);
+    }
+
+    /** SEPA QR BIC bank code (4 letters) must have independent random chars, not AAAA/ZZZZ. */
+    @RepeatedTest(1) void sepa_qr_bic_has_varied_bank_code() {
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int i = 0; i < 50; i++) {
+            String qr = g("sepa_qr", "DE");
+            String bic = qr.split("\n")[4];
+            seen.add(bic.substring(0, 4));
+        }
+        assertTrue(seen.size() > 5,
+            "SEPA QR BIC bank codes suspiciously uniform (may be same letter ×4): " + seen);
+    }
+
+    /** Market tick price must be STRICTLY greater than bid (not equal). */
+    @RepeatedTest(200) void market_tick_price_strictly_gt_bid() {
+        String json = g("market_tick", "TR");
+        double bid   = extractNumericField(json, "bid");
+        double price = extractNumericField(json, "price");
+        assertTrue(price > bid, "price " + price + " must be strictly > bid " + bid);
+    }
+
+    /** Event stream events must contain aggregate_id and aggregate_type. */
+    @RepeatedTest(10) void event_stream_has_aggregate_id() {
+        String stream = g("event_stream", "TR");
+        assertTrue(stream.contains("\"aggregate_id\""),
+            "event_stream missing aggregate_id field");
+        assertTrue(stream.contains("\"aggregate_type\""),
+            "event_stream missing aggregate_type field");
+        assertTrue(stream.contains("\"User\""),
+            "event_stream aggregate_type must be 'User'");
+    }
+
+    /** MT940 :61: booking date must be MMDD (4 digits after YYMMDD value date). */
+    @RepeatedTest(20) void mt940_61_booking_date_is_mmdd() {
+        String stmt = g("mt940", "TR");
+        for (String line : stmt.split("\n")) {
+            if (line.startsWith(":61:")) {
+                String body = line.substring(4);
+                // value date (6) + booking date (4) + C/D (1) = first 11 chars
+                assertTrue(body.matches("\\d{6}\\d{4}[CD].*"),
+                    ":61: booking date must be MMDD after YYMMDD: " + line);
+                int mm = Integer.parseInt(body.substring(6, 8));
+                int dd = Integer.parseInt(body.substring(8, 10));
+                assertTrue(mm >= 1 && mm <= 12, ":61: booking month " + mm + " invalid: " + line);
+                assertTrue(dd >= 1 && dd <= 31, ":61: booking day " + dd + " invalid: " + line);
+            }
+        }
+    }
+
+    /** RC-5 command must be 0-127 and extended commands (64-127) must appear. */
+    @RepeatedTest(1) void ir_rc5_command_covers_extended_range() {
+        boolean sawHigh = false;
+        for (int i = 0; i < 200; i++) {
+            String json = g("ir_rc5", "TR");
+            double cmd = extractNumericField(json, "command");
+            assertTrue(cmd >= 0 && cmd <= 127, "RC-5 command out of 0-127: " + cmd);
+            if (cmd >= 64) sawHigh = true;
+        }
+        assertTrue(sawHigh, "RC-5 extended commands (64-127) never appeared in 200 samples");
+    }
+
+    /** XMLDSig X.509 cert must start with ASN.1 DER SEQUENCE bytes 0x30 0x82. */
+    @RepeatedTest(5) void xmldsig_x509_der_sequence_header() throws Exception {
+        String json = g("xmldsig", "TR");
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("<ds:X509Certificate>([^<]+)</ds:X509Certificate>")
+            .matcher(json);
+        assertTrue(m.find(), "X509Certificate tag missing");
+        byte[] der = java.util.Base64.getDecoder().decode(m.group(1));
+        assertEquals((byte)0x30, der[0], "DER must start with 0x30 (SEQUENCE)");
+        assertEquals((byte)0x82, der[1], "DER length must use 0x82 (long-form)");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
