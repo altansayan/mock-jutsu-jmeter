@@ -448,6 +448,71 @@ class FormatValidationTest {
     @RepeatedTest(10) void atm_session_json()     { assertKeys(g("atm_session","TR"), "session_id"); }
     @RepeatedTest(10) void pos_receipt_not_empty(){ assertNoError(g("pos_receipt","TR")); }
 
+    // ── ISO 8583 field-level assertions (standard: ISO 8583-1:1993) ───────────
+
+    @ParameterizedTest @ValueSource(strings = {"TR","US","DE","UK","RU"})
+    void iso8583_de049_exactly_3_digits(String locale) {
+        // DE049 is n3 per ISO 8583 — must be exactly 3 numeric digits, no leading zero padding to 4
+        String msg = g("iso8583_auth_request", locale);
+        String de049 = extractJsonField(msg, "de049");
+        assertMatches(de049, "\\d{3}", "DE049 must be n3 (exactly 3 digits) for locale " + locale + ", got: " + de049);
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"TR","US","DE","UK","RU"})
+    void iso8583_reversal_de049_exactly_3_digits(String locale) {
+        String msg = g("iso8583_reversal", locale);
+        String de049 = extractJsonField(msg, "de049");
+        assertMatches(de049, "\\d{3}", "Reversal DE049 must be n3 for locale " + locale + ", got: " + de049);
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"TR","DE","US"})
+    void iso8583_de049_correct_value(String locale) {
+        String msg = g("iso8583_auth_request", locale);
+        String de049 = extractJsonField(msg, "de049");
+        String expected = switch (locale) { case "DE" -> "978"; case "US" -> "840"; default -> "949"; };
+        assertEquals(expected, de049, "DE049 wrong for locale " + locale);
+    }
+
+    @RepeatedTest(50) void iso8583_de022_entry_mode_varies() {
+        // DE022 must not be hardcoded — must vary across samples
+        java.util.Set<String> modes = new java.util.HashSet<>();
+        for (int i = 0; i < 50; i++) modes.add(extractJsonField(g("iso8583_auth_request","TR"), "de022"));
+        assertTrue(modes.size() > 1, "DE022 entry mode never varies (hardcoded): " + modes);
+    }
+
+    @RepeatedTest(50) void iso8583_de018_mcc_varies() {
+        java.util.Set<String> mccs = new java.util.HashSet<>();
+        for (int i = 0; i < 50; i++) mccs.add(extractJsonField(g("iso8583_auth_request","TR"), "de018"));
+        assertTrue(mccs.size() > 1, "DE018 MCC never varies (hardcoded): " + mccs);
+    }
+
+    @RepeatedTest(10) void iso8583_auth_response_has_all_des() {
+        // MTI 0110 bitmap declares DE 2,3,4,7,11,12,13,38,39,41,42 — all must be present
+        String resp = g("iso8583_auth_response","TR");
+        for (String de : new String[]{"de002","de003","de004","de007","de011","de012","de013","de038","de039","de041","de042"})
+            assertTrue(resp.contains("\"" + de + "\""), "Auth response missing field: " + de + " in: " + resp.substring(0, Math.min(200,resp.length())));
+    }
+
+    @RepeatedTest(10) void iso8583_auth_request_has_all_des() {
+        String req = g("iso8583_auth_request","TR");
+        for (String de : new String[]{"de002","de003","de004","de007","de011","de012","de013","de014","de018","de022","de025","de037","de041","de042","de049"})
+            assertTrue(req.contains("\"" + de + "\""), "Auth request missing field: " + de);
+    }
+
+    private static String extractJsonField(String json, String key) {
+        // Extract value for "key":"value" — works for numeric and string values
+        String marker = "\"" + key + "\":\"";
+        int start = json.indexOf(marker);
+        if (start == -1) return "";
+        start += marker.length();
+        int end = json.indexOf("\"", start);
+        return end == -1 ? "" : json.substring(start, end);
+    }
+
+    private static void assertMatches(String val, String regex, String msg) {
+        assertTrue(val.matches(regex), msg);
+    }
+
     // ── Security ──────────────────────────────────────────────────────────────
 
     @RepeatedTest(10) void cef_log_prefix()  { assertTrue(g("cef_log","TR").startsWith("CEF:")); }

@@ -20,10 +20,14 @@ public final class CardPhysicsGen {
         return String.format("%016X", bits);
     }
 
-    // Currency codes per locale
+    // ISO 4217 numeric n3 per ISO 8583 DE049 — 3 digits, no leading zero
+    // EMV tag 5F2A uses 2-byte BCD (0x09 0x49 = TRY) — separate context, not here
     private static String currency(String locale) {
-        return switch (locale) { case "DE","FR" -> "0978"; case "UK" -> "0826"; case "US" -> "0840"; case "RU" -> "0643"; default -> "0949"; };
+        return switch (locale) { case "DE","FR" -> "978"; case "UK" -> "826"; case "US" -> "840"; case "RU" -> "643"; default -> "949"; };
     }
+
+    private static final String[] MCC_POOL   = {"5411","5999","4111","5912","5691","7011","5812","6011"};
+    private static final String[] ENTRY_MODES = {"051","071","002"};
 
     private static String currencyAlpha(String locale) {
         return switch (locale) { case "DE","FR" -> "EUR"; case "UK" -> "GBP"; case "US" -> "USD"; case "RU" -> "RUB"; default -> "TRY"; };
@@ -88,7 +92,7 @@ public final class CardPhysicsGen {
                "\"de002\":\"" + pan + "\",\"de003\":\"000000\",\"de004\":\"" + amount + "\"," +
                "\"de007\":\"" + dt + "\",\"de011\":\"" + trace + "\",\"de012\":\"" + dt.substring(4) + "\"," +
                "\"de013\":\"" + dt.substring(0,4) + "\",\"de014\":\"" + expiry + "\"," +
-               "\"de018\":\"5411\",\"de022\":\"051\",\"de025\":\"00\"," +
+               "\"de018\":\"" + MCC_POOL[rng.nextInt(MCC_POOL.length)] + "\",\"de022\":\"" + ENTRY_MODES[rng.nextInt(ENTRY_MODES.length)] + "\",\"de025\":\"00\"," +
                "\"de037\":\"" + rrn + "\",\"de041\":\"" + tid + "\"," +
                "\"de042\":\"" + mid + "\",\"de049\":\"" + ccy + "\"}";
     }
@@ -96,13 +100,19 @@ public final class CardPhysicsGen {
     // ── ISO 8583 Auth Response (MTI 0110) ────────────────────────────────────
 
     static String iso8583AuthResp(ThreadLocalRandom rng, String locale) {
-        String rrn      = "MOCKJ" + hexRng(rng, 7);
+        String pan      = FinancialGen.cardnum(rng, locale);
+        String amount   = String.format("%012d", rng.nextInt(100, 9999999));
+        String trace    = String.format("%06d", rng.nextInt(1, 1000000));
+        String dt       = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
         String authCode = "MOCKJ" + rng.nextInt(1, 10);
+        String respCode = new String[]{"00","05","12","14","51","54","57","91"}[rng.nextInt(8)];
         String tid      = "MOCKJT" + String.format("%02d", rng.nextInt(10, 100));
         String mid      = "MOCKJM" + String.format("%09d", rng.nextInt(100000000, 999999999));
         return "{\"mti\":\"0110\",\"bitmap\":\"" + BITMAP_AUTH_RESP + "\"," +
-               "\"de039\":\"00\",\"de038\":\"" + authCode + "\"," +
-               "\"de037\":\"" + rrn + "\",\"de041\":\"" + tid + "\",\"de042\":\"" + mid + "\"}";
+               "\"de002\":\"" + pan + "\",\"de003\":\"000000\",\"de004\":\"" + amount + "\"," +
+               "\"de007\":\"" + dt + "\",\"de011\":\"" + trace + "\",\"de012\":\"" + dt.substring(4) + "\"," +
+               "\"de013\":\"" + dt.substring(0,4) + "\",\"de038\":\"" + authCode + "\"," +
+               "\"de039\":\"" + respCode + "\",\"de041\":\"" + tid + "\",\"de042\":\"" + mid + "\"}";
     }
 
     // ── ISO 8583 Reversal (MTI 0400) ─────────────────────────────────────────
