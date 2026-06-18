@@ -53,7 +53,8 @@ class CategoryFunctionTest {
             new MockJutsuAutomotiveFunction(),
             new MockJutsuTleFunction(),
             new MockJutsuPaymentsFunction(),
-            new MockJutsuRegexFunction()
+            new MockJutsuRegexFunction(),
+            new MockJutsuIntlIdsFunction()
         );
     }
 
@@ -85,6 +86,6 @@ class CategoryFunctionTest {
 
     @Test
     void totalFunctionCount() {
-        assertEquals(39, allFunctions().count(), "Must have exactly 39 category functions");
+        assertEquals(40, allFunctions().count(), "Must have exactly 40 category functions");
     }
 }

@@ -188,6 +188,43 @@ public final class MockJutsuRegistry {
         "regex_string"
     );
 
+    private static final Set<String> INTL_IDS_TYPES = Set.of(
+        "br_cpf","br_cnpj",
+        "in_pan","in_aadhaar","in_gstin","in_epic",
+        "cn_ric",
+        "mx_curp","mx_rfc",
+        "it_codicefiscale",
+        "es_dni","es_nie","es_ccc",
+        "de_idnr","de_stnr",
+        "pk_cnic",
+        "jp_cn","jp_in",
+        "kr_rrn","kr_brn",
+        "nl_bsn",
+        "pl_pesel",
+        "se_personnummer",
+        "dk_cpr",
+        "fi_hetu",
+        "no_fodselsnummer",
+        "au_abn","au_tfn","au_acn",
+        "my_nric",
+        "th_pin","th_tin",
+        "sg_uen",
+        "za_idnr",
+        "ca_bn",
+        "nz_ird",
+        "ar_cuit","ar_dni",
+        "cl_rut",
+        "co_nit",
+        "il_idnr",
+        "ro_cnp","ro_cui",
+        "hr_oib",
+        "bg_egn",
+        "lt_asmens",
+        "ee_ik",
+        "pt_cc",
+        "eg_tn"
+    );
+
     // ── Dispatch ─────────────────────────────────────────────────────────────
 
     public static String generate(String type, String locale) {
@@ -236,6 +273,7 @@ public final class MockJutsuRegistry {
         if (TLE_TYPES.contains(type))          return TleGen.generate(type, locale);
         if (PAYMENTS_TYPES.contains(type))     return PaymentsGen.generate(type, locale);
         if (REVERSE_REGEX_TYPES.contains(type)) return ReverseRegexGen.generate(type, locale);
+        if (INTL_IDS_TYPES.contains(type))    return IntlIdsGen.generate(type, locale);
 
         return "ERROR: Unknown DataType '" + type + "'";
     }

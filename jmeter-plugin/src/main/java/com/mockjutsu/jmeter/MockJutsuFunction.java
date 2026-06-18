@@ -15,6 +15,6 @@ public final class MockJutsuFunction extends MockJutsuBaseFunction {
     @Override
     protected String typeDescription() {
         return "type — any type — tckn | iban | cardnum | uuid | email | ... (all ~251 types supported); " +
-               "for multi-type: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — types as separate params, last two = locale, varName";
+               "for multi-type: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — types as separate params, last two = locale, varName. ~300 types supported including IntlIDs (br_cpf, in_aadhaar, kr_rrn, ...";
     }
 }
