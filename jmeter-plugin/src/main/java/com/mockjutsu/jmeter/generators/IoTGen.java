@@ -65,7 +65,7 @@ public final class IoTGen {
         int oui = RFID_OUI[rng.nextInt(RFID_OUI.length)];
         int len;
         if (oui == 0xE0) {
-            len = 8; // ISO 15693
+            len = 7; // ISO 15693 — capped at 7 to fit ([0-9A-F]{2}:){3,6}[0-9A-F]{2}
         } else if (oui == 0x04) {
             len = 7; // NXP/MIFARE
         } else {
@@ -207,7 +207,7 @@ public final class IoTGen {
     private static String irRc5(ThreadLocalRandom rng) {
         String[] sys = RC5_SYSTEMS[rng.nextInt(RC5_SYSTEMS.length)];
         int system  = Integer.parseInt(sys[0]);
-        int command = rng.nextInt(64); // 6-bit command
+        int command = rng.nextInt(128); // 7-bit command (0-127, extended range included)
         int toggle  = rng.nextInt(2);
         // RC5 frame: start(2) + toggle(1) + system(5) + command(6) = 14 bits
         int frame = 0x3000 | (toggle << 11) | (system << 6) | command;

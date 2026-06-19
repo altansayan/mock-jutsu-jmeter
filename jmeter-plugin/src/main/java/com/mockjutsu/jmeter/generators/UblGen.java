@@ -88,10 +88,16 @@ public final class UblGen {
 
     private static String xmldsig() {
         byte[] sig = new byte[128]; SEC.nextBytes(sig);
-        String sigVal = Base64.getMimeEncoder(76, new byte[]{'\n'}).encodeToString(sig);
+        byte[] cert = new byte[256]; SEC.nextBytes(cert);
+        // Synthetic DER certificate: set valid ASN.1 SEQUENCE header (0x30 0x82)
+        cert[0] = 0x30; cert[1] = (byte) 0x82; cert[2] = 0x00; cert[3] = (byte) (cert.length - 4);
+        String sigVal  = Base64.getMimeEncoder(76, new byte[]{'\n'}).encodeToString(sig);
+        String certVal = Base64.getEncoder().encodeToString(cert);
         return "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" +
                "<SignedInfo><CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"/>" +
                "<SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/></SignedInfo>" +
-               "<SignatureValue>" + sigVal + "\n</SignatureValue></Signature>";
+               "<SignatureValue>" + sigVal + "\n</SignatureValue>" +
+               "<KeyInfo><X509Data><ds:X509Certificate>" + certVal + "</ds:X509Certificate></X509Data></KeyInfo>" +
+               "</Signature>";
     }
 }

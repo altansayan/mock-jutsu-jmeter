@@ -25,7 +25,7 @@ public final class BankStatementGen {
                ":25:" + bic + "/" + iban + "\n" +
                ":28C:00001/001\n" +
                ":60F:C" + date + ccy + mt940Amount(open) + "\n" +
-               ":61:" + date + date + "CR" + mt940Amount(rng.nextDouble(100,5000)) + "NMSC//MOCKREF\n" +
+               ":61:" + date + String.format("%02d%02d", rng.nextInt(1,13), rng.nextInt(1,29)) + "C" + mt940Amount(rng.nextDouble(100,5000)) + "NMSC//MOCKREF\n" +
                ":86:Test transaction - MOCKJUTSU\n" +
                ":62F:C" + date + ccy + mt940Amount(close) + "\n-";
     }

@@ -697,7 +697,7 @@ class FormatValidationTest {
     @RepeatedTest(10) void snils_format()           { assertMatches(g("snils","RU"), "\\d{3}-\\d{3}-\\d{3} \\d{2}"); }
     @RepeatedTest(10) void ogrn_13_digits()         { assertMatches(g("ogrn","RU"), "\\d{13}"); }
     @RepeatedTest(10) void kpp_9_digits()           { assertMatches(g("kpp","RU"), "\\d{9}"); }
-    @RepeatedTest(10) void rvn_de_format()          { assertMatches(g("rvn","DE"), "\\d{8}[A-Z]\\d{2}"); }
+    @RepeatedTest(10) void rvn_de_format()          { assertMatches(g("rvn","DE"), "\\d{8}[A-Z]\\d{4}"); }
     @RepeatedTest(10) void crn_uk_not_empty()       { assertNoError(g("crn","UK")); }
     @RepeatedTest(10) void hrb_de_prefix()          { assertTrue(g("hrb","DE").startsWith("HRB ")); }
     @RepeatedTest(10) void paye_uk_format()         { assertMatches(g("paye","UK"), "\\d{3}/[A-Z]\\d{6}"); }

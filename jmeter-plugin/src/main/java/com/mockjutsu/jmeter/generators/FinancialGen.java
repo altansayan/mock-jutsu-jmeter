@@ -214,10 +214,16 @@ public final class FinancialGen {
 
     // ── SEPA QR ───────────────────────────────────────────────────────────────
 
+    private static final String[] SEPA_INST_CODES = {"NOVX","FXMK","TRST","LBLK","ZNTL","AXMK"};
+    private static final String[] SEPA_INST_NAMES = {"Novex Trust Corp","Fexmark Payments","Trustline Bank","Labelbank SA","Zentral Finance","Axmark Corp"};
+
     private static String sepaQr(ThreadLocalRandom rng, String locale) {
         String iban   = iban(rng, locale.equals("TR") ? "DE" : locale);
         double amount = rng.nextDouble(1.00, 1000.00);
-        return String.format("BCD\n001\n1\nSCT\nNOVEXDEFT\nNovex Corp\n%s\nEUR%.2f\n\nTest payment\n", iban, amount);
+        int idx = rng.nextInt(SEPA_INST_CODES.length);
+        String bic  = SEPA_INST_CODES[idx] + "DEFT";
+        String name = SEPA_INST_NAMES[idx];
+        return String.format("BCD\n001\n1\nSCT\n%s\n%s\n%s\nEUR%.2f\n\nTest payment\n", bic, name, iban, amount);
     }
 
     // ── EMV QR ────────────────────────────────────────────────────────────────

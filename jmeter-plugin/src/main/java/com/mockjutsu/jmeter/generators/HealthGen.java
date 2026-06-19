@@ -112,7 +112,7 @@ public final class HealthGen {
         java.math.BigInteger uid = java.math.BigInteger.valueOf(hi)
                 .shiftLeft(63)
                 .add(java.math.BigInteger.valueOf(lo).abs());
-        return "2.25." + uid.toString();
+        return "1." + uid.toString();
     }
 
     private static <T> T pick(ThreadLocalRandom rng, T[] arr) {

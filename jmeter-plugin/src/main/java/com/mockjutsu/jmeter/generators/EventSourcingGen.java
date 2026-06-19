@@ -23,7 +23,7 @@ public final class EventSourcingGen {
         String eventId   = UUID.randomUUID().toString();
         String aggId     = UUID.randomUUID().toString();
         return "{\"eventId\":\"" + eventId + "\",\"eventType\":\"" + eventType + "\"," +
-               "\"aggregateId\":\"" + aggId + "\",\"version\":" + rng.nextInt(1,100) + "," +
+               "\"aggregate_id\":\"" + aggId + "\",\"aggregate_type\":\"User\",\"version\":" + rng.nextInt(1,100) + "," +
                "\"timestamp\":\"" + java.time.Instant.now() + "\"," +
                "\"payload\":{\"id\":\"" + aggId + "\",\"status\":\"active\"}}";
     }

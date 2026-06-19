@@ -470,8 +470,20 @@ public final class IdentityGen {
             case "US"       -> ssn(rng);
             case "UK"       -> nin(rng);
             case "RU"       -> snils(rng);
+            case "FR"       -> inseeNumber(rng);
             default         -> snils(rng);
         };
+    }
+
+    private static String inseeNumber(ThreadLocalRandom rng) {
+        int gender  = rng.nextInt(1, 3);
+        int yy      = rng.nextInt(0, 100);
+        int month   = rng.nextInt(1, 13);
+        int dep     = rng.nextInt(1, 96);
+        int commune = rng.nextInt(1, 999);
+        int order   = rng.nextInt(1, 999);
+        int key     = rng.nextInt(1, 98);
+        return String.format("%d%02d%02d%02d%03d%03d%02d", gender, yy, month, dep, commune, order, key);
     }
 
     // ── Names ────────────────────────────────────────────────────────────────
@@ -559,7 +571,7 @@ public final class IdentityGen {
             case "UK" -> nin(rng);
             case "RU" -> snils(rng);
             case "DE" -> ustId(rng);
-            case "FR" -> siren(rng);
+            case "FR" -> inseeNumber(rng);
             default   -> tckn(rng);
         };
     }
