@@ -124,11 +124,33 @@ public final class FinancialMarketsGen {
     // ── PSD2 Consent ─────────────────────────────────────────────────────────
 
     private static String psd2Consent(ThreadLocalRandom rng) {
-        String consentId = "MOCKJ-CONSENT-" + java.util.UUID.randomUUID().toString().substring(0,13).toUpperCase();
-        return "{\"consentId\":\"" + consentId + "\",\"access\":{\"accounts\":\"readAccount\"," +
-               "\"balances\":\"readBalances\",\"transactions\":\"readTransactions\"}," +
-               "\"recurringIndicator\":true,\"validUntil\":\"2025-12-31\",\"frequencyPerDay\":4," +
-               "\"lastActionDate\":\"2024-01-01\",\"consentStatus\":\"received\"}";
+        // JWS compact serialization (mirrors financial_markets.py)
+        String kid = randomAlphaNum(rng, 16).toUpperCase();
+        String consentId = "MOCKJ-" + kid.substring(0, 8);
+        long now = System.currentTimeMillis() / 1000;
+        String iban1 = "TR" + String.format("%02d", rng.nextInt(10, 99)) + String.format("%016d", rng.nextLong(1000000000000000L, 9999999999999999L));
+        String iban2 = "TR" + String.format("%02d", rng.nextInt(10, 99)) + String.format("%016d", rng.nextLong(1000000000000000L, 9999999999999999L));
+        String expDate = java.time.LocalDate.now().plusDays(90).toString() + "T00:00:00Z";
+        String fromDate = java.time.LocalDate.now().minusDays(90).toString() + "T00:00:00Z";
+        String toDate   = java.time.LocalDate.now().plusDays(90).toString() + "T00:00:00Z";
+        String header = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(
+            ("{\"alg\":\"PS256\",\"kid\":\"" + kid + "\",\"b64\":false,\"crit\":[\"b64\"]}").getBytes());
+        String payloadJson =
+            "{\"iss\":\"MOCKJUTSU\",\"iat\":" + now + ",\"exp\":" + (now + 3600) +
+            ",\"consentId\":\"" + consentId + "\"" +
+            ",\"permissions\":[\"ReadAccountsDetail\",\"ReadBalances\",\"ReadTransactionsCredits\"" +
+            ",\"ReadTransactionsDebits\",\"ReadTransactionsDetail\"]" +
+            ",\"accounts\":[{\"schemeName\":\"IBAN\",\"identification\":\"" + iban1 + "\"}]" +
+            ",\"balances\":[{\"schemeName\":\"IBAN\",\"identification\":\"" + iban1 + "\"}]" +
+            ",\"transactions\":[{\"schemeName\":\"IBAN\",\"identification\":\"" + iban2 + "\"}]" +
+            ",\"expirationDateTime\":\"" + expDate + "\"" +
+            ",\"transactionFromDateTime\":\"" + fromDate + "\"" +
+            ",\"transactionToDateTime\":\"" + toDate + "\"}";
+        String payload = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes());
+        byte[] sigBytes = new byte[64];
+        new java.security.SecureRandom().nextBytes(sigBytes);
+        String sig = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(sigBytes);
+        return header + "." + payload + "." + sig;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

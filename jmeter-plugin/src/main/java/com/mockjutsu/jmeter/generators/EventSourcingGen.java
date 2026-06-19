@@ -18,14 +18,33 @@ public final class EventSourcingGen {
         };
     }
 
+    private static final String[] AGG_TYPES = {"User","Order","Payment","Account","Session","Transaction"};
+
     private static String eventStream(ThreadLocalRandom rng) {
-        String eventType = EVENT_TYPES[rng.nextInt(EVENT_TYPES.length)];
-        String eventId   = UUID.randomUUID().toString();
-        String aggId     = UUID.randomUUID().toString();
-        return "{\"eventId\":\"" + eventId + "\",\"eventType\":\"" + eventType + "\"," +
-               "\"aggregate_id\":\"" + aggId + "\",\"aggregate_type\":\"User\",\"version\":" + rng.nextInt(1,100) + "," +
-               "\"timestamp\":\"" + java.time.Instant.now() + "\"," +
-               "\"payload\":{\"id\":\"" + aggId + "\",\"status\":\"active\"}}";
+        // Return JSON array mirroring event_sourcing.py (multiple events per stream)
+        int count = 3 + rng.nextInt(5);
+        String aggId   = UUID.randomUUID().toString();
+        String aggType = "User";
+        String corrId  = UUID.randomUUID().toString();
+        String sessId  = UUID.randomUUID().toString();
+        String userId  = UUID.randomUUID().toString();
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < count; i++) {
+            if (i > 0) sb.append(",");
+            String eventType = EVENT_TYPES[rng.nextInt(EVENT_TYPES.length)];
+            String eventId   = UUID.randomUUID().toString();
+            sb.append("{\"event_id\":\"").append(eventId).append("\"");
+            sb.append(",\"aggregate_id\":\"").append(aggId).append("\"");
+            sb.append(",\"aggregate_type\":\"").append(aggType).append("\"");
+            sb.append(",\"correlation_id\":\"").append(corrId).append("\"");
+            sb.append(",\"session_id\":\"").append(sessId).append("\"");
+            sb.append(",\"user_id\":\"").append(userId).append("\"");
+            sb.append(",\"timestamp\":\"").append(java.time.Instant.now()).append("\"");
+            sb.append(",\"event_type\":\"").append(eventType).append("\"");
+            sb.append(",\"payload\":{\"id\":\"").append(aggId).append("\",\"status\":\"active\"}}");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     private static String cdcEvent(ThreadLocalRandom rng) {

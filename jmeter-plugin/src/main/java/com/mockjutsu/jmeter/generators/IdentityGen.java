@@ -521,7 +521,7 @@ public final class IdentityGen {
     }
 
     static String patronymic(ThreadLocalRandom rng, String locale, String gender) {
-        if (!"RU".equals(locale)) return "-";
+        if (!"RU".equals(locale)) return "";
         boolean male = !"F".equalsIgnoreCase(gender) && (gender.isEmpty() ? rng.nextBoolean() : true);
         return male ? pick(rng, RU_PATRONYMIC_M) : pick(rng, RU_PATRONYMIC_F);
     }

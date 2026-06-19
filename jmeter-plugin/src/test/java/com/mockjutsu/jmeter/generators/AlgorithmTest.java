@@ -159,7 +159,11 @@ class AlgorithmTest {
 
     @RepeatedTest(20)
     void nmeaGpggaChecksumCorrect() {
-        String sentence = NmeaGen.generate("nmea_gpgga", "TR");
+        String json = NmeaGen.generate("nmea_gpgga", "TR");
+        // Extract raw NMEA sentence from JSON: {"sentence":"$GPGGA,...*XX","type":...}
+        int s = json.indexOf("\"sentence\":\"") + "\"sentence\":\"".length();
+        int e = json.indexOf("\",\"type\":");
+        String sentence = json.substring(s, e);
         int star = sentence.lastIndexOf('*');
         String body = sentence.substring(1, star);
         String cs   = sentence.substring(star + 1);
@@ -182,10 +186,13 @@ class AlgorithmTest {
 
     @RepeatedTest(20)
     void mrzTd3Line2Is44Chars() {
-        String mrz = MrzGen.generate("mrz_td3", "TR");
-        String[] lines = mrz.split("\n");
-        assertEquals(44, lines[0].length());
-        assertEquals(44, lines[1].length());
+        String json = MrzGen.generate("mrz_td3", "TR");
+        // Extract lines field from JSON: {"mrz_type":"TD3","lines":"<L1> | <L2>",...}
+        int s = json.indexOf("\"lines\":\"") + "\"lines\":\"".length();
+        int e = json.indexOf("\",\"surname\"");
+        String[] parts = json.substring(s, e).split(" \\| ");
+        assertEquals(44, parts[0].length());
+        assertEquals(44, parts[1].length());
     }
 
     // ── PIN Block ─────────────────────────────────────────────────────────────
@@ -230,15 +237,15 @@ class AlgorithmTest {
     void iso8583BitmapsAreCorrect() {
         // Auth request: DEs 2,3,4,7,11,12,13,14,18,22,25,37,41,42,49
         String authReq = CardPhysicsGen.iso8583AuthReq(ThreadLocalRandom.current(), "TR");
-        assertTrue(authReq.contains("\"723C448008C08000\""),
+        assertTrue(authReq.contains("723C448008C08000"),
             "Auth request bitmap must be 723C448008C08000, response was: " + authReq);
 
         String authResp = CardPhysicsGen.iso8583AuthResp(ThreadLocalRandom.current(), "TR");
-        assertTrue(authResp.contains("\"7238000006C00000\""),
+        assertTrue(authResp.contains("7238000006C00000"),
             "Auth response bitmap must be 7238000006C00000");
 
         String reversal = CardPhysicsGen.iso8583Reversal(ThreadLocalRandom.current(), "TR");
-        assertTrue(reversal.contains("\"7238000008C08100\""),
+        assertTrue(reversal.contains("7238000008C08100"),
             "Reversal bitmap must be 7238000008C08100");
     }
 

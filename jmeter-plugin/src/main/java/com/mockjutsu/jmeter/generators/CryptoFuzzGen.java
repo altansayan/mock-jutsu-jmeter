@@ -20,7 +20,15 @@ public final class CryptoFuzzGen {
 
     private static String jwtAttack(ThreadLocalRandom rng) {
         String[] attacks = {"none_alg", "alg_confusion", "empty_sig", "kid_injection"};
-        String attack = attacks[rng.nextInt(attacks.length)];
+        String[] descs   = {
+            "Algorithm set to none to bypass signature verification",
+            "Algorithm confusion attack using public key as HMAC secret",
+            "Empty signature to test signature validation bypass",
+            "Key ID injection via path traversal"
+        };
+        int idx = rng.nextInt(attacks.length);
+        String attack = attacks[idx];
+        String desc   = descs[idx];
         String header = switch (attack) {
             case "none_alg"      -> b64url("{\"alg\":\"none\",\"typ\":\"JWT\"}");
             case "alg_confusion" -> b64url("{\"alg\":\"HS256\",\"typ\":\"JWT\",\"x5u\":\"http://attacker.test/key\"}");
@@ -29,16 +37,25 @@ public final class CryptoFuzzGen {
         };
         String payload = b64url("{\"sub\":\"mock_user\",\"iat\":" + (System.currentTimeMillis()/1000) + "}");
         String sig     = attack.equals("empty_sig") ? "" : b64url(new byte[32]);
-        return "{\"attack\":\"" + attack + "\",\"token\":\"" + header + "." + payload + "." + sig + "\"}";
+        String token   = header + "." + payload + "." + sig;
+        return "{\"attack_type\":\"" + attack + "\",\"description\":\"" + desc + "\",\"token\":\"" + token + "\"}";
     }
 
+    private static final String[] FUZZ_TYPES = {"length_overflow","length_underflow","wrong_tag","nested_overflow","truncated"};
+
     private static String asn1Fuzz(ThreadLocalRandom rng) {
-        // Malformed ASN.1 DER payload (for security testing)
         byte[] payload = new byte[32];
         SEC.nextBytes(payload);
         payload[0] = 0x30; // SEQUENCE
-        payload[1] = (byte) rng.nextInt(0, 256); // potentially wrong length
-        return "{\"type\":\"DER_SEQUENCE\",\"hex\":\"" + bytesToHex(payload) + "\",\"length_fuzzed\":true}";
+        String fuzzType = FUZZ_TYPES[rng.nextInt(FUZZ_TYPES.length)];
+        String hex = bytesToHex(payload);
+        return switch (fuzzType) {
+            case "length_overflow"  -> "{\"fuzz_type\":\"length_overflow\",\"hex\":\"" + hex + "\",\"declared_length\":" + (payload.length + 100) + ",\"actual_bytes\":" + payload.length + "}";
+            case "length_underflow" -> "{\"fuzz_type\":\"length_underflow\",\"hex\":\"" + hex + "\",\"claimed_length\":" + rng.nextInt(4) + "}";
+            case "wrong_tag"        -> "{\"fuzz_type\":\"wrong_tag\",\"hex\":\"" + hex + "\",\"tag_byte\":\"0x" + String.format("%02X", rng.nextInt(256)) + "\"}";
+            case "nested_overflow"  -> "{\"fuzz_type\":\"nested_overflow\",\"hex\":\"" + hex + "\",\"inner_claimed\":" + (payload.length + 50) + ",\"inner_actual\":" + payload.length + "}";
+            default                 -> "{\"fuzz_type\":\"truncated\",\"hex\":\"" + hex + "\",\"length\":" + rng.nextInt(1, payload.length) + "}";
+        };
     }
 
     private static String b64url(String s) { return Base64.getUrlEncoder().withoutPadding().encodeToString(s.getBytes()); }

@@ -43,7 +43,18 @@ public final class TleGen {
         // Append checksum
         line2 = line2.substring(0,68) + tleChecksum(line2.substring(0,68));
 
-        return name + "\n" + line1 + "\n" + line2;
+        // Parse out orbital elements for JSON (mirrors tle.py)
+        String orbitType = incl < 5 || incl > 175 ? "GEO" : (incl > 85 && incl < 95 ? "SSO" : "LEO");
+        return String.format(java.util.Locale.US,
+            "{\"name\":\"%s\",\"line1\":\"%s\",\"line2\":\"%s\"," +
+            "\"norad_id\":\"%s\",\"classification\":\"U\"," +
+            "\"epoch_year\":%d,\"epoch_day\":%.8f," +
+            "\"inclination\":%.4f,\"raan\":%.4f,\"eccentricity\":%.7f," +
+            "\"arg_of_perigee\":%.4f,\"mean_anomaly\":%.4f,\"mean_motion\":%.8f," +
+            "\"rev_number\":%d,\"orbit_type\":\"%s\"}",
+            name, line1, line2,
+            String.valueOf(satNum), epochYear, epochDay,
+            incl, raan, ecc, argP, anom, mm, revNo, orbitType);
     }
 
     static int tleChecksum(String line) {

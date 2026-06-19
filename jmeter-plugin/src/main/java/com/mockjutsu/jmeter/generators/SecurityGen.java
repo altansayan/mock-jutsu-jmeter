@@ -35,11 +35,30 @@ public final class SecurityGen {
     }
 
     private static String x509Cert() {
-        // PEM stub — not a real X.509 cert
-        byte[] b = new byte[256];
-        SEC.nextBytes(b);
-        String b64 = Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(b);
-        return "-----BEGIN CERTIFICATE-----\n" + b64 + "\n-----END CERTIFICATE-----";
+        // Return JSON dict mirroring security.py x509_cert
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+        byte[] serial = new byte[16]; SEC.nextBytes(serial);
+        String serialHex = bytesToHex(serial);
+        String[] algos = {"sha256WithRSAEncryption","sha384WithRSAEncryption","sha512WithRSAEncryption","ecdsa-with-SHA256"};
+        int[] keySizes = {2048, 3072, 4096, 256};
+        int idx = rng.nextInt(algos.length);
+        String algo = algos[idx];
+        int keySize = keySizes[idx];
+        String notBefore = java.time.LocalDate.now().minusYears(1).toString();
+        String notAfter  = java.time.LocalDate.now().plusYears(2).toString();
+        String org = "MOCKJ-ORG-" + String.format("%04d", rng.nextInt(10000));
+        return "{\"version\":3,\"serial\":\"" + serialHex + "\",\"algorithm\":\"" + algo + "\"," +
+               "\"key_size\":" + keySize + ",\"subject\":\"CN=mockjutsu.test,O=" + org + ",C=TR\"," +
+               "\"issuer\":\"CN=MOCKJ-CA,O=MOCKJUTSU CA,C=TR\"," +
+               "\"not_before\":\"" + notBefore + "\",\"not_after\":\"" + notAfter + "\"," +
+               "\"san\":[\"mockjutsu.test\",\"www.mockjutsu.test\"]," +
+               "\"fingerprint\":\"" + serialHex.substring(0, 20) + "\"}";
+    }
+
+    private static String bytesToHex(byte[] b) {
+        StringBuilder sb = new StringBuilder();
+        for (byte v : b) sb.append(String.format("%02x", v));
+        return sb.toString();
     }
 
     private static String pcapHex(ThreadLocalRandom rng) {

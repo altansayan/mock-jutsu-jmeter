@@ -92,14 +92,25 @@ public final class HealthGen {
     // ── FHIR Patient resource ─────────────────────────────────────────────────
 
     private static String fhirPatient(ThreadLocalRandom rng, String locale) {
-        String id   = java.util.UUID.randomUUID().toString();
-        String fn   = IdentityGen.firstname(rng, locale, "");
-        String ln   = IdentityGen.lastname(rng, locale, "");
-        String dob  = (1950 + rng.nextInt(50)) + "-" + String.format("%02d", rng.nextInt(1,13)) + "-" + String.format("%02d", rng.nextInt(1,29));
+        // Mirrors health.py fhir_patient — includes active, address, identifier, meta, telecom
+        String id      = java.util.UUID.randomUUID().toString();
+        String fn      = IdentityGen.firstname(rng, locale, "");
+        String ln      = IdentityGen.lastname(rng, locale, "");
+        String dob     = (1950 + rng.nextInt(50)) + "-" + String.format("%02d", rng.nextInt(1,13)) + "-" + String.format("%02d", rng.nextInt(1,29));
+        String gender  = rng.nextBoolean() ? "male" : "female";
+        String phone   = "+90" + String.format("%010d", rng.nextLong(1000000000L, 9999999999L));
+        String email   = (fn.toLowerCase() + "." + ln.toLowerCase() + "@mockjutsu.test");
+        String version = String.valueOf(rng.nextInt(1,5));
+        String lastUpd = java.time.Instant.now().toString();
         return "{\"resourceType\":\"Patient\",\"id\":\"" + id + "\"," +
+               "\"meta\":{\"versionId\":\"" + version + "\",\"lastUpdated\":\"" + lastUpd + "\"}," +
+               "\"identifier\":[{\"use\":\"official\",\"system\":\"urn:mockjutsu:patient\",\"value\":\"MOCKJ-" + String.format("%08d", rng.nextInt(100000000)) + "\"}]," +
+               "\"active\":true," +
                "\"name\":[{\"use\":\"official\",\"family\":\"" + ln + "\",\"given\":[\"" + fn + "\"]}]," +
-               "\"gender\":\"" + (rng.nextBoolean() ? "male" : "female") + "\"," +
-               "\"birthDate\":\"" + dob + "\"}";
+               "\"telecom\":[{\"system\":\"phone\",\"value\":\"" + phone + "\"},{\"system\":\"email\",\"value\":\"" + email + "\"}]," +
+               "\"gender\":\"" + gender + "\"," +
+               "\"birthDate\":\"" + dob + "\"," +
+               "\"address\":[{\"use\":\"home\",\"city\":\"Istanbul\",\"country\":\"TR\"}]}";
     }
 
     // ── DICOM UID ─────────────────────────────────────────────────────────────

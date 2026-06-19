@@ -73,14 +73,13 @@ public final class CommerceGen {
         };
     }
 
-    // currency → JSON dict {code, symbol, name, decimals}
+    // currency → plain string code (mirrors commerce.py)
     private static String currency(ThreadLocalRandom rng) {
         String[] c = CURRENCIES[rng.nextInt(CURRENCIES.length)];
-        return String.format("{\"code\":\"%s\",\"symbol\":\"%s\",\"name\":\"%s\",\"decimals\":%s}",
-            c[0], c[1], c[2], c[3]);
+        return c[0];
     }
 
-    // tax_rate → JSON dict {rate, name, type}
+    // tax_rate → plain string rate number (mirrors commerce.py)
     private static String taxRate(ThreadLocalRandom rng, String locale) {
         String[][][] pool = null;
         for (String[][] entry : TAX_RATES) {
@@ -88,10 +87,8 @@ public final class CommerceGen {
         }
         if (pool == null) pool = TAX_RATES;
         String[][] localeRates = pool[rng.nextInt(pool.length)];
-        // pick a rate row (index 1+)
         int idx = 1 + rng.nextInt(localeRates.length - 1);
-        String[] row = localeRates[idx];
-        return String.format("{\"rate\":\"%s%%\",\"name\":\"%s\",\"type\":\"%s\"}", row[0], row[1], row[2]);
+        return localeRates[idx][0];
     }
 
     // invoice_number — locale-specific format

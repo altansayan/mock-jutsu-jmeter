@@ -27,9 +27,14 @@ public final class NmeaGen {
         int    sats   = rng.nextInt(4,12);
         double hdop   = 0.8 + rng.nextDouble(3);
         double alt    = rng.nextDouble(500);
-        String body   = String.format("GPGGA,%s,%s,%c,%s,%c,%d,%02d,%.1f,%.1f,M,0.0,M,,",
+        String body   = String.format(java.util.Locale.US, "GPGGA,%s,%s,%c,%s,%c,%d,%02d,%.1f,%.1f,M,0.0,M,,",
             time, lat, latH, lon, lonH, fix, sats, hdop, alt);
-        return "$" + body + "*" + nmeaChecksum(body);
+        String sentence = "$" + body + "*" + nmeaChecksum(body);
+        return String.format(java.util.Locale.US,
+            "{\"sentence\":\"%s\",\"type\":\"GPGGA\",\"time\":\"%s\",\"lat\":\"%s\",\"lat_dir\":\"%c\"," +
+            "\"lon\":\"%s\",\"lon_dir\":\"%c\",\"fix_quality\":%d,\"num_satellites\":%d," +
+            "\"hdop\":%.1f,\"altitude\":%.1f,\"geoid_height\":0.0,\"checksum\":\"%s\"}",
+            sentence, time, lat, latH, lon, lonH, fix, sats, hdop, alt, nmeaChecksum(body));
     }
 
     // ── GPRMC ─────────────────────────────────────────────────────────────────
@@ -43,9 +48,14 @@ public final class NmeaGen {
         char   lonH   = rng.nextBoolean() ? 'E' : 'W';
         double speed  = rng.nextDouble(100);
         double course = rng.nextDouble(360);
-        String body   = String.format("GPRMC,%s,A,%s,%c,%s,%c,%.1f,%.1f,%s,,,A",
+        String body   = String.format(java.util.Locale.US, "GPRMC,%s,A,%s,%c,%s,%c,%.1f,%.1f,%s,,,A",
             time, lat, latH, lon, lonH, speed, course, date);
-        return "$" + body + "*" + nmeaChecksum(body);
+        String sentence = "$" + body + "*" + nmeaChecksum(body);
+        return String.format(java.util.Locale.US,
+            "{\"sentence\":\"%s\",\"type\":\"GPRMC\",\"time\":\"%s\",\"status\":\"A\"," +
+            "\"lat\":\"%s\",\"lat_dir\":\"%c\",\"lon\":\"%s\",\"lon_dir\":\"%c\"," +
+            "\"speed_knots\":%.1f,\"course\":%.1f,\"date\":\"%s\",\"checksum\":\"%s\"}",
+            sentence, time, lat, latH, lon, lonH, speed, course, date, nmeaChecksum(body));
     }
 
     // ── NMEA checksum: XOR of all bytes between $ and * ──────────────────────

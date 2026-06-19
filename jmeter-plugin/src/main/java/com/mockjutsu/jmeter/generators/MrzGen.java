@@ -49,7 +49,8 @@ public final class MrzGen {
         String compChk    = String.valueOf(mrzCheck(composite));
         String line2      = number + numChk + cc + dob + dobChk + sex + expiry + expiryChk + personal + personalChk + compChk;
 
-        return line1 + "\n" + line2;
+        String lines = line1 + " | " + line2;
+        return mrzJson("TD3", lines, fn, ln, cc, number, dob, String.valueOf(sex), expiry);
     }
 
     // ── TD1 — 3 lines × 30 chars (ID card) ───────────────────────────────────
@@ -71,7 +72,16 @@ public final class MrzGen {
         String line2  = pad(dob + dobChk + sex + expiry + expiryChk + cc, 30);
         String line3  = pad(ln + "<<" + fn, 30);
 
-        return line1 + "\n" + line2 + "\n" + line3;
+        String lines = line1 + " | " + line2 + " | " + line3;
+        return mrzJson("TD1", lines, fn, ln, cc, number, dob, String.valueOf(sex), expiry);
+    }
+
+    private static String mrzJson(String type, String lines, String fn, String ln,
+                                   String nat, String docNum, String dob, String sex, String expiry) {
+        return "{\"mrz_type\":\"" + type + "\",\"lines\":\"" + lines + "\"," +
+               "\"surname\":\"" + ln + "\",\"given_names\":\"" + fn + "\"," +
+               "\"nationality\":\"" + nat + "\",\"doc_number\":\"" + docNum + "\"," +
+               "\"dob\":\"" + dob + "\",\"sex\":\"" + sex + "\",\"expiry\":\"" + expiry + "\"}";
     }
 
     // ── MRZ check digit ───────────────────────────────────────────────────────

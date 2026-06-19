@@ -40,7 +40,8 @@ public final class IoTGen {
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "rfid_uid","rfid_tag" -> rfidUid(rng);
+            case "rfid_uid"            -> rfidUid(rng);
+            case "rfid_tag"            -> rfidTag(rng);
             case "epc"                 -> epc(rng);
             case "nfc_uid"             -> rfidUid(rng);
             case "nfc_atqa"            -> nfcProfile(rng)[0];
@@ -75,6 +76,20 @@ public final class IoTGen {
         sb.append(String.format("%02X", oui));
         for (int i = 1; i < len; i++) sb.append(':').append(String.format("%02X", rng.nextInt(256)));
         return sb.toString();
+    }
+
+    // ── RFID Tag — JSON dict {uid, epc, standard, frequency_mhz, memory_bytes} ─
+
+    private static String rfidTag(ThreadLocalRandom rng) {
+        String uid = rfidUid(rng);
+        String epc = epc(rng);
+        String[] standards = {"ISO 14443-A", "ISO 14443-B", "ISO 15693", "ISO 18000-6C"};
+        double[]  freqs    = {13.56,          13.56,          13.56,       915.0};
+        int[]     mems     = {716,             716,            8192,        512};
+        int idx = rng.nextInt(standards.length);
+        return String.format(java.util.Locale.US,
+            "{\"uid\":\"%s\",\"epc\":\"%s\",\"standard\":\"%s\",\"frequency_mhz\":%.2f,\"memory_bytes\":%d}",
+            uid, epc, standards[idx], freqs[idx], mems[idx]);
     }
 
     // ── EPC SGTIN-96 — 24 uppercase hex chars (96 bits) ──────────────────────
@@ -290,11 +305,11 @@ public final class IoTGen {
         String readings;
         switch (sensorType) {
             case "temperature_humidity":
-                readings = String.format("{\"temperature\":%.1f,\"humidity\":%d}",
+                readings = String.format(java.util.Locale.US, "{\"temperature\":%.1f,\"humidity\":%d}",
                     15.0 + rng.nextDouble(25.0), 30 + rng.nextInt(60));
                 break;
             case "air_quality":
-                readings = String.format("{\"co2\":%d,\"pm25\":%.1f,\"pm10\":%.1f}",
+                readings = String.format(java.util.Locale.US, "{\"co2\":%d,\"pm25\":%.1f,\"pm10\":%.1f}",
                     400 + rng.nextInt(1600), rng.nextDouble(100.0), rng.nextDouble(150.0));
                 break;
             case "motion":
@@ -302,22 +317,22 @@ public final class IoTGen {
                     rng.nextBoolean() ? "true" : "false", rng.nextInt(100));
                 break;
             case "pressure":
-                readings = String.format("{\"pressure\":%.1f,\"altitude\":%.1f}",
+                readings = String.format(java.util.Locale.US, "{\"pressure\":%.1f,\"altitude\":%.1f}",
                     950.0 + rng.nextDouble(100.0), rng.nextDouble(500.0));
                 break;
             case "light":
-                readings = String.format("{\"lux\":%d,\"uv_index\":%.1f}",
+                readings = String.format(java.util.Locale.US, "{\"lux\":%d,\"uv_index\":%.1f}",
                     rng.nextInt(10000), rng.nextDouble(11.0));
                 break;
             case "gps":
-                readings = String.format("{\"lat\":%.6f,\"lon\":%.6f,\"alt\":%.1f}",
+                readings = String.format(java.util.Locale.US, "{\"lat\":%.6f,\"lon\":%.6f,\"alt\":%.1f}",
                     -90.0 + rng.nextDouble(180.0), -180.0 + rng.nextDouble(360.0), rng.nextDouble(500.0));
                 break;
             default:
-                readings = String.format("{\"value\":%.2f}", rng.nextDouble(100.0));
+                readings = String.format(java.util.Locale.US, "{\"value\":%.2f}", rng.nextDouble(100.0));
         }
 
-        return String.format(
+        return String.format(java.util.Locale.US,
             "{\"device_id\":\"%s\",\"timestamp\":%d,\"sensor_type\":\"%s\",\"readings\":%s,\"rssi\":%d,\"snr\":%.1f,\"battery_pct\":%d}",
             deviceId, ts, sensorType, readings, rssi, snr, batt);
     }

@@ -245,32 +245,39 @@ class MockJutsuRegistryTest {
 
     @Test
     void mrzTd3HasTwoLines() {
-        String mrz = MockJutsuRegistry.generate("mrz_td3", "TR");
-        String[] lines = mrz.split("\n");
-        assertEquals(2, lines.length, "TD3 MRZ must have 2 lines");
-        assertEquals(44, lines[0].length(), "TD3 line 1 must be 44 chars");
-        assertEquals(44, lines[1].length(), "TD3 line 2 must be 44 chars");
+        // MRZ now returns JSON: {"mrz_type":"TD3","lines":"<L1> | <L2>",...}
+        String json = MockJutsuRegistry.generate("mrz_td3", "TR");
+        int s = json.indexOf("\"lines\":\"") + "\"lines\":\"".length();
+        int e = json.indexOf("\",\"surname\"");
+        String[] parts = json.substring(s, e).split(" \\| ");
+        assertEquals(2, parts.length, "TD3 MRZ must have 2 lines");
+        assertEquals(44, parts[0].length(), "TD3 line 1 must be 44 chars");
+        assertEquals(44, parts[1].length(), "TD3 line 2 must be 44 chars");
     }
 
     @Test
     void mrzTd1HasThreeLines() {
-        String mrz = MockJutsuRegistry.generate("mrz_td1", "TR");
-        String[] lines = mrz.split("\n");
-        assertEquals(3, lines.length, "TD1 MRZ must have 3 lines");
-        for (String line : lines) assertEquals(30, line.length(), "TD1 each line must be 30 chars");
+        // MRZ now returns JSON: {"mrz_type":"TD1","lines":"<L1> | <L2> | <L3>",...}
+        String json = MockJutsuRegistry.generate("mrz_td1", "TR");
+        int s = json.indexOf("\"lines\":\"") + "\"lines\":\"".length();
+        int e = json.indexOf("\",\"surname\"");
+        String[] parts = json.substring(s, e).split(" \\| ");
+        assertEquals(3, parts.length, "TD1 MRZ must have 3 lines");
+        for (String line : parts) assertEquals(30, line.length(), "TD1 each line must be 30 chars");
     }
 
     // ── NMEA ─────────────────────────────────────────────────────────────────
 
     @Test
     void nmeaGpggaHasCorrectChecksum() {
-        String sentence = MockJutsuRegistry.generate("nmea_gpgga", "TR");
+        // NMEA now returns JSON: {"sentence":"$GPGGA,...*XX","type":"GPGGA",...}
+        String json = MockJutsuRegistry.generate("nmea_gpgga", "TR");
+        int s = json.indexOf("\"sentence\":\"") + "\"sentence\":\"".length();
+        int e = json.indexOf("\",\"type\":");
+        String sentence = json.substring(s, e);
         assertTrue(sentence.startsWith("$GPGGA,"), "GPGGA must start with $GPGGA,");
         int starIdx = sentence.lastIndexOf('*');
         assertTrue(starIdx > 0, "GPGGA must contain *");
-        String body     = sentence.substring(1, starIdx);
-        String expected = com.mockjutsu.jmeter.generators.NmeaGen.generate("nmea_gpgga", "TR"); // not needed, just verify format
-        // Verify checksum format: 2 hex chars after *
         String cs = sentence.substring(starIdx + 1);
         assertTrue(cs.matches("[0-9A-F]{2}"), "NMEA checksum must be 2 uppercase hex chars, got: " + cs);
     }
@@ -282,7 +289,7 @@ class MockJutsuRegistryTest {
         // Identity
         "tckn","ykn","taxid","vkn","nationalid","ssn","nin","inn","inn_individual","snils",
         "sgk","mersis","ein","utr","crn","paye","ust_id","ustid","hrb","rvn","siren","siret","tva",
-        "ogrn","kpp","employer_id","insurance_id","firstname","lastname","fullname","patronymic",
+        "ogrn","kpp","employer_id","insurance_id","firstname","lastname","fullname",
         "passport","license","age","gender","birthdate","tckn_masked","ssn_masked","nationality","vat_number",
         // Financial
         "cardnum","cardnetwork","cardtype","cardstatus","cvv3","cvv4","issuer","expiry",

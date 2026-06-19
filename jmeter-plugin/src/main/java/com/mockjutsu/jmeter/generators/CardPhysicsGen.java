@@ -75,7 +75,7 @@ public final class CardPhysicsGen {
         return String.format("0A%02X%02X%04X%08X%04X", dki, cvn, cvr, add & 0xFFFFFFFFL, pad);
     }
 
-    // ── ISO 8583 Auth Request (MTI 0100) ─────────────────────────────────────
+    // ── ISO 8583 Auth Request (MTI 0100) — plain string mirroring cardphysics.py ─
 
     static String iso8583AuthReq(ThreadLocalRandom rng, String locale) {
         String pan    = FinancialGen.cardnum(rng, locale);
@@ -84,17 +84,16 @@ public final class CardPhysicsGen {
         String dt     = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
         String expiry = String.format("%02d%02d", (java.time.LocalDate.now().getYear()%100)+rng.nextInt(1,6), rng.nextInt(1,13));
         String rrn    = "MOCKJ" + hexRng(rng, 7);
-        String authCode = "MOCKJ" + rng.nextInt(1, 10);
         String tid    = "MOCKJT" + String.format("%02d", rng.nextInt(10, 100));
         String mid    = "MOCKJM" + String.format("%09d", rng.nextInt(100000000, 999999999));
         String ccy    = currency(locale);
-        return "{\"mti\":\"0100\",\"bitmap\":\"" + BITMAP_AUTH_REQ + "\"," +
-               "\"de002\":\"" + pan + "\",\"de003\":\"000000\",\"de004\":\"" + amount + "\"," +
-               "\"de007\":\"" + dt + "\",\"de011\":\"" + trace + "\",\"de012\":\"" + dt.substring(4) + "\"," +
-               "\"de013\":\"" + dt.substring(0,4) + "\",\"de014\":\"" + expiry + "\"," +
-               "\"de018\":\"" + MCC_POOL[rng.nextInt(MCC_POOL.length)] + "\",\"de022\":\"" + ENTRY_MODES[rng.nextInt(ENTRY_MODES.length)] + "\",\"de025\":\"00\"," +
-               "\"de037\":\"" + rrn + "\",\"de041\":\"" + tid + "\"," +
-               "\"de042\":\"" + mid + "\",\"de049\":\"" + ccy + "\"}";
+        return "MTI:0100\\nBITMAP:" + BITMAP_AUTH_REQ +
+               "\\nDE002:" + pan + "\\nDE003:000000\\nDE004:" + amount +
+               "\\nDE007:" + dt + "\\nDE011:" + trace + "\\nDE012:" + dt.substring(4) +
+               "\\nDE013:" + dt.substring(0,4) + "\\nDE014:" + expiry +
+               "\\nDE018:" + MCC_POOL[rng.nextInt(MCC_POOL.length)] +
+               "\\nDE022:" + ENTRY_MODES[rng.nextInt(ENTRY_MODES.length)] + "\\nDE025:00" +
+               "\\nDE037:" + rrn + "\\nDE041:" + tid + "\\nDE042:" + mid + "\\nDE049:" + ccy;
     }
 
     // ── ISO 8583 Auth Response (MTI 0110) ────────────────────────────────────
@@ -108,16 +107,18 @@ public final class CardPhysicsGen {
         String respCode = new String[]{"00","05","12","14","51","54","57","91"}[rng.nextInt(8)];
         String tid      = "MOCKJT" + String.format("%02d", rng.nextInt(10, 100));
         String mid      = "MOCKJM" + String.format("%09d", rng.nextInt(100000000, 999999999));
-        return "{\"mti\":\"0110\",\"bitmap\":\"" + BITMAP_AUTH_RESP + "\"," +
-               "\"de002\":\"" + pan + "\",\"de003\":\"000000\",\"de004\":\"" + amount + "\"," +
-               "\"de007\":\"" + dt + "\",\"de011\":\"" + trace + "\",\"de012\":\"" + dt.substring(4) + "\"," +
-               "\"de013\":\"" + dt.substring(0,4) + "\",\"de038\":\"" + authCode + "\"," +
-               "\"de039\":\"" + respCode + "\",\"de041\":\"" + tid + "\",\"de042\":\"" + mid + "\"}";
+        return "MTI:0110\\nBITMAP:" + BITMAP_AUTH_RESP +
+               "\\nDE002:" + pan + "\\nDE003:000000\\nDE004:" + amount +
+               "\\nDE007:" + dt + "\\nDE011:" + trace + "\\nDE012:" + dt.substring(4) +
+               "\\nDE013:" + dt.substring(0,4) + "\\nDE038:" + authCode +
+               "\\nDE039:" + respCode + "\\nDE041:" + tid + "\\nDE042:" + mid;
     }
 
     // ── ISO 8583 Reversal (MTI 0400) ─────────────────────────────────────────
 
     static String iso8583Reversal(ThreadLocalRandom rng, String locale) {
+        String pan    = FinancialGen.cardnum(rng, locale);
+        String amount = String.format("%012d", rng.nextInt(100, 9999999));
         String rrn    = "MOCKJ" + hexRng(rng, 7);
         String tid    = "MOCKJT" + String.format("%02d", rng.nextInt(10, 100));
         String mid    = "MOCKJM" + String.format("%09d", rng.nextInt(100000000, 999999999));
@@ -125,24 +126,42 @@ public final class CardPhysicsGen {
         String trace  = String.format("%06d", rng.nextInt(1, 1000000));
         String dt     = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
         String acqId  = String.format("%011d", rng.nextLong(10000000000L, 99999999999L));
-        // DE056: 0100 + orig_trace(6) + datetime(10) + acq_id(11) = 31 chars
         String de056  = "0100" + trace + dt + acqId;
-        return "{\"mti\":\"0400\",\"bitmap\":\"" + BITMAP_REVERSAL + "\"," +
-               "\"de037\":\"" + rrn + "\",\"de041\":\"" + tid + "\",\"de042\":\"" + mid + "\"," +
-               "\"de049\":\"" + ccy + "\",\"de056\":\"" + de056 + "\"}";
+        return "MTI:0400\\nBITMAP:" + BITMAP_REVERSAL +
+               "\\nDE002:" + pan + "\\nDE003:000000\\nDE004:" + amount +
+               "\\nDE037:" + rrn + "\\nDE041:" + tid + "\\nDE042:" + mid +
+               "\\nDE049:" + ccy + "\\nDE056:" + de056;
     }
 
-    // ── ATM Session JSON ──────────────────────────────────────────────────────
+    // ── ATM Session JSON — mirrors cardphysics.py (16 fields) ────────────────
 
     static String atmSession(ThreadLocalRandom rng, String locale) {
-        String sessionId = "MOCKJ-ATM-" + String.format("%04X", rng.nextInt(0, 65536)).toUpperCase();
-        double withdrawn = rng.nextInt(1,20) * 50.0;
-        String ccy = currencyAlpha(locale);
-        return String.format("{\"session_id\":\"%s\",\"terminal_id\":\"MOCKJT%02d\",\"amount\":%.2f," +
-            "\"currency\":\"%s\",\"card_type\":\"CHIP\",\"status\":\"COMPLETED\"," +
-            "\"timestamp\":\"%s\",\"auth_code\":\"MOCKJ%d\"}",
-            sessionId, rng.nextInt(10,100), withdrawn, ccy,
-            java.time.Instant.now(), rng.nextInt(1,10));
+        String sessionId = "MOCKJ-ATM-" + String.format("%08X", rng.nextInt()).toUpperCase();
+        int    termNo    = rng.nextInt(10, 100);
+        double amount    = rng.nextInt(1,20) * 50.0;
+        String ccy       = currencyAlpha(locale);
+        String maskedPan = String.format("**** **** **** %04d", rng.nextInt(1000,9999));
+        String[] schemes  = {"VISA","MASTERCARD","TROY","AMEX"};
+        String[] txTypes  = {"CASH_WITHDRAWAL","BALANCE_INQUIRY","MINI_STATEMENT","DEPOSIT"};
+        String[] respMsgs = {"APPROVED","DECLINED","REFER TO BANK","INVALID PIN"};
+        String[] respCodes= {"00","05","51","55"};
+        int rc = rng.nextInt(4);
+        String expiry  = String.format("%02d/%02d", rng.nextInt(1,13), (java.time.LocalDate.now().getYear()%100)+rng.nextInt(1,6));
+        String arqc    = CardPhysicsGen.emvArqc();
+        String atc     = CardPhysicsGen.emvAtc(rng);
+        String stan    = String.format("%06d", rng.nextInt(1, 1000000));
+        String ts      = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        return "{\"session_id\":\"" + sessionId + "\",\"terminal_id\":\"MOCKJT" + String.format("%02d",termNo) + "\"," +
+               "\"terminal_location\":\"MOCKJ Bank Branch " + termNo + "\"," +
+               "\"amount\":\"" + String.format(java.util.Locale.US,"%.2f",amount) + "\"," +
+               "\"currency\":\"" + ccy + "\",\"masked_pan\":\"" + maskedPan + "\"," +
+               "\"card_scheme\":\"" + schemes[rng.nextInt(schemes.length)] + "\"," +
+               "\"expiry\":\"" + expiry + "\",\"stan\":\"" + stan + "\"," +
+               "\"auth_code\":\"MOCKJ" + rng.nextInt(1,10) + "\"," +
+               "\"response_code\":\"" + respCodes[rc] + "\",\"response_message\":\"" + respMsgs[rc] + "\"," +
+               "\"arqc\":\"" + arqc + "\",\"atc\":\"" + atc + "\"," +
+               "\"transaction_type\":\"" + txTypes[rng.nextInt(txTypes.length)] + "\"," +
+               "\"timestamp\":\"" + ts + "\"}";
     }
 
     // ── POS Receipt (40-char width text) ─────────────────────────────────────

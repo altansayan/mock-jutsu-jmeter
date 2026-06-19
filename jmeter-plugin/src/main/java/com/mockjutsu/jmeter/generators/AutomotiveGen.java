@@ -25,29 +25,48 @@ public final class AutomotiveGen {
     }
 
     private static String canFrame(ThreadLocalRandom rng) {
-        int arbId  = rng.nextInt(0x001, 0x7FF);  // 11-bit standard ID
-        int dlc    = rng.nextInt(1, 9);            // Data Length Code
+        boolean extended = rng.nextBoolean();
+        int arbId  = extended ? rng.nextInt(0x001, 0x1FFFFFFF) : rng.nextInt(0x001, 0x7FF);
+        int dlc    = rng.nextInt(1, 9);
         StringBuilder data = new StringBuilder();
+        StringBuilder dataHex = new StringBuilder();
         for (int i = 0; i < dlc; i++) {
-            if (i > 0) data.append(' ');
-            data.append(String.format("%02X", rng.nextInt(0, 256)));
+            int b = rng.nextInt(0, 256);
+            if (i > 0) { data.append(' '); dataHex.append(' '); }
+            data.append(String.format("%02X", b));
+            dataHex.append(String.format("%02X", b));
         }
-        return String.format("{\"id\":\"0x%03X\",\"dlc\":%d,\"data\":\"%s\",\"ts\":%d}", arbId, dlc, data, System.currentTimeMillis());
+        // CRC15 stub (mirrors automotive.py)
+        int crc15 = arbId ^ dlc ^ rng.nextInt(0x7FFF);
+        String frameType = extended ? "extended" : "standard";
+        String canIdStr = extended ? String.format("0x%08X", arbId) : String.format("0x%03X", arbId);
+        String socketcan = String.format("%s#%s", canIdStr.substring(2), dataHex.toString().replace(" ", ""));
+        return String.format(
+            "{\"frame_type\":\"%s\",\"can_id\":\"%s\",\"can_id_int\":%d,\"dlc\":%d," +
+            "\"data\":\"%s\",\"data_hex\":\"%s\",\"crc15\":%d,\"crc15_hex\":\"0x%04X\",\"socketcan\":\"%s\"}",
+            frameType, canIdStr, arbId, dlc, data, dataHex, crc15, crc15, socketcan);
     }
 
     private static String obd2Response(ThreadLocalRandom rng) {
-        int idx  = rng.nextInt(OBD_PIDS.length);
-        int pid  = OBD_PIDS[idx][0];
-        String name = OBD_NAMES[idx];
-        double val;
-        String unit;
-        switch (pid) {
-            case 0x0C -> { val = rng.nextDouble(500, 6000); unit = "rpm"; }
-            case 0x0D -> { val = rng.nextDouble(0, 200);    unit = "km/h"; }
-            case 0x05 -> { val = rng.nextDouble(60, 120);   unit = "°C"; }
-            case 0x04 -> { val = rng.nextDouble(0, 100);    unit = "%"; }
-            default   -> { val = rng.nextDouble(0, 100);    unit = "%"; }
-        }
-        return String.format("{\"pid\":\"0x%02X\",\"name\":\"%s\",\"value\":%.1f,\"unit\":\"%s\"}", pid, name, val, unit);
+        // Full snapshot mirroring automotive.py
+        String ecuId = "7E8";
+        double rpm    = 600 + rng.nextDouble(5400);
+        double speed  = rng.nextDouble(200);
+        double cool   = 60 + rng.nextDouble(60);
+        double throt  = rng.nextDouble(100);
+        double load   = rng.nextDouble(100);
+        double fuel   = rng.nextDouble(100);
+        // Build pids array
+        String pids = String.format(java.util.Locale.US,
+            "[{\"pid\":\"0C\",\"name\":\"Engine RPM\",\"value\":%.1f,\"unit\":\"rpm\"}," +
+            "{\"pid\":\"0D\",\"name\":\"Vehicle Speed\",\"value\":%.1f,\"unit\":\"km/h\"}," +
+            "{\"pid\":\"05\",\"name\":\"Coolant Temp\",\"value\":%.1f,\"unit\":\"C\"}]",
+            rpm, speed, cool);
+        String dtcs = "[]";
+        return String.format(java.util.Locale.US,
+            "{\"ecu_id\":\"%s\",\"mode\":\"01\",\"pids\":%s,\"dtcs\":%s,\"dtc_count\":0," +
+            "\"rpm\":%.1f,\"speed_kmh\":%.1f,\"coolant_temp_c\":%.1f," +
+            "\"throttle_pct\":%.1f,\"engine_load_pct\":%.1f,\"fuel_level_pct\":%.1f}",
+            ecuId, pids, dtcs, rpm, speed, cool, throt, load, fuel);
     }
 }

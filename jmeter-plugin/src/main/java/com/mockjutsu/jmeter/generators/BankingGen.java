@@ -184,7 +184,7 @@ public final class BankingGen {
         int r = rng.nextInt(20);
         String status = r < 16 ? "COMPLETED" : r < 19 ? "PENDING" : "FAILED";
 
-        return String.format(
+        return String.format(java.util.Locale.US,
             "{\"ref\":\"%s\",\"sender_iban\":\"%s\",\"receiver_iban\":\"%s\",\"amount\":%.2f," +
             "\"currency\":\"%s\",\"description\":\"%s\",\"channel\":\"%s\",\"timestamp\":\"%s\",\"status\":\"%s\"}",
             ref, senderIban, receiverIban, amount, ccy,

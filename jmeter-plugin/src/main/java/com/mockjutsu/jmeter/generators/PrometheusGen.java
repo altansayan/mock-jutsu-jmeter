@@ -20,25 +20,26 @@ public final class PrometheusGen {
         long   requests  = rng.nextLong(1000, 9999999);
         double p99lat    = rng.nextDouble(0.001, 2.0);
         long   ts        = System.currentTimeMillis();
-        return "# HELP http_requests_total Total HTTP requests\n" +
-               "# TYPE http_requests_total counter\n" +
-               "http_requests_total{method=\"GET\",status=\"200\"} " + requests + " " + ts + "\n" +
-               "# HELP process_cpu_usage CPU usage fraction\n" +
-               "# TYPE process_cpu_usage gauge\n" +
-               "process_cpu_usage " + String.format("%.4f", cpuUsage/100) + "\n" +
-               "# HELP jvm_memory_used_bytes JVM memory used\n" +
-               "# TYPE jvm_memory_used_bytes gauge\n" +
-               "jvm_memory_used_bytes{area=\"heap\"} " + (long)(memUsage * 1024 * 1024) + "\n" +
-               "# HELP http_request_duration_seconds HTTP request latency\n" +
-               "# TYPE http_request_duration_seconds summary\n" +
-               "http_request_duration_seconds{quantile=\"0.99\"} " + String.format("%.6f", p99lat);
+        String expo = "# HELP http_requests_total Total HTTP requests " +
+               "# TYPE http_requests_total counter " +
+               "http_requests_total{method=\\\"GET\\\",status=\\\"200\\\"} " + requests + " " + ts + " " +
+               "# HELP process_cpu_usage CPU usage fraction " +
+               "# TYPE process_cpu_usage gauge " +
+               "process_cpu_usage " + String.format(java.util.Locale.US, "%.4f", cpuUsage/100) + " " +
+               "# HELP jvm_memory_used_bytes JVM memory used " +
+               "# TYPE jvm_memory_used_bytes gauge " +
+               "jvm_memory_used_bytes{area=\\\"heap\\\"} " + (long)(memUsage * 1024 * 1024) + " " +
+               "# HELP http_request_duration_seconds HTTP request latency " +
+               "# TYPE http_request_duration_seconds summary " +
+               "http_request_duration_seconds{quantile=\\\"0.99\\\"} " + String.format(java.util.Locale.US, "%.6f", p99lat);
+        return "{\"exposition\":\"" + expo + "\",\"format\":\"prometheus\",\"metric_families\":4,\"total_samples\":4}";
     }
 
     private static String openMetrics(ThreadLocalRandom rng) {
-        return "# TYPE cpu_usage gauge\n# UNIT cpu_usage ratio\n" +
-               "cpu_usage " + String.format("%.4f", rng.nextDouble()) + "\n" +
-               "# TYPE memory_used_bytes gauge\n# UNIT memory_used_bytes bytes\n" +
-               "memory_used_bytes " + rng.nextLong(100000000L, 2000000000L) + "\n" +
-               "# EOF";
+        String expo = "# TYPE cpu_usage gauge # UNIT cpu_usage ratio " +
+               "cpu_usage " + String.format(java.util.Locale.US, "%.4f", rng.nextDouble()) + " " +
+               "# TYPE memory_used_bytes gauge # UNIT memory_used_bytes bytes " +
+               "memory_used_bytes " + rng.nextLong(100000000L, 2000000000L) + " # EOF";
+        return "{\"exposition\":\"" + expo + "\",\"format\":\"openmetrics\",\"metric_families\":2,\"total_samples\":2}";
     }
 }

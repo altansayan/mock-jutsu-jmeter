@@ -20,11 +20,20 @@ public final class OidcGen {
     }
 
     private static String tokenSet(ThreadLocalRandom rng, String locale) {
-        String access  = MetaGen.jwt(rng);
-        String refresh = MetaGen.jwt(rng);
-        String id      = MetaGen.jwt(rng);
-        return "{\"access_token\":\"" + access + "\",\"refresh_token\":\"" + refresh + "\"," +
-               "\"id_token\":\"" + id + "\",\"token_type\":\"Bearer\",\"expires_in\":900}";
+        // Mirrors oidc.py: {token, claims, jwks, kid}
+        String token = MetaGen.jwt(rng);
+        String kid   = UUID.randomUUID().toString().substring(0, 8);
+        String claims = "{\\\"iss\\\":\\\"https://mockjutsu.test\\\",\\\"sub\\\":\\\"MOCKJ-" +
+                        String.format("%06d", rng.nextInt(1000000)) + "\\\",\\\"aud\\\":\\\"mockjutsu-client\\\"," +
+                        "\\\"exp\\\":" + (System.currentTimeMillis()/1000 + 900) + ",\\\"iat\\\":" +
+                        (System.currentTimeMillis()/1000) + "}";
+        byte[] x = new byte[32]; SEC.nextBytes(x);
+        byte[] y = new byte[32]; SEC.nextBytes(y);
+        String xB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(x);
+        String yB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(y);
+        String jwks = "{\\\"keys\\\":[{\\\"kty\\\":\\\"EC\\\",\\\"use\\\":\\\"sig\\\",\\\"kid\\\":\\\"" + kid + "\\\"," +
+                      "\\\"crv\\\":\\\"P-256\\\",\\\"x\\\":\\\"" + xB64 + "\\\",\\\"y\\\":\\\"" + yB64 + "\\\"}]}";
+        return "{\"token\":\"" + token + "\",\"claims\":\"" + claims + "\",\"jwks\":\"" + jwks + "\",\"kid\":\"" + kid + "\"}";
     }
 
     private static String jwks() {
