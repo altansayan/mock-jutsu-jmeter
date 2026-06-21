@@ -13,16 +13,20 @@ public final class FinancialGen {
 
     // ── Card networks & BINs ──────────────────────────────────────────────────
 
-    private static final String[][] VISA_BINS    = {{"4111","4539","4916","4532"}, {"16"}};
-    private static final String[][] MC_BINS      = {{"5100","5200","5300","5400","5500"}, {"16"}};
-    private static final String[][] AMEX_BINS    = {{"3400","3700","3701","3741","3742"}, {"15"}};
+    private static final String[][] VISA_BINS     = {{"4111","4539","4916","4532"}, {"16"}};
+    private static final String[][] MC_BINS       = {{"5100","5200","5300","5400","5500"}, {"16"}};
+    private static final String[][] AMEX_BINS     = {{"3400","3700","3701","3741","3742"}, {"15"}};
     private static final String[][] DISCOVER_BINS = {{"6011","6500","6501"}, {"16"}};
-    private static final String[][] TROY_BINS    = {{"9792"}, {"16"}};
+    private static final String[][] TROY_BINS     = {{"9792"}, {"16"}};
+    private static final String[][] MIR_BINS      = {{"2200","2201","2202","2203","2204"}, {"16"}};
+    private static final String[][] JCB_BINS      = {{"3528","3529","3530","3540","3589"}, {"16"}};
+    private static final String[][] UNIONPAY_BINS = {{"6221","6222","6223","6229","6282"}, {"16"}};
+    private static final String[][] MAESTRO_BINS  = {{"6304","6759","6761","6762"}, {"16"}};
 
     private static final String[] CARD_TYPES   = {"credit","debit","prepaid"};
     private static final String[] CARD_STATUS  = {"active","inactive","blocked","expired"};
     private static final String[] CARD_CATS    = {"classic","gold","platinum","business","infinite"};
-    private static final String[] NETWORKS     = {"Visa","Mastercard","AmericanExpress","Discover","Troy"};
+    private static final String[] NETWORKS     = {"Visa","Mastercard","AmericanExpress","Discover","Troy","Mir","JCB","UnionPay","Maestro"};
 
     // ── IBAN country specs: {countryCode, checkLen, bbanLen} ─────────────────
     //    bbanLen excludes the 2-char country code and 2-char check digits
@@ -94,11 +98,15 @@ public final class FinancialGen {
 
     private static String[][] cardBins(ThreadLocalRandom rng, String locale, String network) {
         return switch (network.toLowerCase()) {
-            case "visa"         -> VISA_BINS;
-            case "mastercard","mc" -> MC_BINS;
-            case "amex","americanexpress" -> AMEX_BINS;
-            case "discover"     -> DISCOVER_BINS;
-            case "troy"         -> TROY_BINS;
+            case "visa"                    -> VISA_BINS;
+            case "mastercard","mc"         -> MC_BINS;
+            case "amex","americanexpress"  -> AMEX_BINS;
+            case "discover"                -> DISCOVER_BINS;
+            case "troy"                    -> TROY_BINS;
+            case "mir"                     -> MIR_BINS;
+            case "jcb"                     -> JCB_BINS;
+            case "unionpay","cup"          -> UNIONPAY_BINS;
+            case "maestro"                 -> MAESTRO_BINS;
             default -> {
                 // no qualifier: Troy for TR 1/3 of the time, otherwise random
                 if ("TR".equals(locale) && rng.nextInt(3) == 0) yield TROY_BINS;

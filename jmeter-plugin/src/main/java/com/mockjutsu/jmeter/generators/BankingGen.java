@@ -82,18 +82,33 @@ public final class BankingGen {
         return switch (locale) { case "DE" -> "DE"; case "FR" -> "FR"; case "UK" -> "GB"; case "US" -> "US"; case "RU" -> "RU"; default -> "TR"; };
     }
 
+    private static final String[] ACCOUNT_TYPES  = {"Savings","Checking","Current","Money Market","Fixed Deposit"};
+    private static final String[] TX_TYPES       = {"CREDIT","DEBIT","FEE","REVERSAL","REFUND","TRANSFER","WITHDRAWAL","DEPOSIT"};
+    private static final String[] PAYMENT_REFS   = {"PO","INV","REF","ORD","TXN"};
+
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "swift","bic"  -> bic(rng, locale, false);
-            case "sort_code"    -> sortCode(rng);
-            case "routing_number" -> routingNumber(rng);
-            case "bik_code"     -> bikCode(rng);
-            case "transaction"  -> transaction(rng, locale);
-            case "bank_name"    -> bankName(rng, locale);
-            case "sepa_ref"     -> sepaRef(rng);
-            case "creditor_ref" -> creditorRef(rng);
-            default             -> "ERROR: Unknown banking type '" + type + "'";
+            case "swift","bic"           -> bic(rng, locale, false);
+            case "sort_code"             -> sortCode(rng);
+            case "routing_number"        -> routingNumber(rng);
+            case "wire_routing_number"   -> routingNumber(rng);
+            case "bik_code"              -> bikCode(rng);
+            case "transaction"           -> transaction(rng, locale);
+            case "bank_name"             -> bankName(rng, locale);
+            case "sepa_ref"              -> sepaRef(rng);
+            case "creditor_ref"          -> creditorRef(rng);
+            case "account_type"          -> pick(rng, ACCOUNT_TYPES);
+            case "transaction_type"      -> pick(rng, TX_TYPES);
+            case "transaction_description" -> transactionDescription(rng, locale);
+            case "ifsc_code"             -> ifscCode(rng);
+            case "bsb_code"              -> bsbCode(rng);
+            case "check_number"          -> String.format("%06d", rng.nextInt(100000, 999999));
+            case "micr_line"             -> micrLine(rng);
+            case "payment_reference"     -> paymentReference(rng);
+            case "account_number"        -> accountNumber(rng);
+            case "account_number_masked" -> maskMiddle(accountNumber(rng));
+            default                      -> "ERROR: Unknown banking type '" + type + "'";
         };
     }
 
@@ -224,6 +239,62 @@ public final class BankingGen {
         // RF + check (MOD-97) + body
         String check = FinancialGen.ibanCheckDigits("RF", body);
         return "RF" + check + body;
+    }
+
+    // ── IFSC Code (India) ─────────────────────────────────────────────────────
+
+    private static String ifscCode(ThreadLocalRandom rng) {
+        String[] banks = {"SBIN","HDFC","ICIC","AXIS","KOTK","PUNB","UBIN","CNRB","BKID","IOBA"};
+        return pick(rng, banks) + "0" + randomAlphaNum(rng, 6).toUpperCase();
+    }
+
+    // ── BSB Code (Australia) ─────────────────────────────────────────────────
+
+    private static String bsbCode(ThreadLocalRandom rng) {
+        return String.format("%03d-%03d", rng.nextInt(100, 999), rng.nextInt(100, 999));
+    }
+
+    // ── MICR Line ─────────────────────────────────────────────────────────────
+
+    private static String micrLine(ThreadLocalRandom rng) {
+        String rt  = String.format("%09d", rng.nextLong(100000000L, 999999999L));
+        String acct = String.format("%010d", rng.nextLong(1000000000L, 9999999999L));
+        String chk  = String.format("%04d", rng.nextInt(1000, 9999));
+        return rt + " " + acct + " " + chk;
+    }
+
+    // ── Payment Reference ─────────────────────────────────────────────────────
+
+    private static String paymentReference(ThreadLocalRandom rng) {
+        String prefix = PAYMENT_REFS[rng.nextInt(PAYMENT_REFS.length)];
+        return prefix + "-" + java.time.LocalDate.now().getYear() + "-" + String.format("%08d", rng.nextInt(10000000, 99999999));
+    }
+
+    // ── Account Number ────────────────────────────────────────────────────────
+
+    private static String accountNumber(ThreadLocalRandom rng) {
+        int len = 10 + rng.nextInt(3); // 10-12 digits
+        StringBuilder sb = new StringBuilder();
+        sb.append(rng.nextInt(1, 10));
+        for (int i = 1; i < len; i++) sb.append(rng.nextInt(0, 10));
+        return sb.toString();
+    }
+
+    // ── Transaction Description ───────────────────────────────────────────────
+
+    private static String transactionDescription(ThreadLocalRandom rng, String locale) {
+        String[] descs = switch (locale) {
+            case "US" -> TX_DESC_US; case "UK" -> TX_DESC_UK; case "DE" -> TX_DESC_DE;
+            case "FR" -> TX_DESC_FR; case "RU" -> TX_DESC_RU; default   -> TX_DESC_TR;
+        };
+        return pick(rng, descs);
+    }
+
+    // ── Mask middle digits ────────────────────────────────────────────────────
+
+    private static String maskMiddle(String s) {
+        if (s.length() <= 4) return "****";
+        return s.substring(0, 2) + "*".repeat(s.length() - 4) + s.substring(s.length() - 2);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

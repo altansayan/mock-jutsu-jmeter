@@ -7,19 +7,39 @@ public final class FinancialMarketsGen {
 
     private FinancialMarketsGen() {}
 
-    private static final String[] COUNTRY_CODES = {"US","GB","DE","FR","TR","JP","CA","AU","CH","NL"};
-    private static final char[] ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    private static final String[] COUNTRY_CODES   = {"US","GB","DE","FR","TR","JP","CA","AU","CH","NL"};
+    private static final char[]   ALPHA_NUM        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    private static final String[] EXCHANGE_NAMES   = {"NYSE","NASDAQ","LSE","Euronext","XETRA","Borsa Istanbul","TSE","ASX","SIX","Euronext Amsterdam"};
+    private static final String[] MIC_CODES        = {"XNYS","XNAS","XLON","XPAR","XETR","XIST","XTKS","XASX","XSWX","XAMS","XHKG","XMIL","XBUD","XBRA","XKRX"};
+    private static final String[] FOREX_PAIRS      = {"EURUSD","GBPUSD","USDJPY","USDCHF","AUDUSD","USDCAD","NZDUSD","EURGBP","EURJPY","GBPJPY","USDTRY","EUРТRY"};
+    private static final String[] OPTION_TYPES     = {"CALL","PUT"};
+    private static final String[] BOND_TYPES       = {"Government","Corporate","Municipal","Agency","Treasury","Sovereign"};
+    private static final String[] TICKER_PREFIXES  = {"MCK","NOV","APX","ZRC","ORB","VTX","AXM","TRX","PLN","FXM","LBL","ZNT"};
 
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "isin"         -> isin(rng, locale);
-            case "cusip"        -> cusip(rng);
-            case "sedol"        -> sedol(rng);
-            case "lei"          -> lei(rng);
-            case "fix_message"  -> fixMessage(rng);
-            case "psd2_consent" -> psd2Consent(rng);
-            default             -> "ERROR: Unknown markets type '" + type + "'";
+            case "isin"              -> isin(rng, locale);
+            case "cusip"             -> cusip(rng);
+            case "sedol"             -> sedol(rng);
+            case "lei"               -> lei(rng);
+            case "fix_message"       -> fixMessage(rng);
+            case "psd2_consent"      -> psd2Consent(rng);
+            case "figi"              -> figi(rng);
+            case "nsin"              -> nsin(rng);
+            case "stock_ticker"      -> stockTicker(rng);
+            case "forex_pair"        -> pick(rng, FOREX_PAIRS);
+            case "forex_rate"        -> forexRate(rng);
+            case "ric"               -> ric(rng, locale);
+            case "mic"               -> pick(rng, MIC_CODES);
+            case "stock_exchange"    -> pick(rng, EXCHANGE_NAMES);
+            case "option_contract"   -> optionContract(rng);
+            case "bond_yield"        -> String.format(java.util.Locale.US, "%.4f", rng.nextDouble(0.5, 8.0));
+            case "coupon_rate"       -> String.format(java.util.Locale.US, "%.2f", rng.nextDouble(1.0, 12.0));
+            case "settlement_date"   -> settlementDate();
+            case "portfolio_id"      -> portfolioId(rng);
+            case "portfolio_id_masked" -> maskPortfolio(portfolioId(rng));
+            default                  -> "ERROR: Unknown markets type '" + type + "'";
         };
     }
 
@@ -153,7 +173,88 @@ public final class FinancialMarketsGen {
         return header + "." + payload + "." + sig;
     }
 
+    // ── FIGI (12 chars: 2 alpha + 9 alphanumeric + 1 CUSIP-style check) ────────
+
+    static String figi(ThreadLocalRandom rng) {
+        // Avoid reserved prefixes BS, BM, GG, GB, GH, KY, VG
+        String[] invalidPfx = {"BS","BM","GG","GB","GH","KY","VG"};
+        String prefix;
+        do {
+            prefix = "" + (char)('A' + rng.nextInt(26)) + (char)('A' + rng.nextInt(26));
+        } while (java.util.Arrays.asList(invalidPfx).contains(prefix));
+        prefix += "G"; // FIGI registrar code
+        StringBuilder body = new StringBuilder(prefix);
+        for (int i = 0; i < 8; i++) body.append(ALPHA_NUM[rng.nextInt(ALPHA_NUM.length)]);
+        String s = body.toString();
+        // CUSIP-style check digit
+        int sum = 0;
+        for (int i = 0; i < 11; i++) {
+            char c = s.charAt(i);
+            int v = Character.isDigit(c) ? c - '0' : c - 'A' + 10;
+            if (i % 2 == 1) v *= 2;
+            sum += v / 10 + v % 10;
+        }
+        int check = (10 - (sum % 10)) % 10;
+        return s + check;
+    }
+
+    // ── NSIN (9-char National Securities ID) ─────────────────────────────────
+
+    static String nsin(ThreadLocalRandom rng) {
+        return randomAlphaNum(rng, 9).toUpperCase();
+    }
+
+    // ── Stock Ticker ──────────────────────────────────────────────────────────
+
+    private static String stockTicker(ThreadLocalRandom rng) {
+        String base = TICKER_PREFIXES[rng.nextInt(TICKER_PREFIXES.length)];
+        return rng.nextBoolean() ? base : base + (char)('A' + rng.nextInt(26));
+    }
+
+    // ── Forex Rate ────────────────────────────────────────────────────────────
+
+    private static String forexRate(ThreadLocalRandom rng) {
+        double rate = 0.5 + rng.nextDouble(0, 9.5);
+        return String.format(java.util.Locale.US, "%.4f", rate);
+    }
+
+    // ── RIC (Reuters Instrument Code) ────────────────────────────────────────
+
+    private static String ric(ThreadLocalRandom rng, String locale) {
+        String sfx = switch (locale) { case "UK" -> ".L"; case "DE" -> ".DE"; case "FR" -> ".PA"; default -> ""; };
+        return stockTicker(rng) + sfx;
+    }
+
+    // ── Option Contract ───────────────────────────────────────────────────────
+
+    private static String optionContract(ThreadLocalRandom rng) {
+        java.time.LocalDate exp = java.time.LocalDate.now().plusMonths(1 + rng.nextInt(12));
+        double strike = 50.0 + rng.nextDouble(0, 950.0);
+        String type = OPTION_TYPES[rng.nextInt(2)];
+        return String.format(java.util.Locale.US, "%s %s %.1f %s", stockTicker(rng), exp, strike, type);
+    }
+
+    // ── Settlement Date ───────────────────────────────────────────────────────
+
+    private static String settlementDate() {
+        return java.time.LocalDate.now().plusDays(2).toString();
+    }
+
+    // ── Portfolio ID ──────────────────────────────────────────────────────────
+
+    private static String portfolioId(ThreadLocalRandom rng) {
+        return "PORT-" + randomAlphaNum(rng, 8).toUpperCase();
+    }
+
+    private static String maskPortfolio(String id) {
+        return id.substring(0, 7) + "****";
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static <T> T pick(ThreadLocalRandom rng, T[] arr) {
+        return arr[rng.nextInt(arr.length)];
+    }
 
     private static String randomAlphaNum(ThreadLocalRandom rng, int len) {
         StringBuilder sb = new StringBuilder(len);

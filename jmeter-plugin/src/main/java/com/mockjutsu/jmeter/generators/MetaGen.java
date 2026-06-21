@@ -61,6 +61,13 @@ public final class MetaGen {
             case "totp_code"         -> String.format("%06d", rng.nextInt(0, 1000000));
             case "webhook_signature" -> "sha256=" + hash();
             case "transaction_id"    -> "TXN" + randomHex(rng, 8).toUpperCase();
+            case "slug"              -> slug(rng);
+            case "http_method"       -> pick(rng, new String[]{"GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS"});
+            case "http_status_code"  -> pick(rng, new String[]{"200","201","204","301","302","400","401","403","404","409","422","429","500","502","503"});
+            case "port_number"       -> String.valueOf(rng.nextInt(1, 65536));
+            case "hostname"          -> hostname(rng);
+            case "tld"               -> pick(rng, TLDS);
+            case "uri_path"          -> uriPath(rng);
             default                  -> "ERROR: Unknown meta type '" + type + "'";
         };
     }
@@ -218,6 +225,31 @@ public final class MetaGen {
 
     private static String apiKey(ThreadLocalRandom rng) {
         return "mk_" + (rng.nextBoolean() ? "live" : "test") + "_" + randomHex(rng, 32);
+    }
+
+    // ── Slug ──────────────────────────────────────────────────────────────────
+
+    private static String slug(ThreadLocalRandom rng) {
+        String[] nouns = {"upload","product","order","user","report","event","session","record","item","ticket"};
+        String[] adjs  = {"public","private","new","active","pending","archived","shared","draft"};
+        int year = java.time.LocalDate.now().getYear();
+        return adjs[rng.nextInt(adjs.length)] + "-" + nouns[rng.nextInt(nouns.length)] + "-" + year;
+    }
+
+    // ── Hostname ──────────────────────────────────────────────────────────────
+
+    private static String hostname(ThreadLocalRandom rng) {
+        String[] prefixes = {"api","web","app","srv","db","cache","worker","proxy","gateway","node"};
+        return prefixes[rng.nextInt(prefixes.length)] + "-" + rng.nextInt(1, 100) + "." + domain(rng);
+    }
+
+    // ── URI Path ──────────────────────────────────────────────────────────────
+
+    private static String uriPath(ThreadLocalRandom rng) {
+        String[] resources = {"users","orders","products","accounts","payments","invoices","reports","events"};
+        String   res = resources[rng.nextInt(resources.length)];
+        int      id  = rng.nextInt(1, 10000);
+        return "/api/v" + rng.nextInt(1, 4) + "/" + res + "/" + id;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

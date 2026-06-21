@@ -12,14 +12,40 @@ public final class SecurityGen {
     private static final String[] VENDORS = {"MockVendor","TestSecurity","FakeFW","SimAV"};
     private static final String[] EVENT_NAMES = {"PortScan","BruteForce","SQLInjection","XSSAttempt","DDoS","Malware","Phishing"};
 
+    private static final String PASSWORD_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "cef_log"  -> cefLog(rng);
-            case "x509_cert"-> x509Cert();
-            case "pcap_hex" -> pcapHex(rng);
+            case "cef_log"      -> cefLog(rng);
+            case "x509_cert"    -> x509Cert();
+            case "pcap_hex"     -> pcapHex(rng);
+            case "password"     -> password(rng);
+            case "password_hash" -> passwordHash();
+            case "cve_id"       -> cveId(rng);
             default -> "ERROR: Unknown security type '" + type + "'";
         };
+    }
+
+    private static String password(ThreadLocalRandom rng) {
+        int len = 12 + rng.nextInt(8); // 12-19 chars
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) sb.append(PASSWORD_CHARS.charAt(rng.nextInt(PASSWORD_CHARS.length())));
+        return sb.toString();
+    }
+
+    private static String passwordHash() {
+        // bcrypt-style hash prefix + 53 chars
+        byte[] bytes = new byte[20];
+        SEC.nextBytes(bytes);
+        String hex = bytesToHex(bytes);
+        return "$2b$12$" + hex.substring(0, 22) + hex.substring(0, 31);
+    }
+
+    private static String cveId(ThreadLocalRandom rng) {
+        int year = 2015 + rng.nextInt(11); // 2015-2025
+        int num  = 1000 + rng.nextInt(98999);
+        return "CVE-" + year + "-" + num;
     }
 
     private static String cefLog(ThreadLocalRandom rng) {

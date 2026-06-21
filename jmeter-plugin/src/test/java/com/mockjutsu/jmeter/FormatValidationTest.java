@@ -746,7 +746,7 @@ class FormatValidationTest {
     }
 
     @RepeatedTest(10) void cardnetwork_valid() {
-        assertTrue(java.util.Set.of("Visa","Mastercard","AmericanExpress","Discover","Troy")
+        assertTrue(java.util.Set.of("Visa","Mastercard","AmericanExpress","Discover","Troy","Mir","JCB","UnionPay","Maestro")
             .contains(g("cardnetwork","TR")), "Invalid cardnetwork");
     }
 

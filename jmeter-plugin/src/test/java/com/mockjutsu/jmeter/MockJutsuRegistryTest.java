@@ -303,8 +303,11 @@ class MockJutsuRegistryTest {
         "timestamp","timestamp_iso","clientversion","bearertoken","signature","apppassword",
         "jwt","hash","mac_address","domain","url","color","api_key","totp_code",
         "webhook_signature","transaction_id","public_ip","private_ip",
+        "slug","http_method","http_status_code","port_number","hostname","tld","uri_path",
         // Banking
-        "swift","bic","sort_code","routing_number","bik_code","transaction","bank_name","sepa_ref","creditor_ref",
+        "swift","bic","sort_code","routing_number","wire_routing_number","bik_code","transaction","bank_name","sepa_ref","creditor_ref",
+        "account_type","transaction_type","transaction_description","ifsc_code","bsb_code",
+        "check_number","micr_line","payment_reference","account_number","account_number_masked",
         // Corporate
         "company_name","job_title","occupation","jobtitle",
         // Health
@@ -320,8 +323,12 @@ class MockJutsuRegistryTest {
         "imei","imei2","iccid","imsi","msisdn",
         // Securities
         "isin","cusip","sedol","lei","fix_message","psd2_consent",
+        "figi","nsin","stock_ticker","forex_pair","forex_rate","ric","mic",
+        "stock_exchange","option_contract","bond_yield","coupon_rate","settlement_date","portfolio_id","portfolio_id_masked",
         // Crypto
         "btc_address","eth_address","crypto_address","tx_hash","block_hash","mnemonic",
+        "nft_token_id","gas_price","gas_limit","defi_protocol_name","blockchain_network",
+        "wallet_label","defi_position_type","cryptocurrency_name","liquidity_pool_id","liquidity_pool_id_masked",
         // Ecommerce
         "product_name","sku","order_id","tracking_number","category","rating","dhl_tracking",
         // Location
@@ -333,7 +340,7 @@ class MockJutsuRegistryTest {
         // CardPhysics
         "emv_arqc","emv_atc","emv_iad","iso8583_auth_request","iso8583_auth_response","iso8583_reversal","atm_session","pos_receipt",
         // Security
-        "cef_log","x509_cert","pcap_hex",
+        "cef_log","x509_cert","pcap_hex","password","password_hash","cve_id",
         // Aviation
         "iata_ticket","imo_number","pnr_code",
         // FIDO2
@@ -372,6 +379,17 @@ class MockJutsuRegistryTest {
         "tle_satellite",
         // Payments
         "swift_mt103","pain001","nacha_ach","sepa_mandate","fedwire",
+        // Compliance
+        "policy_number","claim_number","pep_status","aml_risk_rating","cdd_level",
+        "sar_number","ubo_ownership_percentage","kyc_document_type","consent_id",
+        "tpp_id","onboarding_method","sanctions_hit","sanctions_hit_masked",
+        // Financial Ext
+        "credit_score_model","credit_score_tier","credit_limit","credit_utilization",
+        "credit_card_issuer_name","apr","loan_type","mortgage_rate","mortgage_term",
+        "premium_amount","deductible","coverage_limit","claim_status",
+        // DateTime
+        "past_date","future_date","date_between","date_this_year",
+        "date_this_month","time_only","past_datetime","future_datetime",
         // Special
         "cardowner","regex_string"
     })

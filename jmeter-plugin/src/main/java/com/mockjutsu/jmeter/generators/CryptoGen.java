@@ -26,15 +26,31 @@ public final class CryptoGen {
         "away","awesome","awful","awkward","axis","baby","balance","bamboo","banana","banner"
     };
 
+    private static final String[] DEFI_PROTOCOLS  = {"Uniswap","Aave","Compound","Curve","Maker","Balancer","Yearn","Synthetix","dYdX","Lido","Convex","GMX"};
+    private static final String[] BLOCKCHAIN_NETS = {"Ethereum","Bitcoin","Polygon","Arbitrum","Optimism","Solana","Avalanche","BNB Chain","Base","zkSync Era","Starknet","Sui"};
+    private static final String[] WALLET_LABELS   = {"Main Wallet","Trading","Savings","Cold Storage","DeFi","NFT Vault","Operations","Reserve"};
+    private static final String[] DEFI_POSITIONS  = {"Liquidity Provider","Lending","Borrowing","Staking","Yield Farming","Vault","Perpetual"};
+    private static final String[] CRYPTO_NAMES    = {"Bitcoin","Ethereum","Tether","BNB","XRP","USD Coin","Cardano","Dogecoin","Solana","TRON","Polkadot","Polygon"};
+
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "btc_address"    -> btcAddress(rng);
-            case "eth_address"    -> ethAddress();
-            case "crypto_address" -> rng.nextBoolean() ? btcAddress(rng) : ethAddress();
-            case "tx_hash"        -> "0x" + randomSecHex(32);
-            case "block_hash"     -> "0x" + randomSecHex(32);
-            case "mnemonic"       -> mnemonic(rng, 12);
+            case "btc_address"          -> btcAddress(rng);
+            case "eth_address"          -> ethAddress();
+            case "crypto_address"       -> rng.nextBoolean() ? btcAddress(rng) : ethAddress();
+            case "tx_hash"              -> "0x" + randomSecHex(32);
+            case "block_hash"           -> "0x" + randomSecHex(32);
+            case "mnemonic"             -> mnemonic(rng, 12);
+            case "nft_token_id"         -> String.valueOf(rng.nextLong(1_000_000_000L, 999_999_999_999_999_999L));
+            case "gas_price"            -> String.valueOf(rng.nextInt(1, 200));
+            case "gas_limit"            -> String.valueOf(21000 + rng.nextInt(479000));
+            case "defi_protocol_name"   -> DEFI_PROTOCOLS[rng.nextInt(DEFI_PROTOCOLS.length)];
+            case "blockchain_network"   -> BLOCKCHAIN_NETS[rng.nextInt(BLOCKCHAIN_NETS.length)];
+            case "wallet_label"         -> WALLET_LABELS[rng.nextInt(WALLET_LABELS.length)];
+            case "defi_position_type"   -> DEFI_POSITIONS[rng.nextInt(DEFI_POSITIONS.length)];
+            case "cryptocurrency_name"  -> CRYPTO_NAMES[rng.nextInt(CRYPTO_NAMES.length)];
+            case "liquidity_pool_id"    -> "0x" + randomSecHex(20);
+            case "liquidity_pool_id_masked" -> "0x" + "****" + randomSecHex(6);
             default -> "ERROR: Unknown crypto type '" + type + "'";
         };
     }

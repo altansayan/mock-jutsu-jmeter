@@ -39,12 +39,16 @@ public final class MockJutsuRegistry {
         "deviceid","ipv4","ipv6","browser_name","browser_version","browser_engine",
         "useragent","timestamp","timestamp_iso","clientversion","bearertoken",
         "signature","apppassword","jwt","hash","mac_address","domain","url","color",
-        "api_key","totp_code","webhook_signature","transaction_id","public_ip","private_ip"
+        "api_key","totp_code","webhook_signature","transaction_id","public_ip","private_ip",
+        "slug","http_method","http_status_code","port_number","hostname","tld","uri_path"
     );
 
     private static final Set<String> BANKING_TYPES = Set.of(
-        "swift","bic","sort_code","routing_number","bik_code",
-        "transaction","bank_name","sepa_ref","creditor_ref"
+        "swift","bic","sort_code","routing_number","wire_routing_number","bik_code",
+        "transaction","bank_name","sepa_ref","creditor_ref",
+        "account_type","transaction_type","transaction_description",
+        "ifsc_code","bsb_code","check_number","micr_line",
+        "payment_reference","account_number","account_number_masked"
     );
 
     private static final Set<String> CORPORATE_TYPES = Set.of(
@@ -75,11 +79,17 @@ public final class MockJutsuRegistry {
     );
 
     private static final Set<String> SECURITIES_TYPES = Set.of(
-        "isin","cusip","sedol","lei","fix_message","psd2_consent"
+        "isin","cusip","sedol","lei","fix_message","psd2_consent",
+        "figi","nsin","stock_ticker","forex_pair","forex_rate","ric","mic",
+        "stock_exchange","option_contract","bond_yield","coupon_rate",
+        "settlement_date","portfolio_id","portfolio_id_masked"
     );
 
     private static final Set<String> CRYPTO_TYPES = Set.of(
-        "btc_address","eth_address","crypto_address","tx_hash","block_hash","mnemonic"
+        "btc_address","eth_address","crypto_address","tx_hash","block_hash","mnemonic",
+        "nft_token_id","gas_price","gas_limit","defi_protocol_name","blockchain_network",
+        "wallet_label","defi_position_type","cryptocurrency_name",
+        "liquidity_pool_id","liquidity_pool_id_masked"
     );
 
     private static final Set<String> ECOMMERCE_TYPES = Set.of(
@@ -105,7 +115,7 @@ public final class MockJutsuRegistry {
     );
 
     private static final Set<String> CYBERSEC_TYPES = Set.of(
-        "cef_log","x509_cert","pcap_hex"
+        "cef_log","x509_cert","pcap_hex","password","password_hash","cve_id"
     );
 
     private static final Set<String> AVIATION_TYPES = Set.of(
@@ -182,6 +192,23 @@ public final class MockJutsuRegistry {
 
     private static final Set<String> PAYMENTS_TYPES = Set.of(
         "swift_mt103","pain001","nacha_ach","sepa_mandate","fedwire"
+    );
+
+    private static final Set<String> COMPLIANCE_TYPES = Set.of(
+        "policy_number","claim_number","pep_status","aml_risk_rating","cdd_level",
+        "sar_number","ubo_ownership_percentage","kyc_document_type","consent_id",
+        "tpp_id","onboarding_method","sanctions_hit","sanctions_hit_masked"
+    );
+
+    private static final Set<String> FINANCIAL_EXT_TYPES = Set.of(
+        "credit_score_model","credit_score_tier","credit_limit","credit_utilization",
+        "credit_card_issuer_name","apr","loan_type","mortgage_rate","mortgage_term",
+        "premium_amount","deductible","coverage_limit","claim_status"
+    );
+
+    private static final Set<String> DATETIME_TYPES = Set.of(
+        "past_date","future_date","date_between","date_this_year",
+        "date_this_month","time_only","past_datetime","future_datetime"
     );
 
     private static final Set<String> REVERSE_REGEX_TYPES = Set.of(
@@ -278,6 +305,9 @@ public final class MockJutsuRegistry {
         if (PAYMENTS_TYPES.contains(type))     return PaymentsGen.generate(type, locale);
         if (REVERSE_REGEX_TYPES.contains(type)) return ReverseRegexGen.generate(type, locale);
         if (INTL_IDS_TYPES.contains(type))    return IntlIdsGen.generate(type, locale);
+        if (COMPLIANCE_TYPES.contains(type))   return ComplianceGen.generate(type, locale);
+        if (FINANCIAL_EXT_TYPES.contains(type)) return FinancialExtGen.generate(type, locale);
+        if (DATETIME_TYPES.contains(type))     return DateTimeGen.generate(type, locale);
 
         return "ERROR: Unknown DataType '" + type + "'";
     }
