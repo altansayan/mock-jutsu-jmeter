@@ -261,9 +261,9 @@ public final class MockJutsuRegistry {
     public static String generate(String type, String locale, String qualifier) {
         if (type == null || type.isEmpty())    return "ERROR: Missing DataType";
 
-        // special case: cardowner = uppercase fullname
+        // special case: cardowner = uppercase fullname (qualifier = gender)
         if ("cardowner".equals(type))
-            return IdentityGen.generate("fullname", locale).toUpperCase();
+            return IdentityGen.generate("fullname", locale, qualifier).toUpperCase();
 
         if (IDENTITY_TYPES.contains(type))     return IdentityGen.generate(type, locale, qualifier);
         if (FINANCIAL_TYPES.contains(type))    return FinancialGen.generate(type, locale, qualifier);

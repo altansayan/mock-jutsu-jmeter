@@ -53,7 +53,7 @@ public final class MetaGen {
             case "timestamp_iso"     -> Instant.now().toString();
             case "clientversion"     -> String.format("%d.%d.%d", rng.nextInt(1,5), rng.nextInt(0,20), rng.nextInt(0,100));
             case "bearertoken"       -> "Bearer " + jwt(rng);
-            case "signature"         -> signature();
+            case "signature"         -> signature(qualifier);
             case "apppassword"       -> appPassword(rng);
             case "jwt"               -> jwt(rng);
             case "hash"              -> hash(qualifier);
@@ -161,12 +161,31 @@ public final class MetaGen {
     // ── Hash ──────────────────────────────────────────────────────────────────
 
     private static String hash(String algorithm) {
-        int bytes = switch (algorithm.toLowerCase()) {
-            case "md5"    -> 16;
-            case "sha1"   -> 20;
-            case "sha384" -> 48;
-            case "sha512" -> 64;
-            default       -> 32; // sha256
+        String algo = algorithm.toLowerCase();
+        // CRC variants — fixed output widths, no random bytes needed
+        if ("crc32".equals(algo)) {
+            byte[] dummy = new byte[8]; SEC.nextBytes(dummy);
+            java.util.zip.CRC32 crc = new java.util.zip.CRC32(); crc.update(dummy);
+            return String.format("%08x", crc.getValue());
+        }
+        if ("adler32".equals(algo)) {
+            byte[] dummy = new byte[8]; SEC.nextBytes(dummy);
+            java.util.zip.Adler32 a = new java.util.zip.Adler32(); a.update(dummy);
+            return String.format("%08x", a.getValue());
+        }
+        if ("crc16".equals(algo)) {
+            ThreadLocalRandom rng = ThreadLocalRandom.current();
+            return String.format("%04x", rng.nextInt(0x10000));
+        }
+        // SHA/MD variants — map to byte count
+        int bytes = switch (algo) {
+            case "md5"                        -> 16;
+            case "sha1"                       -> 20;
+            case "sha224","sha3-224"          -> 28;
+            case "sha256","sha3-256"          -> 32;
+            case "sha384","sha3-384"          -> 48;
+            case "sha512","sha3-512"          -> 64;
+            default                           -> 32; // sha256
         };
         byte[] b = new byte[bytes];
         SEC.nextBytes(b);
@@ -189,10 +208,27 @@ public final class MetaGen {
 
     // ── Signature ─────────────────────────────────────────────────────────────
 
-    private static String signature() {
-        byte[] bytes = new byte[64];
-        SEC.nextBytes(bytes);
-        return Base64.getEncoder().encodeToString(bytes);
+    private static String signature(String qualifier) {
+        if (qualifier.isEmpty()) {
+            // default: 64 random bytes as Base64 (88 chars)
+            byte[] bytes = new byte[64];
+            SEC.nextBytes(bytes);
+            return Base64.getEncoder().encodeToString(bytes);
+        }
+        // qualifier: "secret|payload" — HMAC-SHA256, returned as Base64
+        String[] parts = qualifier.split("\\|", 2);
+        String secret  = parts[0].isEmpty() ? "ninja" : parts[0];
+        String payload = (parts.length > 1 && !parts[1].isEmpty()) ? parts[1] : "mock";
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] sig = mac.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(sig); // 44 chars
+        } catch (Exception e) {
+            byte[] bytes = new byte[64];
+            SEC.nextBytes(bytes);
+            return Base64.getEncoder().encodeToString(bytes);
+        }
     }
 
     // ── App Password — 6-digit PIN, no consecutive repeats, no sequential run of 3+ ──
