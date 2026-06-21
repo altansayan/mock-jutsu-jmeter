@@ -74,7 +74,7 @@ class CategoryFunctionTest {
     void typeDescriptionNonEmpty(MockJutsuBaseFunction fn) {
         // getArgumentDesc()[0] contains "type — <types>"
         List<String> desc = fn.getArgumentDesc();
-        assertEquals(3, desc.size(), fn.getReferenceKey() + " must have 3 param descriptions");
+        assertEquals(1, desc.size(), fn.getReferenceKey() + " must have 1 param description");
         String typeDesc = desc.get(0);
         assertTrue(typeDesc.contains("|") || typeDesc.contains("type"),
             fn.getReferenceKey() + " typeDescription must list types");

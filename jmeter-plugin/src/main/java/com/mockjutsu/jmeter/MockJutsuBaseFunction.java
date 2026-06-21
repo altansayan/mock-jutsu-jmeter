@@ -75,9 +75,7 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
     @Override
     public List<String> getArgumentDesc() {
         return List.of(
-            "type — " + typeDescription(),
-            "locale — TR | DE | FR | UK | US | RU (optional, default TR)",
-            "varName — store result in a JMeter variable (optional)"
+            "type[:qualifier][,locale][,varName] — " + typeDescription()
         );
     }
 
