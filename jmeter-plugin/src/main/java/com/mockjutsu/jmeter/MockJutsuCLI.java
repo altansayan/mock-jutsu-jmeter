@@ -114,7 +114,7 @@ public final class MockJutsuCLI {
         // Payments
         "swift_mt103","pain001","nacha_ach","sepa_mandate","fedwire",
         // Regex
-        "regex_string",
+        "reverse_regex",
         // IntlIDs
         "br_cpf","br_cnpj",
         "in_pan","in_aadhaar","in_gstin","in_epic",

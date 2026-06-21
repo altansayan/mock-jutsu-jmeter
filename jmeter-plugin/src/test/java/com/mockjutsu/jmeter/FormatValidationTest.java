@@ -708,7 +708,7 @@ class FormatValidationTest {
     // ── Special ───────────────────────────────────────────────────────────────
 
     @RepeatedTest(10) void cardowner_uppercase()   { String co = g("cardowner","TR"); assertEquals(co, co.toUpperCase()); }
-    @RepeatedTest(10) void regex_string_not_empty(){ assertNoError(g("regex_string","TR")); }
+    @RepeatedTest(10) void reverse_regex_not_empty(){ assertNoError(g("reverse_regex","TR")); }
 
     // ── Identity (additional / alias types) ───────────────────────────────────
 

@@ -166,7 +166,7 @@ ${__mockjutsu(tckn,TR,myVar)}
 `jwt_attack` `asn1_fuzz`
 
 ### Regex — `__mockjutsu_regex`
-`regex_string`
+`reverse_regex`
 
 ---
 

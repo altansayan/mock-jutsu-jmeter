@@ -212,7 +212,7 @@ public final class MockJutsuRegistry {
     );
 
     private static final Set<String> REVERSE_REGEX_TYPES = Set.of(
-        "regex_string"
+        "reverse_regex"
     );
 
     private static final Set<String> INTL_IDS_TYPES = Set.of(
