@@ -7,6 +7,7 @@ import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.samplers.Sampler;
 import org.apache.jmeter.threads.JMeterVariables;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,14 +20,27 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
     @Override
     public String execute(SampleResult prev, Sampler current) throws InvalidVariableException {
         int n = params.length;
-        // params[0] = type(s) — single or comma-separated, e.g. "tckn,iban,cardnum"
-        // params[1] = locale  (optional, default TR)
-        // params[2] = varName (optional)
-        // params[3] = mask    (optional, "true"/"false", default false)
-        String rawType = n > 0 ? params[0].execute().trim() : "";
-        String locale  = n > 1 ? params[1].execute().trim().toUpperCase() : "TR";
-        String varName = n > 2 ? params[2].execute().trim() : "";
-        boolean mask   = n > 3 && isTruthy(params[3].execute().trim());
+
+        // Evaluate all params upfront to scan for the "mask" keyword
+        String[] ev = new String[n];
+        for (int i = 0; i < n; i++) ev[i] = params[i].execute().trim();
+
+        // "mask" keyword in ANY position triggers masking; remove it from positional list
+        boolean mask = false;
+        List<String> positional = new ArrayList<>();
+        for (String p : ev) {
+            if ("mask".equalsIgnoreCase(p)) {
+                mask = true;
+            } else {
+                positional.add(p);
+            }
+        }
+        // Legacy: params[3] = "true" / "1" / "yes" still works
+        if (!mask && n > 3 && isTruthy(ev[3])) mask = true;
+
+        String rawType = positional.size() > 0 ? positional.get(0) : "";
+        String locale  = positional.size() > 1 ? positional.get(1).toUpperCase() : "TR";
+        String varName = positional.size() > 2 ? positional.get(2) : "";
         if (locale.isEmpty()) locale = "TR";
 
         String[] parts     = rawType.split(",");
@@ -86,7 +100,7 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
             "type[:qualifier][,type2...] — " + typeDescription(),
             "locale (TR/UK/US/DE/FR/RU) — optional, default TR",
             "varName — optional JMeter variable name to store result",
-            "mask (true/false) — optional, default false"
+            "mask — keyword in any position (or legacy true/false at pos 4)"
         );
     }
 
