@@ -228,6 +228,10 @@ public final class MockJutsuRegistry {
     // ── Dispatch ─────────────────────────────────────────────────────────────
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         if (type == null || type.isEmpty())    return "ERROR: Missing DataType";
 
         // special case: cardowner = uppercase fullname
@@ -235,7 +239,7 @@ public final class MockJutsuRegistry {
             return IdentityGen.generate("fullname", locale).toUpperCase();
 
         if (IDENTITY_TYPES.contains(type))     return IdentityGen.generate(type, locale);
-        if (FINANCIAL_TYPES.contains(type))    return FinancialGen.generate(type, locale);
+        if (FINANCIAL_TYPES.contains(type))    return FinancialGen.generate(type, locale, qualifier);
         if (COMM_TYPES.contains(type))         return CommunicationGen.generate(type, locale);
         if (META_TYPES.contains(type))         return MetaGen.generate(type, locale);
         if (BANKING_TYPES.contains(type))      return BankingGen.generate(type, locale);

@@ -66,6 +66,57 @@ class AlgorithmTest {
         assertTrue(isLuhnValid(card), "Card " + card + " failed Luhn");
     }
 
+    @Test
+    void cardnumVisaStartsWith4() {
+        var rng = ThreadLocalRandom.current();
+        for (int i = 0; i < 50; i++) {
+            String card = FinancialGen.cardnum(rng, "TR", "visa");
+            assertTrue(card.startsWith("4"), "Visa card must start with 4: " + card);
+            assertEquals(16, card.length(), "Visa card must be 16 digits");
+            assertTrue(isLuhnValid(card), "Visa card Luhn invalid: " + card);
+        }
+    }
+
+    @Test
+    void cardnumMastercardStartsWith5() {
+        var rng = ThreadLocalRandom.current();
+        for (int i = 0; i < 50; i++) {
+            String card = FinancialGen.cardnum(rng, "TR", "mastercard");
+            assertTrue(card.startsWith("5"), "Mastercard must start with 5: " + card);
+            assertEquals(16, card.length(), "Mastercard must be 16 digits");
+            assertTrue(isLuhnValid(card), "Mastercard Luhn invalid: " + card);
+        }
+    }
+
+    @Test
+    void cardnumAmexStartsWith3() {
+        var rng = ThreadLocalRandom.current();
+        for (int i = 0; i < 50; i++) {
+            String card = FinancialGen.cardnum(rng, "TR", "amex");
+            assertTrue(card.startsWith("3"), "Amex card must start with 3: " + card);
+            assertEquals(15, card.length(), "Amex card must be 15 digits");
+            assertTrue(isLuhnValid(card), "Amex card Luhn invalid: " + card);
+        }
+    }
+
+    @Test
+    void cardnumTroyStartsWith9792() {
+        var rng = ThreadLocalRandom.current();
+        for (int i = 0; i < 50; i++) {
+            String card = FinancialGen.cardnum(rng, "TR", "troy");
+            assertTrue(card.startsWith("9792"), "Troy card must start with 9792: " + card);
+            assertEquals(16, card.length(), "Troy card must be 16 digits");
+            assertTrue(isLuhnValid(card), "Troy card Luhn invalid: " + card);
+        }
+    }
+
+    @Test
+    void cardnumMcAliasWorks() {
+        var rng = ThreadLocalRandom.current();
+        String card = FinancialGen.cardnum(rng, "TR", "mc");
+        assertTrue(card.startsWith("5"), "mc alias must produce Mastercard: " + card);
+    }
+
     @RepeatedTest(50)
     void imeiLuhnValid() {
         String imei = TelecomGen.imei(ThreadLocalRandom.current(), "TR");

@@ -29,16 +29,27 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
 
         String[] parts = rawType.split(",");
         String[] types = new String[parts.length];
-        for (int i = 0; i < parts.length; i++) types[i] = parts[i].trim().toLowerCase();
+        String[] qualifiers = new String[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].trim().toLowerCase();
+            int colonIdx = part.indexOf(':');
+            if (colonIdx >= 0) {
+                types[i]      = part.substring(0, colonIdx).trim();
+                qualifiers[i] = part.substring(colonIdx + 1).trim();
+            } else {
+                types[i]      = part;
+                qualifiers[i] = "";
+            }
+        }
 
         String result;
         if (types.length == 1) {
-            result = MockJutsuRegistry.generate(types[0], locale);
+            result = MockJutsuRegistry.generate(types[0], locale, qualifiers[0]);
         } else {
             StringBuilder sb = new StringBuilder("{");
             JMeterVariables vars = varName.isEmpty() ? null : getVariables();
             for (int i = 0; i < types.length; i++) {
-                String val = MockJutsuRegistry.generate(types[i], locale);
+                String val = MockJutsuRegistry.generate(types[i], locale, qualifiers[i]);
                 sb.append('"').append(types[i]).append("\":").append(toJsonValue(val));
                 if (i < types.length - 1) sb.append(',');
                 if (vars != null) vars.put(varName + "_" + types[i], val);

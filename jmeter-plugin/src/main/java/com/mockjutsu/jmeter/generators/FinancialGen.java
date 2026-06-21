@@ -45,9 +45,13 @@ public final class FinancialGen {
     // ── Public API ────────────────────────────────────────────────────────────
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "cardnum"      -> cardnum(rng, locale);
+            case "cardnum"      -> cardnum(rng, locale, qualifier);
             case "cardnetwork"  -> cardnetwork(rng, locale);
             case "cardtype"     -> pick(rng, CARD_TYPES);
             case "cardstatus"   -> pick(rng, CARD_STATUS);
@@ -75,21 +79,33 @@ public final class FinancialGen {
     // ── Card number (Luhn-valid) ──────────────────────────────────────────────
 
     static String cardnum(ThreadLocalRandom rng, String locale) {
-        String[][] bins = cardBins(rng, locale);
+        return cardnum(rng, locale, "");
+    }
+
+    static String cardnum(ThreadLocalRandom rng, String locale, String network) {
+        String[][] bins = cardBins(rng, locale, network);
         String bin    = bins[0][rng.nextInt(bins[0].length)];
         int    length = Integer.parseInt(bins[1][0]);
-        // fill digits after BIN, leave last for Luhn check
         StringBuilder sb = new StringBuilder(bin);
         while (sb.length() < length - 1) sb.append(rng.nextInt(0, 10));
         sb.append(IdentityGen.luhnCheckDigit(sb.toString()));
         return sb.toString();
     }
 
-    private static String[][] cardBins(ThreadLocalRandom rng, String locale) {
-        // Troy for TR, otherwise random Visa/MC/Amex/Discover
-        if ("TR".equals(locale) && rng.nextInt(3) == 0) return TROY_BINS;
-        String[][][] all = {VISA_BINS, MC_BINS, AMEX_BINS, DISCOVER_BINS};
-        return all[rng.nextInt(all.length)];
+    private static String[][] cardBins(ThreadLocalRandom rng, String locale, String network) {
+        return switch (network.toLowerCase()) {
+            case "visa"         -> VISA_BINS;
+            case "mastercard","mc" -> MC_BINS;
+            case "amex","americanexpress" -> AMEX_BINS;
+            case "discover"     -> DISCOVER_BINS;
+            case "troy"         -> TROY_BINS;
+            default -> {
+                // no qualifier: Troy for TR 1/3 of the time, otherwise random
+                if ("TR".equals(locale) && rng.nextInt(3) == 0) yield TROY_BINS;
+                String[][][] all = {VISA_BINS, MC_BINS, AMEX_BINS, DISCOVER_BINS};
+                yield all[rng.nextInt(all.length)];
+            }
+        };
     }
 
     private static String cardnetwork(ThreadLocalRandom rng, String locale) {
