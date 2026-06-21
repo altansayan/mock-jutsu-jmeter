@@ -87,6 +87,17 @@ class CategoryFunctionTest {
         assertNotEquals("__mockjutsu", fn.getReferenceKey());
     }
 
+    @ParameterizedTest
+    @MethodSource("allFunctions")
+    void maskArgDescMentionsKeyword(MockJutsuBaseFunction fn) {
+        List<String> desc = fn.getArgumentDesc();
+        assertEquals(4, desc.size(),
+            fn.getReferenceKey() + " must have exactly 4 param descriptions");
+        String maskDesc = desc.get(3);
+        assertTrue(maskDesc.toLowerCase().contains("keyword"),
+            fn.getReferenceKey() + " 4th param must mention 'keyword', got: '" + maskDesc + "'");
+    }
+
     @Test
     void totalFunctionCount() {
         assertEquals(43, allFunctions().count(), "Must have exactly 43 category functions");
