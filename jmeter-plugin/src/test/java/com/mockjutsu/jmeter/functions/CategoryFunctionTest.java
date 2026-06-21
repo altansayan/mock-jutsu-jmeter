@@ -72,9 +72,9 @@ class CategoryFunctionTest {
     @ParameterizedTest
     @MethodSource("allFunctions")
     void typeDescriptionNonEmpty(MockJutsuBaseFunction fn) {
-        // getArgumentDesc()[0] contains "type — <types>"
+        // getArgumentDesc()[0] contains "type — <types>"; params 1-3 are locale/varName/mask
         List<String> desc = fn.getArgumentDesc();
-        assertEquals(1, desc.size(), fn.getReferenceKey() + " must have 1 param description");
+        assertFalse(desc.isEmpty(), fn.getReferenceKey() + " must have at least 1 param description");
         String typeDesc = desc.get(0);
         assertTrue(typeDesc.contains("|") || typeDesc.contains("type"),
             fn.getReferenceKey() + " typeDescription must list types");
