@@ -29,6 +29,10 @@ public final class MetaGen {
     private static final String BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
             case "uuid"              -> UUID.randomUUID().toString();
@@ -52,14 +56,14 @@ public final class MetaGen {
             case "signature"         -> signature();
             case "apppassword"       -> appPassword(rng);
             case "jwt"               -> jwt(rng);
-            case "hash"              -> hash();
+            case "hash"              -> hash(qualifier);
             case "mac_address"       -> macAddress(rng);
             case "domain"            -> domain(rng);
             case "url"               -> url(rng);
-            case "color"             -> pick(rng, COLORS);
+            case "color"             -> color(rng, qualifier);
             case "api_key"           -> apiKey(rng);
             case "totp_code"         -> String.format("%06d", rng.nextInt(0, 1000000));
-            case "webhook_signature" -> "sha256=" + hash();
+            case "webhook_signature" -> "sha256=" + hash("");
             case "transaction_id"    -> "TXN" + randomHex(rng, 8).toUpperCase();
             case "slug"              -> slug(rng);
             case "http_method"       -> pick(rng, new String[]{"GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS"});
@@ -156,10 +160,31 @@ public final class MetaGen {
 
     // ── Hash ──────────────────────────────────────────────────────────────────
 
-    private static String hash() {
-        byte[] bytes = new byte[32];
-        SEC.nextBytes(bytes);
-        return HexFormat.of().formatHex(bytes);
+    private static String hash(String algorithm) {
+        int bytes = switch (algorithm.toLowerCase()) {
+            case "md5"    -> 16;
+            case "sha1"   -> 20;
+            case "sha384" -> 48;
+            case "sha512" -> 64;
+            default       -> 32; // sha256
+        };
+        byte[] b = new byte[bytes];
+        SEC.nextBytes(b);
+        return HexFormat.of().formatHex(b);
+    }
+
+    private static final String[] COLOR_NAMES = {
+        "red","blue","green","yellow","purple","orange","pink","cyan","magenta","black","white","gray","indigo","teal","lime"
+    };
+
+    private static String color(ThreadLocalRandom rng, String format) {
+        int r = rng.nextInt(256), g = rng.nextInt(256), b = rng.nextInt(256);
+        return switch (format.toLowerCase()) {
+            case "rgb"  -> String.format("rgb(%d, %d, %d)", r, g, b);
+            case "hsl"  -> String.format("hsl(%d, %d%%, %d%%)", rng.nextInt(360), 20 + rng.nextInt(81), 20 + rng.nextInt(61));
+            case "name" -> COLOR_NAMES[rng.nextInt(COLOR_NAMES.length)];
+            default     -> String.format("#%02X%02X%02X", r, g, b); // hex (default)
+        };
     }
 
     // ── Signature ─────────────────────────────────────────────────────────────

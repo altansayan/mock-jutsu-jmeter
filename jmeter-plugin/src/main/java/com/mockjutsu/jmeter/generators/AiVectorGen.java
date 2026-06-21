@@ -6,11 +6,31 @@ public final class AiVectorGen {
     private AiVectorGen() {}
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "ai_embedding"     -> embedding(rng, 1536);
-            case "ai_vector"        -> embedding(rng, 384);
-            case "ai_sparse_vector" -> sparseVector(rng);
+            case "ai_embedding" -> {
+                int dim = 1536;
+                if (!qualifier.isEmpty()) try { dim = Math.max(1, Integer.parseInt(qualifier)); } catch (NumberFormatException ignored) {}
+                yield embedding(rng, dim);
+            }
+            case "ai_vector" -> {
+                int dim = 384;
+                if (!qualifier.isEmpty()) try { dim = Math.max(1, Integer.parseInt(qualifier)); } catch (NumberFormatException ignored) {}
+                yield embedding(rng, dim);
+            }
+            case "ai_sparse_vector" -> {
+                int dims = 30000, nnz = -1;
+                if (!qualifier.isEmpty()) {
+                    String[] parts = qualifier.split("\\|", 2);
+                    try { dims = Math.max(1, Integer.parseInt(parts[0])); } catch (NumberFormatException ignored) {}
+                    if (parts.length > 1) try { nnz = Math.max(1, Integer.parseInt(parts[1])); } catch (NumberFormatException ignored) {}
+                }
+                yield sparseVector(rng, dims, nnz);
+            }
             default -> "ERROR: Unknown AI vector type '" + type + "'";
         };
     }
@@ -31,11 +51,12 @@ public final class AiVectorGen {
         return sb.append("]").toString();
     }
 
-    private static String sparseVector(ThreadLocalRandom rng) {
-        int nnz = rng.nextInt(10, 50);
+    private static String sparseVector(ThreadLocalRandom rng, int dims, int nnzOverride) {
+        int nnz = nnzOverride > 0 ? nnzOverride : rng.nextInt(10, 50);
+        nnz = Math.min(nnz, dims);
         StringBuilder sb = new StringBuilder("{\"indices\":[");
         java.util.TreeSet<Integer> indices = new java.util.TreeSet<>();
-        while (indices.size() < nnz) indices.add(rng.nextInt(0, 30000));
+        while (indices.size() < nnz) indices.add(rng.nextInt(0, dims));
         boolean first = true;
         for (int idx : indices) { if (!first) sb.append(","); sb.append(idx); first = false; }
         sb.append("],\"values\":[");

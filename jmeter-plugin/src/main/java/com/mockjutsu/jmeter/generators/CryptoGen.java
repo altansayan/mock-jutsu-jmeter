@@ -33,14 +33,28 @@ public final class CryptoGen {
     private static final String[] CRYPTO_NAMES    = {"Bitcoin","Ethereum","Tether","BNB","XRP","USD Coin","Cardano","Dogecoin","Solana","TRON","Polkadot","Polygon"};
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
+        String q = qualifier.toLowerCase();
         return switch (type) {
             case "btc_address"          -> btcAddress(rng);
             case "eth_address"          -> ethAddress();
-            case "crypto_address"       -> rng.nextBoolean() ? btcAddress(rng) : ethAddress();
-            case "tx_hash"              -> "0x" + randomSecHex(32);
-            case "block_hash"           -> "0x" + randomSecHex(32);
-            case "mnemonic"             -> mnemonic(rng, 12);
+            case "crypto_address"       -> "btc".equals(q) ? btcAddress(rng) : "eth".equals(q) ? ethAddress() : (rng.nextBoolean() ? btcAddress(rng) : ethAddress());
+            case "tx_hash"              -> "btc".equals(q) ? randomSecHex(32) : "0x" + randomSecHex(32);
+            case "block_hash"           -> "btc".equals(q) ? randomSecHex(32) : "0x" + randomSecHex(32);
+            case "mnemonic"             -> {
+                int words = 12;
+                if (!qualifier.isEmpty()) {
+                    try {
+                        int n = Integer.parseInt(qualifier);
+                        if (n == 12 || n == 15 || n == 18 || n == 21 || n == 24) words = n;
+                    } catch (NumberFormatException ignored) {}
+                }
+                yield mnemonic(rng, words);
+            }
             case "nft_token_id"         -> String.valueOf(rng.nextLong(1_000_000_000L, 999_999_999_999_999_999L));
             case "gas_price"            -> String.valueOf(rng.nextInt(1, 200));
             case "gas_limit"            -> String.valueOf(21000 + rng.nextInt(479000));

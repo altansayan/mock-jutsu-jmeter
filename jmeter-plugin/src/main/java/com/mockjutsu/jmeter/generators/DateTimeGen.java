@@ -16,11 +16,15 @@ public final class DateTimeGen {
     private static final DateTimeFormatter TIME_FMT     = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
             case "past_date"       -> pastDate(rng);
             case "future_date"     -> futureDate(rng);
-            case "date_between"    -> dateBetween(rng);
+            case "date_between"    -> dateBetween(rng, qualifier);
             case "date_this_year"  -> dateThisYear(rng);
             case "date_this_month" -> dateThisMonth(rng);
             case "time_only"       -> timeOnly(rng);
@@ -38,10 +42,17 @@ public final class DateTimeGen {
         return LocalDate.now().plusDays(rng.nextInt(1, 3650)).format(DATE_FMT);
     }
 
-    private static String dateBetween(ThreadLocalRandom rng) {
+    private static String dateBetween(ThreadLocalRandom rng, String qualifier) {
         LocalDate start = LocalDate.now().minusYears(5);
-        long days = rng.nextInt(0, (int) (LocalDate.now().toEpochDay() - start.toEpochDay()) + 1);
-        return start.plusDays(days).format(DATE_FMT);
+        LocalDate end   = LocalDate.now();
+        if (!qualifier.isEmpty() && qualifier.contains("|")) {
+            String[] parts = qualifier.split("\\|", 2);
+            try { start = LocalDate.parse(parts[0].trim()); } catch (Exception ignored) {}
+            if (parts.length > 1) try { end = LocalDate.parse(parts[1].trim()); } catch (Exception ignored) {}
+        }
+        long range = end.toEpochDay() - start.toEpochDay();
+        if (range <= 0) return start.format(DATE_FMT);
+        return start.plusDays(rng.nextLong(0, range + 1)).format(DATE_FMT);
     }
 
     private static String dateThisYear(ThreadLocalRandom rng) {

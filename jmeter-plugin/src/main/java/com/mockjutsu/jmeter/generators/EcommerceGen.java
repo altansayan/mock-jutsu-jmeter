@@ -24,17 +24,47 @@ public final class EcommerceGen {
     private static final int[]    RATING_WEIGHTS = {1,   2,   3,   4,   8,   12,  20,  25,  25};
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
             case "product_name"    -> pick(rng, PRODUCTS);
             case "sku"             -> sku(rng);
             case "order_id"        -> orderId(rng);
-            case "tracking_number" -> uspsTracking(rng);
+            case "tracking_number" -> trackingNumber(rng, qualifier);
             case "category"        -> pick(rng, CATEGORIES);
             case "rating"          -> rating(rng);
             case "dhl_tracking"    -> dhlTracking(rng);
             default -> "ERROR: Unknown ecommerce type '" + type + "'";
         };
+    }
+
+    private static String trackingNumber(ThreadLocalRandom rng, String carrier) {
+        return switch (carrier.toLowerCase()) {
+            case "fedex" -> fedexTracking(rng);
+            case "ups"   -> upsTracking(rng);
+            case "dhl"   -> dhlTracking(rng);
+            default      -> uspsTracking(rng); // usps or empty
+        };
+    }
+
+    private static String fedexTracking(ThreadLocalRandom rng) {
+        int len = rng.nextBoolean() ? 12 : 15;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < len; i++) sb.append(rng.nextInt(10));
+        return sb.toString();
+    }
+
+    private static String upsTracking(ThreadLocalRandom rng) {
+        String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        StringBuilder sb = new StringBuilder("1Z");
+        for (int i = 0; i < 6; i++) sb.append(chars.charAt(rng.nextInt(chars.length())));
+        sb.append(String.format("%02d", rng.nextInt(100)));
+        for (int i = 0; i < 8; i++) sb.append(chars.charAt(rng.nextInt(chars.length())));
+        sb.append(rng.nextInt(10));
+        return sb.toString();
     }
 
     // SKU: {2-4 uppercase letters}-{4-8 digits}

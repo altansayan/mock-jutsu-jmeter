@@ -67,7 +67,7 @@ public final class FinancialGen {
             case "expirymonth"  -> String.format("%02d", rng.nextInt(1, 13));
             case "expiryyear"   -> String.valueOf(2025 + rng.nextInt(1, 8));
             case "pin"          -> String.format("%04d", rng.nextInt(0, 10000));
-            case "balance"      -> balance(rng, locale);
+            case "balance"      -> balance(rng, locale, qualifier);
             case "iban"         -> iban(rng, locale);
             case "credit_score" -> creditScore(rng, locale);
             case "sepa_qr"      -> sepaQr(rng, locale);
@@ -75,7 +75,7 @@ public final class FinancialGen {
             case "emv_qr_atm"   -> emvQr(rng, locale, "ATM");
             case "emv_qr_pos"   -> emvQr(rng, locale, "POS");
             case "3ds_cavv"     -> cavv();
-            case "3ds_eci"      -> eci(rng);
+            case "3ds_eci"      -> eci(rng, qualifier);
             default             -> "ERROR: Unknown financial type '" + type + "'";
         };
     }
@@ -225,9 +225,15 @@ public final class FinancialGen {
 
     // ── Balance ───────────────────────────────────────────────────────────────
 
-    private static String balance(ThreadLocalRandom rng, String locale) {
-        double amount = rng.nextDouble(10.0, 50000.00);
-        return String.format("%.2f", amount);
+    private static String balance(ThreadLocalRandom rng, String locale, String qualifier) {
+        double min = 10.0, max = 50000.0;
+        if (!qualifier.isEmpty() && qualifier.contains("|")) {
+            String[] parts = qualifier.split("\\|", 2);
+            try { min = Double.parseDouble(parts[0]); } catch (NumberFormatException ignored) {}
+            if (parts.length > 1) try { max = Double.parseDouble(parts[1]); } catch (NumberFormatException ignored) {}
+        }
+        if (min >= max) max = min + 1000.0;
+        return String.format("%.2f", min + rng.nextDouble(max - min));
     }
 
     // ── Credit score ──────────────────────────────────────────────────────────
@@ -267,9 +273,11 @@ public final class FinancialGen {
         return Base64.getEncoder().encodeToString(bytes).substring(0, 28);
     }
 
-    private static String eci(ThreadLocalRandom rng) {
-        String[] ecis = {"05","06","07"};
-        return pick(rng, ecis);
+    private static String eci(ThreadLocalRandom rng, String network) {
+        return switch (network.toLowerCase()) {
+            case "mc","mastercard" -> pick(rng, new String[]{"00","01","02"});
+            default -> pick(rng, new String[]{"05","06","07"}); // visa/amex/jcb/default
+        };
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

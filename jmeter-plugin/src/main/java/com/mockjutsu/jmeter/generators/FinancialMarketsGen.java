@@ -17,6 +17,10 @@ public final class FinancialMarketsGen {
     private static final String[] TICKER_PREFIXES  = {"MCK","NOV","APX","ZRC","ORB","VTX","AXM","TRX","PLN","FXM","LBL","ZNT"};
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
             case "isin"              -> isin(rng, locale);
@@ -24,12 +28,12 @@ public final class FinancialMarketsGen {
             case "sedol"             -> sedol(rng);
             case "lei"               -> lei(rng);
             case "fix_message"       -> fixMessage(rng);
-            case "psd2_consent"      -> psd2Consent(rng);
+            case "psd2_consent"      -> psd2Consent(rng, qualifier);
             case "figi"              -> figi(rng);
             case "nsin"              -> nsin(rng);
             case "stock_ticker"      -> stockTicker(rng);
             case "forex_pair"        -> pick(rng, FOREX_PAIRS);
-            case "forex_rate"        -> forexRate(rng);
+            case "forex_rate"        -> forexRate(rng, qualifier);
             case "ric"               -> ric(rng, locale);
             case "mic"               -> pick(rng, MIC_CODES);
             case "stock_exchange"    -> pick(rng, EXCHANGE_NAMES);
@@ -143,7 +147,7 @@ public final class FinancialMarketsGen {
 
     // ── PSD2 Consent ─────────────────────────────────────────────────────────
 
-    private static String psd2Consent(ThreadLocalRandom rng) {
+    private static String psd2Consent(ThreadLocalRandom rng, String qualifier) {
         // JWS compact serialization (mirrors financial_markets.py)
         String kid = randomAlphaNum(rng, 16).toUpperCase();
         String consentId = "MOCKJ-" + kid.substring(0, 8);
@@ -155,9 +159,13 @@ public final class FinancialMarketsGen {
         String toDate   = java.time.LocalDate.now().plusDays(90).toString() + "T00:00:00Z";
         String header = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(
             ("{\"alg\":\"PS256\",\"kid\":\"" + kid + "\",\"b64\":false,\"crit\":[\"b64\"]}").getBytes());
+        String amountField = "";
+        if (!qualifier.isEmpty()) {
+            try { Double.parseDouble(qualifier); amountField = ",\"maximumTransactionAmount\":" + qualifier; } catch (NumberFormatException ignored) {}
+        }
         String payloadJson =
             "{\"iss\":\"MOCKJUTSU\",\"iat\":" + now + ",\"exp\":" + (now + 3600) +
-            ",\"consentId\":\"" + consentId + "\"" +
+            ",\"consentId\":\"" + consentId + "\"" + amountField +
             ",\"permissions\":[\"ReadAccountsDetail\",\"ReadBalances\",\"ReadTransactionsCredits\"" +
             ",\"ReadTransactionsDebits\",\"ReadTransactionsDetail\"]" +
             ",\"accounts\":[{\"schemeName\":\"IBAN\",\"identification\":\"" + iban1 + "\"}]" +
@@ -213,8 +221,15 @@ public final class FinancialMarketsGen {
 
     // ── Forex Rate ────────────────────────────────────────────────────────────
 
-    private static String forexRate(ThreadLocalRandom rng) {
-        double rate = 0.5 + rng.nextDouble(0, 9.5);
+    private static String forexRate(ThreadLocalRandom rng, String pair) {
+        double rate = switch (pair.toUpperCase()) {
+            case "USDTRY","EURTRY","GBPTRY" -> 28.0 + rng.nextDouble(0, 10.0);
+            case "USDJPY","EURJPY","GBPJPY" -> 130.0 + rng.nextDouble(0, 20.0);
+            case "EURUSD","GBPUSD","AUDUSD","NZDUSD" -> 0.85 + rng.nextDouble(0, 0.35);
+            case "USDCHF","EURCHF" -> 0.9 + rng.nextDouble(0, 0.2);
+            case "USDCAD","EURCAD" -> 1.2 + rng.nextDouble(0, 0.3);
+            default -> 0.5 + rng.nextDouble(0, 9.5);
+        };
         return String.format(java.util.Locale.US, "%.4f", rate);
     }
 

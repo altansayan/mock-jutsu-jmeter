@@ -265,10 +265,10 @@ public final class MockJutsuRegistry {
         if ("cardowner".equals(type))
             return IdentityGen.generate("fullname", locale).toUpperCase();
 
-        if (IDENTITY_TYPES.contains(type))     return IdentityGen.generate(type, locale);
+        if (IDENTITY_TYPES.contains(type))     return IdentityGen.generate(type, locale, qualifier);
         if (FINANCIAL_TYPES.contains(type))    return FinancialGen.generate(type, locale, qualifier);
         if (COMM_TYPES.contains(type))         return CommunicationGen.generate(type, locale);
-        if (META_TYPES.contains(type))         return MetaGen.generate(type, locale);
+        if (META_TYPES.contains(type))         return MetaGen.generate(type, locale, qualifier);
         if (BANKING_TYPES.contains(type))      return BankingGen.generate(type, locale);
         if (CORPORATE_TYPES.contains(type))    return CorporateGen.generate(type, locale);
         if (HEALTH_TYPES.contains(type))       return HealthGen.generate(type, locale);
@@ -276,9 +276,9 @@ public final class MockJutsuRegistry {
         if (IOT_TYPES.contains(type))          return IoTGen.generate(type, locale);
         if (BARCODE_TYPES.contains(type))      return BarcodeGen.generate(type, locale);
         if (TELECOM_TYPES.contains(type))      return TelecomGen.generate(type, locale);
-        if (SECURITIES_TYPES.contains(type))   return FinancialMarketsGen.generate(type, locale);
-        if (CRYPTO_TYPES.contains(type))       return CryptoGen.generate(type, locale);
-        if (ECOMMERCE_TYPES.contains(type))    return EcommerceGen.generate(type, locale);
+        if (SECURITIES_TYPES.contains(type))   return FinancialMarketsGen.generate(type, locale, qualifier);
+        if (CRYPTO_TYPES.contains(type))       return CryptoGen.generate(type, locale, qualifier);
+        if (ECOMMERCE_TYPES.contains(type))    return EcommerceGen.generate(type, locale, qualifier);
         if (LOCATION_TYPES.contains(type))     return LocationGen.generate(type, locale);
         if (SOCIAL_TYPES.contains(type))       return SocialGen.generate(type, locale);
         if (HARDWARE_TYPES.contains(type))     return HardwareGen.generate(type, locale);
@@ -287,7 +287,7 @@ public final class MockJutsuRegistry {
         if (AVIATION_TYPES.contains(type))     return AviationGen.generate(type, locale);
         if (FIDO2_TYPES.contains(type))        return Fido2Gen.generate(type, locale);
         if (WALLET_TYPES.contains(type))       return WalletGen.generate(type, locale);
-        if (AI_VECTOR_TYPES.contains(type))    return AiVectorGen.generate(type, locale);
+        if (AI_VECTOR_TYPES.contains(type))    return AiVectorGen.generate(type, locale, qualifier);
         if (OIDC_TYPES.contains(type))         return OidcGen.generate(type, locale);
         if (BANK_STATEMENT_TYPES.contains(type)) return BankStatementGen.generate(type, locale);
         if (EDI_TYPES.contains(type))          return EdiGen.generate(type, locale);
@@ -303,11 +303,11 @@ public final class MockJutsuRegistry {
         if (AUTOMOTIVE_TYPES.contains(type))   return AutomotiveGen.generate(type, locale);
         if (TLE_TYPES.contains(type))          return TleGen.generate(type, locale);
         if (PAYMENTS_TYPES.contains(type))     return PaymentsGen.generate(type, locale);
-        if (REVERSE_REGEX_TYPES.contains(type)) return ReverseRegexGen.generate(type, locale);
+        if (REVERSE_REGEX_TYPES.contains(type)) return ReverseRegexGen.generate(type, locale, qualifier);
         if (INTL_IDS_TYPES.contains(type))    return IntlIdsGen.generate(type, locale);
         if (COMPLIANCE_TYPES.contains(type))   return ComplianceGen.generate(type, locale);
         if (FINANCIAL_EXT_TYPES.contains(type)) return FinancialExtGen.generate(type, locale);
-        if (DATETIME_TYPES.contains(type))     return DateTimeGen.generate(type, locale);
+        if (DATETIME_TYPES.contains(type))     return DateTimeGen.generate(type, locale, qualifier);
 
         return "ERROR: Unknown DataType '" + type + "'";
     }

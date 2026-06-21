@@ -16,7 +16,14 @@ public final class ReverseRegexGen {
     };
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
+        if (!qualifier.isEmpty()) {
+            return fromPattern(rng, locale, qualifier);
+        }
         int idx = rng.nextInt(PATTERNS.length);
         String label = PATTERNS[idx][1];
         return switch (label) {
@@ -27,6 +34,15 @@ public final class ReverseRegexGen {
             case "EMAIL"    -> CommunicationGen.email(rng, locale);
             default         -> java.util.UUID.randomUUID().toString();
         };
+    }
+
+    private static String fromPattern(ThreadLocalRandom rng, String locale, String pattern) {
+        if (pattern.contains("@")) return CommunicationGen.email(rng, locale);
+        if (pattern.startsWith("[A-Z]{2}") && pattern.contains("\\d")) return randomAlpha(rng, 2) + String.format("%06d", rng.nextInt(100000,999999)) + randomAlpha(rng, 1);
+        if (pattern.contains("\\d{4}-\\d{4}")) return String.format("%04d-%04d-%04d-%04d", rng.nextInt(1000,9999), rng.nextInt(1000,9999), rng.nextInt(1000,9999), rng.nextInt(1000,9999));
+        if (pattern.toLowerCase().contains("uuid") || pattern.contains("[A-Z0-9]{8}-")) return java.util.UUID.randomUUID().toString().toUpperCase();
+        if (pattern.contains("\\+") || pattern.contains("phone")) return "+1" + String.format("%010d", rng.nextLong(1000000000L, 9999999999L));
+        return java.util.UUID.randomUUID().toString();
     }
 
     private static String randomAlpha(ThreadLocalRandom rng, int len) {

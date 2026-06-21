@@ -108,9 +108,13 @@ public final class IdentityGen {
     // ── Public API ───────────────────────────────────────────────────────────
 
     public static String generate(String type, String locale) {
+        return generate(type, locale, "");
+    }
+
+    public static String generate(String type, String locale, String qualifier) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
-            case "tckn"         -> tckn(rng);
+            case "tckn"         -> qualifier.isEmpty() ? tckn(rng) : qualifier + tckn(rng);
             case "tckn_masked"  -> tckn(rng).replaceAll("(?<=.{3}).(?=.{4})", "*");
             case "ykn"          -> ykn(rng);
             case "taxid","vkn"  -> vkn(rng);
@@ -137,13 +141,13 @@ public final class IdentityGen {
             case "kpp"          -> kpp(rng);
             case "employer_id"  -> employerId(rng, locale);
             case "insurance_id" -> insuranceId(rng, locale);
-            case "firstname"    -> firstname(rng, locale, "");
-            case "lastname"     -> lastname(rng, locale, "");
-            case "fullname"     -> fullname(rng, locale);
-            case "patronymic"   -> patronymic(rng, locale, "");
+            case "firstname"    -> firstname(rng, locale, qualifier);
+            case "lastname"     -> lastname(rng, locale, qualifier);
+            case "fullname"     -> fullnameQ(rng, locale, qualifier);
+            case "patronymic"   -> patronymic(rng, locale, qualifier);
             case "passport"     -> passport(rng, locale);
             case "license"      -> license(rng, locale);
-            case "age"          -> String.valueOf(rng.nextInt(18, 80));
+            case "age"          -> ageRange(rng, qualifier);
             case "gender"       -> rng.nextBoolean() ? "Male" : "Female";
             case "birthdate"    -> birthdate(rng);
             case "nationality"  -> NATIONALITIES[rng.nextInt(NATIONALITIES.length)];
@@ -515,9 +519,24 @@ public final class IdentityGen {
     }
 
     static String fullname(ThreadLocalRandom rng, String locale) {
-        boolean male = rng.nextBoolean();
-        String gender = male ? "M" : "F";
+        return fullnameQ(rng, locale, "");
+    }
+
+    static String fullnameQ(ThreadLocalRandom rng, String locale, String qualifier) {
+        String gender = qualifier.isEmpty() ? (rng.nextBoolean() ? "M" : "F")
+                      : (qualifier.toLowerCase().startsWith("f") ? "F" : "M");
         return firstname(rng, locale, gender) + " " + lastname(rng, locale, gender);
+    }
+
+    private static String ageRange(ThreadLocalRandom rng, String qualifier) {
+        int min = 18, max = 80;
+        if (!qualifier.isEmpty() && qualifier.contains("-")) {
+            String[] parts = qualifier.split("-", 2);
+            try { min = Integer.parseInt(parts[0].trim()); } catch (NumberFormatException ignored) {}
+            if (parts.length > 1) try { max = Integer.parseInt(parts[1].trim()); } catch (NumberFormatException ignored) {}
+        }
+        if (min >= max) max = min + 1;
+        return String.valueOf(rng.nextInt(min, max + 1));
     }
 
     static String patronymic(ThreadLocalRandom rng, String locale, String gender) {
