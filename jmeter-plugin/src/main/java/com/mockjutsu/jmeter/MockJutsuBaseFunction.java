@@ -44,38 +44,42 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         String        varName  = "";
         boolean       mask     = false;
 
-        // ── Collect extra params (mode B: param[1..3] are locale/mask/varName) ──
-        for (int i = 1; i < n; i++) {
+        // ── Param[1] = options field (Function Helper 2nd field, space-separated)
+        //    Accepts: locale · mask · varName in any order, separated by spaces
+        //    e.g. "TR mask", "mask", "TR", "TR myVar mask"
+        if (n > 1) {
+            for (String opt : params[1].execute().trim().split("\\s+")) {
+                opt = opt.trim();
+                if (opt.isEmpty()) continue;
+                if ("mask".equalsIgnoreCase(opt))            mask   = true;
+                else if (LOCALES.contains(opt.toUpperCase())) locale = opt.toUpperCase();
+                else                                          varName = opt;
+            }
+        }
+
+        // ── Params[2..3] = HOW-TO / manual multi-param compat ──────────────────
+        // e.g. ${__mockjutsu_financial(cardnum:visa,TR,mask)} → param[1]=TR, param[2]=mask
+        // These override/extend what param[1] set.
+        for (int i = 2; i < n; i++) {
             String p = params[i].execute().trim();
             if (p.isEmpty()) continue;
-            if ("mask".equalsIgnoreCase(p))        mask   = true;
+            if ("mask".equalsIgnoreCase(p))             mask   = true;
             else if (LOCALES.contains(p.toUpperCase())) locale = p.toUpperCase();
-            else                                    varName = p;
+            else                                         varName = p;
         }
 
         // ── Parse typeSpec (param[0]): comma-separated type[:qualifier] tokens ──
-        // "mask" keyword inside typeSpec also handled (mode A convenience)
-        boolean seenSuffix = false;
         for (String tok : rawParam.split(",", -1)) {
             tok = tok.trim();
             if (tok.isEmpty()) continue;
             String tokLower = tok.toLowerCase();
-            String tokUpper = tok.toUpperCase();
-            if ("mask".equals(tokLower)) {
-                mask = true; seenSuffix = true;
-            } else if (LOCALES.contains(tokUpper)) {
-                locale = tokUpper; seenSuffix = true;
-            } else if (!seenSuffix) {
-                int colon = tokLower.indexOf(':');
-                if (colon >= 0) {
-                    typeList.add(tokLower.substring(0, colon).trim());
-                    qualList.add(tok.substring(colon + 1).trim());
-                } else {
-                    typeList.add(tokLower);
-                    qualList.add("");
-                }
+            int colon = tokLower.indexOf(':');
+            if (colon >= 0) {
+                typeList.add(tokLower.substring(0, colon).trim());
+                qualList.add(tok.substring(colon + 1).trim());
             } else {
-                varName = tok;
+                typeList.add(tokLower);
+                qualList.add("");
             }
         }
 
@@ -118,7 +122,8 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
     @Override
     public List<String> getArgumentDesc() {
         return List.of(
-            "type[:qualifier][,type2...][,locale][,varName][,mask] — " + typeDescription()
+            "type[:qualifier][,type2...] — " + typeDescription(),
+            "options: locale (TR/UK/US/DE/FR/RU) · mask · varName — space-separated, optional"
         );
     }
 
