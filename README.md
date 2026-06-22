@@ -8,14 +8,14 @@
 Generate **5955-tested**, format-valid synthetic test data directly inside JMeter test plans — no Python, no subprocess, no external dependencies.
 
 ```
-${__mockjutsu_identity(tckn,TR,)}           → 46396909916
-${__mockjutsu_financial(iban,DE,)}          → DE89370400440532013000
-${__mockjutsu_financial(cardnum,TR,)}       → 4532015112830366
-${__mockjutsu_banking(swift,TR,)}           → AKBKTRIS
-${__mockjutsu_mrz(mrz_td3,TR,)}            → P<TUR... (2×44 chars)
-${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})} → XKM7291
-${__mockjutsu_financial(cardnum,TR,mask)}   → 4155 56** **** 3399  (PCI DSS masked)
-${__mockjutsu(uuid,,myId)}                  → stores UUID in ${myId}
+${__mockjutsu_identity(tckn,TR)}                    → 46396909916
+${__mockjutsu_financial(iban,DE)}                   → DE89370400440532013000
+${__mockjutsu_financial(cardnum)}                   → 4532015112830366
+${__mockjutsu_banking(swift,TR)}                    → AKBKTRIS
+${__mockjutsu_mrz(mrz_td3,TR)}                      → P<TUR... (2×44 chars)
+${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})}   → XKM7291
+${__mockjutsu_financial(cardnum:visa,TR,mask)}      → 4155 56** **** 3399  (PCI DSS masked)
+${__mockjutsu(uuid,myId)}                           → stores UUID in ${myId}
 ```
 
 ---
@@ -33,24 +33,33 @@ ${__mockjutsu(uuid,,myId)}                  → stores UUID in ${myId}
 
 ### Syntax
 
-```
-${__mockjutsu_<category>(type,locale,varName)}
-```
-
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `type` | Yes | — | Data type to generate (see categories below). For `reverse_regex`, append pattern with colon: `reverse_regex:[A-Z]{3}\d{4}` |
-| `locale` | No | — | `TR` · `DE` · `FR` · `UK` · `US` · `RU` — omit for locale-agnostic types |
-| `varName` | No | — | Store result in a JMeter variable. Use `mask` keyword here to return a regulation-compliant masked value |
-
-### mask keyword
-
-Pass `mask` as the `varName` parameter to return a regulation-compliant masked value (PCI DSS, GDPR, KVKK, HIPAA…):
+Everything goes into **a single parameter field**. Keywords can appear in any order after the type.
 
 ```
-${__mockjutsu_financial(cardnum,TR,mask)}     → 4155 56** **** 3399
-${__mockjutsu_identity(tckn,TR,mask)}         → 34*******90
-${__mockjutsu_financial(iban,TR,mask)}        → TR12 **** **** **** **** **34
+${__mockjutsu_<category>(type[:qualifier][,type2...][,locale][,varName][,mask])}
+```
+
+| Token | Required | Description |
+|-------|----------|-------------|
+| `type[:qualifier]` | Yes | Data type, optionally with a qualifier after `:` (e.g. `cardnum:visa`, `reverse_regex:[A-Z]{3}\d{4}`) |
+| `locale` | No | `TR` · `DE` · `FR` · `UK` · `US` · `RU` — omit for locale-agnostic types |
+| `varName` | No | Any other word stores the result in a JMeter variable |
+| `mask` | No | Keyword — returns a regulation-compliant masked value (PCI DSS, GDPR, KVKK…) |
+
+Tokens before the first `locale`/`mask` keyword are treated as type names.
+Tokens after the first `locale`/`mask` are treated as `varName`.
+
+### Examples
+
+```
+${__mockjutsu_financial(cardnum)}                    → 4532015112830366
+${__mockjutsu_financial(cardnum:visa)}               → 4532015112830366  (Visa forced)
+${__mockjutsu_financial(cardnum,TR)}                 → 4532015112830366  (Turkish locale)
+${__mockjutsu_financial(cardnum:visa,mask)}          → 4532 01** **** 0366  (masked)
+${__mockjutsu_financial(cardnum:visa,TR,mask)}       → 4532 01** **** 0366
+${__mockjutsu_financial(cardnum:visa,TR,myCard)}     → stores result in ${myCard}
+${__mockjutsu_financial(cardnum:visa,TR,myCard,mask)} → masked + stored
+${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})}    → XKM7291
 ```
 
 ### Generic function (all types)
@@ -210,17 +219,17 @@ ${__mockjutsu(tckn,TR,myVar)}
 ### HTTP Request body with dynamic TCKN + IBAN
 ```
 {
-  "citizenId": "${__mockjutsu_identity(tckn,TR,)}",
-  "iban": "${__mockjutsu_financial(iban,TR,)}",
+  "citizenId": "${__mockjutsu_identity(tckn,TR)}",
+  "iban": "${__mockjutsu_financial(iban,TR)}",
   "cardNumber": "${__mockjutsu_financial(cardnum,TR,card)}",
-  "requestId": "${__mockjutsu_meta(uuid,,rid)}"
+  "requestId": "${__mockjutsu_meta(uuid,rid)}"
 }
 ```
 
 ### Regulation-compliant masked output
 ```
 {
-  "maskedCard": "${__mockjutsu_financial(cardnum,TR,mask)}",
+  "maskedCard": "${__mockjutsu_financial(cardnum:visa,TR,mask)}",
   "maskedTckn": "${__mockjutsu_identity(tckn,TR,mask)}",
   "maskedIban": "${__mockjutsu_financial(iban,TR,mask)}"
 }
@@ -244,10 +253,10 @@ ${__mockjutsu_meta(reverse_regex:[A-Fa-f0-9]{8})}    → 3f8a1c2d
 
 ### Multi-locale load test
 ```
-${__mockjutsu_identity(ssn,US,)}      // US Social Security Number
-${__mockjutsu_identity(nin,UK,)}      // UK National Insurance Number
-${__mockjutsu_identity(tckn,TR,)}     // Turkish Citizen ID
-${__mockjutsu_financial(iban,DE,)}    // German IBAN (MOD-97 valid)
+${__mockjutsu_identity(ssn,US)}     // US Social Security Number
+${__mockjutsu_identity(nin,UK)}     // UK National Insurance Number
+${__mockjutsu_identity(tckn,TR)}    // Turkish Citizen ID
+${__mockjutsu_financial(iban,DE)}   // German IBAN (MOD-97 valid)
 ```
 
 ### International ID load test
