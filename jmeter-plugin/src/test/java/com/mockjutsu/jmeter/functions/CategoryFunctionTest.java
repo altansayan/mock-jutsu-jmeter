@@ -89,13 +89,15 @@ class CategoryFunctionTest {
 
     @ParameterizedTest
     @MethodSource("allFunctions")
-    void maskArgDescMentionsKeyword(MockJutsuBaseFunction fn) {
+    void argDescMentionsPipeAndMask(MockJutsuBaseFunction fn) {
         List<String> desc = fn.getArgumentDesc();
-        assertEquals(4, desc.size(),
-            fn.getReferenceKey() + " must have exactly 4 param descriptions");
-        String maskDesc = desc.get(3);
-        assertTrue(maskDesc.toLowerCase().contains("keyword"),
-            fn.getReferenceKey() + " 4th param must mention 'keyword', got: '" + maskDesc + "'");
+        assertEquals(1, desc.size(),
+            fn.getReferenceKey() + " must have exactly 1 param description (pipe-style)");
+        String d = desc.get(0).toLowerCase();
+        assertTrue(d.contains("|"),
+            fn.getReferenceKey() + " param description must mention '|' separator, got: '" + desc.get(0) + "'");
+        assertTrue(d.contains("mask"),
+            fn.getReferenceKey() + " param description must mention 'mask', got: '" + desc.get(0) + "'");
     }
 
     @Test

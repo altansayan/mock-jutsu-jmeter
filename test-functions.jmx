@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="MockJutsu Function Test" enabled="true">
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <hashTree>
+        <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Tests" enabled="true">
+          <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+          <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController">
+            <boolProp name="LoopController.continue_forever">false</boolProp>
+            <stringProp name="LoopController.loops">1</stringProp>
+          </elementProp>
+          <stringProp name="ThreadGroup.num_threads">1</stringProp>
+          <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+          <boolProp name="ThreadGroup.scheduler">false</boolProp>
+          <hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 1: cardnum (Function Helper style)" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_financial(cardnum)}')
+log.info("Test 1 cardnum: " + result)
+SampleResult.setResponseData("cardnum=" + result, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR"))
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 2: cardnum:visa (qualifier)" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_financial(cardnum:visa)}')
+log.info("Test 2 cardnum:visa: " + result)
+SampleResult.setResponseData("cardnum:visa=" + result, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR"))
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 3: pipe style — cardnum:visa|mask" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_financial(cardnum:visa|mask)}')
+log.info("Test 3 pipe mask: " + result)
+SampleResult.setResponseData("pipe_masked=" + result, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR") &amp;&amp; result.contains("*"))
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 4: pipe style — cardnum:visa|TR|mask" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_financial(cardnum:visa|TR|mask)}')
+log.info("Test 4 pipe TR+mask: " + result)
+SampleResult.setResponseData("pipe_tr_masked=" + result, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR") &amp;&amp; result.contains("*"))
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 5: tckn,TR" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_identity(tckn,TR)}')
+log.info("Test 5 tckn: " + result)
+SampleResult.setResponseData("tckn=" + result, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR") &amp;&amp; result.length() == 11)
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 6: reverse_regex" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_meta(reverse_regex:[A-Z]{3}\\d{4})}')
+log.info("Test 6 reverse_regex: " + result)
+SampleResult.setResponseData("regex=" + result, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR") &amp;&amp; result.length() == 7)
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 7: pipe style — varName storage" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_financial(cardnum|TR|myCard)}')
+def stored = vars.get("myCard")
+log.info("Test 7 pipe varName: result=" + result + " stored=" + stored)
+SampleResult.setResponseData("result=" + result + " stored=" + stored, "UTF-8")
+SampleResult.setSuccessful(result == stored)
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Test 8: pipe style — cardnum:visa|TR|myVar|mask" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def result = vars.replace('${__mockjutsu_financial(cardnum:visa|TR|myCard2|mask)}')
+def stored = vars.get("myCard2")
+log.info("Test 8 all options: result=" + result + " stored=" + stored)
+SampleResult.setResponseData("result=" + result + " stored=" + stored, "UTF-8")
+SampleResult.setSuccessful(!result.startsWith("ERROR") &amp;&amp; result.contains("*") &amp;&amp; result == stored)
+              </stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+          </hashTree>
+        </ThreadGroup>
+      </hashTree>
+    </TestPlan>
+  </hashTree>
+</jmeterTestPlan>

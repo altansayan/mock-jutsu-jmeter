@@ -44,27 +44,45 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         String        varName  = "";
         boolean       mask     = false;
 
-        // ── Param[1] = locale ───────────────────────────────────────────────────
-        if (n > 1) {
-            String p = params[1].execute().trim();
-            if (!p.isEmpty()) locale = p.toUpperCase();
+        // ── Primary syntax: pipe-separated in single field (no JMeter escaping) ──
+        // typeSpec[|locale][|varName][|mask]   e.g. cardnum:visa|TR|myVar|mask
+        // JMeter does not escape | so Function Helper output stays clean.
+        //
+        // Backward compat: multi-param style (HOW-TO) still works:
+        //   ${__mockjutsu_financial(cardnum:visa,TR,myVar,mask)} → params[0..3]
+
+        if (rawParam.contains("|")) {
+            // ── Pipe mode ───────────────────────────────────────────────────────
+            String[] segs = rawParam.split("\\|", -1);
+            // first segment = typeSpec (may contain commas for multi-type)
+            rawParam = segs[0].trim();
+            for (int si = 1; si < segs.length; si++) {
+                String s = segs[si].trim();
+                if (s.isEmpty()) continue;
+                if ("mask".equalsIgnoreCase(s))             mask   = true;
+                else if (LOCALES.contains(s.toUpperCase())) locale = s.toUpperCase();
+                else                                         varName = s;
+            }
+        } else {
+            // ── Multi-param compat: ${__f(type,locale,varName,mask)} ────────────
+            // "mask" keyword is recognized at any of the 3 optional positions.
+            if (n > 1) {
+                String p = params[1].execute().trim();
+                if ("mask".equalsIgnoreCase(p)) mask = true;
+                else if (!p.isEmpty()) locale = p.toUpperCase();
+            }
+            if (n > 2) {
+                String p = params[2].execute().trim();
+                if ("mask".equalsIgnoreCase(p)) mask = true;
+                else if (!p.isEmpty()) varName = p;
+            }
+            if (n > 3) {
+                String p = params[3].execute().trim();
+                if ("mask".equalsIgnoreCase(p) || "true".equalsIgnoreCase(p)) mask = true;
+            }
         }
 
-        // ── Param[2] = varName ──────────────────────────────────────────────────
-        if (n > 2) {
-            String p = params[2].execute().trim();
-            if (!p.isEmpty()) varName = p;
-        }
-
-        // ── Param[3] = mask ─────────────────────────────────────────────────────
-        if (n > 3) {
-            String p = params[3].execute().trim();
-            if ("mask".equalsIgnoreCase(p) || "true".equalsIgnoreCase(p)) mask = true;
-        }
-
-        // ── Parse typeSpec (param[0]): comma-separated type[:qualifier] tokens ──
-        // mask/locale keywords are also recognized here for backward compat
-        // (in case user types everything in field 1 instead of using field 2)
+        // ── Parse typeSpec: comma-separated type[:qualifier] tokens ─────────────
         boolean seenSuffix = false;
         for (String tok : rawParam.split(",", -1)) {
             tok = tok.trim();
@@ -129,10 +147,8 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
     @Override
     public List<String> getArgumentDesc() {
         return List.of(
-            "type[:qualifier][,type2...] — " + typeDescription(),
-            "locale — TR · UK · US · DE · FR · RU (optional)",
-            "varName — JMeter variable to store result (optional)",
-            "mask — type 'mask' to return regulation-compliant masked value (optional)"
+            "type[:qualifier][|locale][|varName][|mask]  —  " + typeDescription()
+                + "  ·  pipe separates options, e.g. cardnum:visa|TR|myVar|mask"
         );
     }
 
