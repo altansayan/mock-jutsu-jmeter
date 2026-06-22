@@ -44,28 +44,22 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         String        varName  = "";
         boolean       mask     = false;
 
-        // ── Param[1] = options field (Function Helper 2nd field, space-separated)
-        //    Accepts: locale · mask · varName in any order, separated by spaces
-        //    e.g. "TR mask", "mask", "TR", "TR myVar mask"
+        // ── Param[1] = locale ───────────────────────────────────────────────────
         if (n > 1) {
-            for (String opt : params[1].execute().trim().split("\\s+")) {
-                opt = opt.trim();
-                if (opt.isEmpty()) continue;
-                if ("mask".equalsIgnoreCase(opt))            mask   = true;
-                else if (LOCALES.contains(opt.toUpperCase())) locale = opt.toUpperCase();
-                else                                          varName = opt;
-            }
+            String p = params[1].execute().trim();
+            if (!p.isEmpty()) locale = p.toUpperCase();
         }
 
-        // ── Params[2..3] = HOW-TO / manual multi-param compat ──────────────────
-        // e.g. ${__mockjutsu_financial(cardnum:visa,TR,mask)} → param[1]=TR, param[2]=mask
-        // These override/extend what param[1] set.
-        for (int i = 2; i < n; i++) {
-            String p = params[i].execute().trim();
-            if (p.isEmpty()) continue;
-            if ("mask".equalsIgnoreCase(p))             mask   = true;
-            else if (LOCALES.contains(p.toUpperCase())) locale = p.toUpperCase();
-            else                                         varName = p;
+        // ── Param[2] = varName ──────────────────────────────────────────────────
+        if (n > 2) {
+            String p = params[2].execute().trim();
+            if (!p.isEmpty()) varName = p;
+        }
+
+        // ── Param[3] = mask ─────────────────────────────────────────────────────
+        if (n > 3) {
+            String p = params[3].execute().trim();
+            if ("mask".equalsIgnoreCase(p) || "true".equalsIgnoreCase(p)) mask = true;
         }
 
         // ── Parse typeSpec (param[0]): comma-separated type[:qualifier] tokens ──
@@ -136,7 +130,9 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
     public List<String> getArgumentDesc() {
         return List.of(
             "type[:qualifier][,type2...] — " + typeDescription(),
-            "options: locale (TR/UK/US/DE/FR/RU) · mask · varName — space-separated, optional"
+            "locale — TR · UK · US · DE · FR · RU (optional)",
+            "varName — JMeter variable to store result (optional)",
+            "mask — type 'mask' to return regulation-compliant masked value (optional)"
         );
     }
 
