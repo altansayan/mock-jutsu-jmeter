@@ -1,6 +1,6 @@
 {
   "id": "mock-jutsu",
-  "name": "mock-jutsu — Synthetic Test Data Functions",
+  "name": "Mock Jutsu — Synthetic Test Data Functions",
   "description": "Generate format-valid synthetic test data inside JMeter — 390 types, 6 locales, zero dependencies. Identity (TCKN, SSN, IBAN, passport), financial (card numbers, SWIFT, crypto), security, health, AI vector, telecom, aviation and more. Pipe-separated options: ${__mockjutsu_financial(cardnum:visa|TR|mask)}",
   "helpurl": "https://github.com/altansayan/mock-jutsu-jmeter#readme",
   "markerClass": "com.mockjutsu.jmeter.MockJutsuBaseFunction",
