@@ -69,17 +69,30 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         }
 
         // ── Parse typeSpec (param[0]): comma-separated type[:qualifier] tokens ──
+        // mask/locale keywords are also recognized here for backward compat
+        // (in case user types everything in field 1 instead of using field 2)
+        boolean seenSuffix = false;
         for (String tok : rawParam.split(",", -1)) {
             tok = tok.trim();
             if (tok.isEmpty()) continue;
             String tokLower = tok.toLowerCase();
-            int colon = tokLower.indexOf(':');
-            if (colon >= 0) {
-                typeList.add(tokLower.substring(0, colon).trim());
-                qualList.add(tok.substring(colon + 1).trim());
+            String tokUpper = tok.toUpperCase();
+            if ("mask".equals(tokLower)) {
+                mask = true; seenSuffix = true;
+            } else if (LOCALES.contains(tokUpper)) {
+                if (locale.isEmpty()) locale = tokUpper;
+                seenSuffix = true;
+            } else if (!seenSuffix) {
+                int colon = tokLower.indexOf(':');
+                if (colon >= 0) {
+                    typeList.add(tokLower.substring(0, colon).trim());
+                    qualList.add(tok.substring(colon + 1).trim());
+                } else {
+                    typeList.add(tokLower);
+                    qualList.add("");
+                }
             } else {
-                typeList.add(tokLower);
-                qualList.add("");
+                if (varName.isEmpty()) varName = tok;
             }
         }
 
