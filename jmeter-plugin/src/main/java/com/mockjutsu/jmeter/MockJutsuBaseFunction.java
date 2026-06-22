@@ -43,20 +43,28 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
         String varName = positional.size() > 2 ? positional.get(2) : "";
         if (locale.isEmpty()) locale = "TR";
 
-        String[] parts     = rawType.split(",");
-        String[] types     = new String[parts.length];
-        String[] qualifiers = new String[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            String part    = parts[i].trim().toLowerCase();
-            int colonIdx   = part.indexOf(':');
+        // Parse comma-separated types; "mask" keyword anywhere in the list sets mask flag
+        String[] parts = rawType.split(",");
+        List<String> typeList = new ArrayList<>();
+        List<String> qualList = new ArrayList<>();
+        for (String part : parts) {
+            part = part.trim().toLowerCase();
+            if (part.isEmpty()) continue;
+            if ("mask".equals(part)) {
+                mask = true;
+                continue;
+            }
+            int colonIdx = part.indexOf(':');
             if (colonIdx >= 0) {
-                types[i]      = part.substring(0, colonIdx).trim();
-                qualifiers[i] = part.substring(colonIdx + 1).trim();
+                typeList.add(part.substring(0, colonIdx).trim());
+                qualList.add(part.substring(colonIdx + 1).trim());
             } else {
-                types[i]      = part;
-                qualifiers[i] = "";
+                typeList.add(part);
+                qualList.add("");
             }
         }
+        String[] types      = typeList.toArray(new String[0]);
+        String[] qualifiers = qualList.toArray(new String[0]);
 
         String result;
         if (types.length == 1) {
@@ -97,16 +105,15 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
     @Override
     public List<String> getArgumentDesc() {
         return List.of(
-            "type[:qualifier][,type2...] — " + typeDescription(),
-            "locale (TR/UK/US/DE/FR/RU) — optional, default TR",
-            "varName — optional JMeter variable name to store result",
-            "mask — keyword in any position (or legacy true/false at pos 4)"
+            "type[:qualifier][,type2...][,mask] — " + typeDescription(),
+            "locale (TR/UK/US/DE/FR/RU) — optional",
+            "varName — optional JMeter variable name to store result"
         );
     }
 
     @Override
     public void setParameters(Collection<CompoundVariable> parameters) throws InvalidVariableException {
-        checkParameterCount(parameters, 1, 4);
+        checkParameterCount(parameters, 1, 3);
         params = parameters.toArray(new CompoundVariable[0]);
     }
 }
