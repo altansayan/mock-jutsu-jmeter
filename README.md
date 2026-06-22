@@ -318,6 +318,20 @@ mvn package       # produces target/mock-jutsu-jmeter-1.0.0.jar
 
 ---
 
+## 💖 Support Mock Jutsu
+
+Mock Jutsu is **free and open-source**. If it saved you hours of test data setup, consider buying me a coffee ☕
+
+> _"Every cup of coffee = one more data type."_ 🥷
+
+| Network | Address |
+|---------|---------|
+| Ξ **Ethereum (ETH)** | `0x8D2fF0a795E3a19D41758Cb9b4451C39D528BbAF` |
+
+_This section will be updated with our sponsors._
+
+---
+
 ## License
 
 MIT © 2026 Altan Sezer Ayan
