@@ -11,8 +11,40 @@
   <packaging>jar</packaging>
 
   <name>mock-jutsu JMeter Function Plugin</name>
-  <description>JMeter custom function — all mock-jutsu types via ${__mockjutsu(type,locale,varName)}</description>
+  <description>JMeter custom functions — 390 mock data types via ${__mockjutsu_*(type|locale|varName|mask)}</description>
   <url>https://github.com/altansayan/mock-jutsu-jmeter</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <organization>
+    <name>ASA Intelligence</name>
+    <url>https://github.com/altansayan</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>altansayan</id>
+      <name>Altan Sezer Ayan</name>
+      <url>https://github.com/altansayan</url>
+      <roles>
+        <role>developer</role>
+        <role>maintainer</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/altansayan/mock-jutsu-jmeter.git</connection>
+    <developerConnection>scm:git:ssh://github.com/altansayan/mock-jutsu-jmeter.git</developerConnection>
+    <url>https://github.com/altansayan/mock-jutsu-jmeter</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
@@ -78,6 +110,22 @@
               </artifactSet>
               <finalName>mock-jutsu-jmeter-${project.version}</finalName>
               <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Implementation-Title>mock-jutsu JMeter Function Plugin</Implementation-Title>
+                    <Implementation-Version>${project.version}</Implementation-Version>
+                    <Implementation-Vendor>ASA Intelligence</Implementation-Vendor>
+                    <Implementation-URL>${project.url}</Implementation-URL>
+                    <Specification-Title>mock-jutsu JMeter Functions</Specification-Title>
+                    <Specification-Version>${project.version}</Specification-Version>
+                    <Specification-Vendor>ASA Intelligence</Specification-Vendor>
+                    <Built-By>Altan Sezer Ayan</Built-By>
+                    <License>MIT License</License>
+                    <Copyright>Copyright 2026 ASA Intelligence</Copyright>
+                  </manifestEntries>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
         </executions>
