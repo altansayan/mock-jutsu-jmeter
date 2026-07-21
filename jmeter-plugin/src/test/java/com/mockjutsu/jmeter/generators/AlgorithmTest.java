@@ -47,15 +47,15 @@ class AlgorithmTest {
 
     @RepeatedTest(20)
     void ninFormatValid() {
+        // Format: "AA DD DD DD A" (13 chars incl. spaces) — matches Python's generate_uk_ni().
         String nin = IdentityGen.nin(ThreadLocalRandom.current());
-        assertEquals(9, nin.length(), "NIN must be 9 chars");
+        assertEquals(13, nin.length(), "NIN must be 13 chars incl. spaces");
+        assertTrue(nin.matches("[A-Z]{2} \\d{2} \\d{2} \\d{2} [A-D]"), "NIN format invalid: " + nin);
         char p1 = nin.charAt(0), p2 = nin.charAt(1);
         assertFalse("DFIQUV".indexOf(p1) >= 0, "NIN prefix char 1 invalid: " + p1);
-        assertFalse("DFIQUV".indexOf(p2) >= 0, "NIN prefix char 2 invalid: " + p2);
+        assertFalse("DFIOQUV".indexOf(p2) >= 0, "NIN prefix char 2 invalid: " + p2);
         String prefix = "" + p1 + p2;
         assertFalse(java.util.Set.of("BG","GB","NK","KN","NT","TN","ZZ").contains(prefix), "NIN forbidden prefix: " + prefix);
-        assertTrue(nin.substring(2,8).matches("\\d{6}"), "NIN digits invalid");
-        assertTrue("ABCD".indexOf(nin.charAt(8)) >= 0, "NIN suffix invalid: " + nin.charAt(8));
     }
 
     // ── Luhn ──────────────────────────────────────────────────────────────────
@@ -79,9 +79,11 @@ class AlgorithmTest {
 
     @Test
     void cardnumMastercardStartsWith5() {
+        // Python's own CARD_NETWORKS dict only recognizes "mc" (not "mastercard") as the
+        // network key — an unrecognized key falls back to visa, in both engines.
         var rng = ThreadLocalRandom.current();
         for (int i = 0; i < 50; i++) {
-            String card = FinancialGen.cardnum(rng, "TR", "mastercard");
+            String card = FinancialGen.cardnum(rng, "TR", "mc");
             assertTrue(card.startsWith("5"), "Mastercard must start with 5: " + card);
             assertEquals(16, card.length(), "Mastercard must be 16 digits");
             assertTrue(isLuhnValid(card), "Mastercard Luhn invalid: " + card);
@@ -119,7 +121,7 @@ class AlgorithmTest {
 
     @RepeatedTest(50)
     void imeiLuhnValid() {
-        String imei = TelecomGen.imei(ThreadLocalRandom.current(), "TR");
+        String imei = TelecomGen.imei(ThreadLocalRandom.current());
         assertEquals(15, imei.length());
         assertTrue(isLuhnValid(imei), "IMEI " + imei + " failed Luhn");
     }
@@ -167,7 +169,7 @@ class AlgorithmTest {
 
     @RepeatedTest(20)
     void ean13ChecksumValid() {
-        String ean = BarcodeGen.ean13(ThreadLocalRandom.current());
+        String ean = BarcodeGen.ean13(ThreadLocalRandom.current(), "TR");
         assertEquals(13, ean.length());
         int[] d = new int[13];
         for (int i = 0; i < 13; i++) d[i] = ean.charAt(i) - '0';

@@ -195,7 +195,7 @@ public final class FinancialGen {
             if (parts.length > 1) try { max = Double.parseDouble(parts[1]); } catch (NumberFormatException ignored) {}
         }
         if (min >= max) max = min + 1000.0;
-        return String.format("%.2f", min + rng.nextDouble(max - min));
+        return String.format(java.util.Locale.US, "%.2f", min + rng.nextDouble(max - min));
     }
 
     // ── Credit score ──────────────────────────────────────────────────────────

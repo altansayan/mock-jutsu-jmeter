@@ -80,7 +80,7 @@ public final class TleGen {
 
         int epochYr = rng.nextInt(14, 27);
         double epochDay = round8(rng.nextDouble(1.0, 365.9999));
-        String epochStr = String.format("%02d%012.8f", epochYr, epochDay);
+        String epochStr = String.format(java.util.Locale.US, "%02d%012.8f", epochYr, epochDay);
 
         double ndot = round8(rng.nextDouble(0.0, 0.00009999));
         String ndotStr = fmt1stDeriv(ndot);

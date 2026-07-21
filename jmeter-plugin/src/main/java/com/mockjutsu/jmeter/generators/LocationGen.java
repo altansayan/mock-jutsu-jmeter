@@ -35,7 +35,7 @@ public final class LocationGen {
             case "DE" -> 55.0; case "FR" -> 51.0; case "RU" -> 82.0;
             default   -> 90.0;
         };
-        return String.format("%.6f", min + rng.nextDouble(max - min));
+        return String.format(java.util.Locale.US, "%.6f", min + rng.nextDouble(max - min));
     }
 
     static String longitude(ThreadLocalRandom rng, String locale) {
@@ -49,7 +49,7 @@ public final class LocationGen {
             case "DE" ->  15.0; case "FR" ->   8.0; case "RU" -> 170.0;
             default   -> 180.0;
         };
-        return String.format("%.6f", min + rng.nextDouble(max - min));
+        return String.format(java.util.Locale.US, "%.6f", min + rng.nextDouble(max - min));
     }
 
     static String timezone(ThreadLocalRandom rng, String locale) {

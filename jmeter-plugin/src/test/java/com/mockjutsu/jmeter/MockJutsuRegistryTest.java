@@ -54,7 +54,7 @@ class MockJutsuRegistryTest {
     @Test
     void ninMatchesFormat() {
         String nin = MockJutsuRegistry.generate("nin", "UK");
-        assertMatches(nin, "[A-Z]{2}\\d{6}[A-D]");
+        assertMatches(nin, "[A-Z]{2} \\d{2} \\d{2} \\d{2} [A-D]");
     }
 
     @ParameterizedTest
@@ -382,7 +382,7 @@ class MockJutsuRegistryTest {
         // Compliance
         "policy_number","claim_number","pep_status","aml_risk_rating","cdd_level",
         "sar_number","ubo_ownership_percentage","kyc_document_type","consent_id",
-        "tpp_id","onboarding_method","sanctions_hit","sanctions_hit_masked",
+        "tpp_id","onboarding_method","sanctions_hit",
         // Financial Ext
         "credit_score_model","credit_score_tier","credit_limit","credit_utilization",
         "credit_card_issuer_name","apr","loan_type","mortgage_rate","mortgage_term",

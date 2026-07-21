@@ -119,7 +119,7 @@ public final class EcommerceGen {
         int cum = 0;
         for (int i = 0; i < RATING_WEIGHTS.length; i++) {
             cum += RATING_WEIGHTS[i];
-            if (r < cum) return String.format("%.1f", RATING_VALUES[i]);
+            if (r < cum) return String.format(java.util.Locale.US, "%.1f", RATING_VALUES[i]);
         }
         return "5.0";
     }

@@ -197,7 +197,7 @@ public final class MockJutsuRegistry {
     private static final Set<String> COMPLIANCE_TYPES = Set.of(
         "policy_number","claim_number","pep_status","aml_risk_rating","cdd_level",
         "sar_number","ubo_ownership_percentage","kyc_document_type","consent_id",
-        "tpp_id","onboarding_method","sanctions_hit","sanctions_hit_masked"
+        "tpp_id","onboarding_method","sanctions_hit"
     );
 
     private static final Set<String> FINANCIAL_EXT_TYPES = Set.of(
