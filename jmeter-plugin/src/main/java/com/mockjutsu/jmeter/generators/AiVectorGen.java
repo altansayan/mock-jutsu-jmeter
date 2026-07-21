@@ -2,6 +2,7 @@ package com.mockjutsu.jmeter.generators;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/** AI / Vector Database mock generator — L2-normalized float vectors. Mirrors ai_vector.py. */
 public final class AiVectorGen {
     private AiVectorGen() {}
 
@@ -23,7 +24,7 @@ public final class AiVectorGen {
                 yield embedding(rng, dim);
             }
             case "ai_sparse_vector" -> {
-                int dims = 30000, nnz = -1;
+                int dims = 10000, nnz = 128;
                 if (!qualifier.isEmpty()) {
                     String[] parts = qualifier.split("\\|", 2);
                     try { dims = Math.max(1, Integer.parseInt(parts[0])); } catch (NumberFormatException ignored) {}
@@ -35,33 +36,56 @@ public final class AiVectorGen {
         };
     }
 
+    // Gaussian random vector normalized to L2 unit length.
     private static String embedding(ThreadLocalRandom rng, int dim) {
         double[] values = new double[dim];
         double norm = 0.0;
         for (int i = 0; i < dim; i++) {
-            values[i] = -1.0 + rng.nextDouble(2.0);
+            values[i] = rng.nextGaussian();
             norm += values[i] * values[i];
         }
         norm = Math.sqrt(norm);
+        if (norm == 0.0) {
+            values[0] = 1.0;
+            norm = 1.0;
+        }
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < dim; i++) {
             if (i > 0) sb.append(",");
-            sb.append(String.format("%.6f", values[i] / norm));
+            sb.append(String.format(java.util.Locale.US, "%.6f", values[i] / norm));
         }
         return sb.append("]").toString();
     }
 
-    private static String sparseVector(ThreadLocalRandom rng, int dims, int nnzOverride) {
-        int nnz = nnzOverride > 0 ? nnzOverride : rng.nextInt(10, 50);
-        nnz = Math.min(nnz, dims);
-        StringBuilder sb = new StringBuilder("{\"indices\":[");
+    private static String sparseVector(ThreadLocalRandom rng, int dims, int nnz) {
+        int k = Math.min(nnz, dims);
         java.util.TreeSet<Integer> indices = new java.util.TreeSet<>();
-        while (indices.size() < nnz) indices.add(rng.nextInt(0, dims));
+        while (indices.size() < k) indices.add(rng.nextInt(0, dims));
+
+        double[] raw = new double[k];
+        double norm = 0.0;
+        for (int i = 0; i < k; i++) {
+            raw[i] = rng.nextDouble(0.001, 1.0);
+            norm += raw[i] * raw[i];
+        }
+        norm = Math.sqrt(norm);
+
+        StringBuilder sb = new StringBuilder("{\"indices\":[");
         boolean first = true;
-        for (int idx : indices) { if (!first) sb.append(","); sb.append(idx); first = false; }
+        for (int idx : indices) {
+            if (!first) sb.append(",");
+            sb.append(idx);
+            first = false;
+        }
         sb.append("],\"values\":[");
+        int i = 0;
         first = true;
-        for (int i = 0; i < nnz; i++) { if (!first) sb.append(","); sb.append(String.format("%.4f", rng.nextDouble())); first = false; }
+        for (int idx : indices) {
+            if (!first) sb.append(",");
+            sb.append(String.format(java.util.Locale.US, "%.6f", raw[i] / norm));
+            i++;
+            first = false;
+        }
         sb.append("]}");
         return sb.toString();
     }

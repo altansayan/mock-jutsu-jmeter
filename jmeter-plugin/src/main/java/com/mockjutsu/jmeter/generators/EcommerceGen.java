@@ -6,17 +6,26 @@ public final class EcommerceGen {
     private EcommerceGen() {}
 
     private static final String[] PRODUCTS   = {
-        "Wireless Headphones","Smart Watch","Laptop Stand","USB-C Hub","Mechanical Keyboard",
-        "Monitor Arm","Webcam","Mouse Pad XL","RGB Mouse","SSD 1TB"
+        "Wireless Headphones", "Mechanical Keyboard", "USB-C Hub", "LED Desk Lamp",
+        "Ergonomic Mouse", "Laptop Stand", "Webcam HD", "Portable SSD",
+        "Smart Watch", "Bluetooth Speaker", "Phone Case", "Screen Protector",
+        "Gaming Chair", "Monitor Arm", "Cable Management Kit", "Power Bank",
+        "Noise Cancelling Earbuds", "Graphic Tablet", "Drawing Pad", "Ring Light",
+        "Action Camera", "Drone Mini", "VR Headset", "Smart Plug",
+        "Robot Vacuum", "Air Purifier", "Coffee Maker", "Electric Kettle",
+        "Standing Desk", "Mesh Wi-Fi System", "NAS Drive", "Raspberry Pi Kit"
     };
     private static final String[] CATEGORIES = {
-        "Electronics","Clothing","Books","Sports","Home","Beauty","Toys","Garden","Automotive","Office"
+        "Electronics", "Computers & Accessories", "Audio & Video", "Photography",
+        "Gaming", "Office Supplies", "Home & Kitchen", "Health & Beauty",
+        "Sports & Outdoors", "Books & Media", "Clothing", "Automotive",
+        "Toys & Games", "Tools & Hardware", "Garden & Outdoor", "Pet Supplies"
     };
     private static final String SKU_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String ORD_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-    // USPS tracking prefixes (2-letter service codes)
-    private static final String[] USPS_PREFIXES = {"94","93","92","91","82"};
+    // USPS IMpb tracking prefixes (USPS Publication 97, Appendix F)
+    private static final String[] USPS_PREFIXES = {"92","94","70","93","95"};
 
     // Rating weighted distribution: weights for 1.0..5.0 in 0.5 steps
     // Python: weights=[1,2,3,4,8,12,20,25,25] → values=["1.0","1.5","2.0","2.5","3.0","3.5","4.0","4.5","5.0"]
@@ -95,12 +104,11 @@ public final class EcommerceGen {
         return sb.toString();
     }
 
-    // DHL: JD{8 digits}{Luhn check digit}
+    // DHL: JD{8 digits}{Luhn check digit} — check digit computed over the 8 digits only
     private static String dhlTracking(ThreadLocalRandom rng) {
-        StringBuilder sb = new StringBuilder("JD");
-        for (int i = 0; i < 8; i++) sb.append(rng.nextInt(10));
-        sb.append(luhnCheck(sb.toString()));
-        return sb.toString();
+        StringBuilder body = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) body.append(rng.nextInt(10));
+        return "JD" + body + luhnCheck(body.toString());
     }
 
     // Weighted rating

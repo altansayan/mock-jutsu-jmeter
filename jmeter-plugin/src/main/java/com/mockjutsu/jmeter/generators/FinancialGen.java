@@ -13,38 +13,33 @@ public final class FinancialGen {
 
     // ── Card networks & BINs ──────────────────────────────────────────────────
 
-    private static final String[][] VISA_BINS     = {{"4111","4539","4916","4532"}, {"16"}};
-    private static final String[][] MC_BINS       = {{"5100","5200","5300","5400","5500"}, {"16"}};
-    private static final String[][] AMEX_BINS     = {{"3400","3700","3701","3741","3742"}, {"15"}};
-    private static final String[][] DISCOVER_BINS = {{"6011","6500","6501"}, {"16"}};
-    private static final String[][] TROY_BINS     = {{"9792"}, {"16"}};
-    private static final String[][] MIR_BINS      = {{"2200","2201","2202","2203","2204"}, {"16"}};
-    private static final String[][] JCB_BINS      = {{"3528","3529","3530","3540","3589"}, {"16"}};
-    private static final String[][] UNIONPAY_BINS = {{"6221","6222","6223","6229","6282"}, {"16"}};
-    private static final String[][] MAESTRO_BINS  = {{"6304","6759","6761","6762"}, {"16"}};
+    // network key -> {prefixes (each a digit-string alternative), length}
+    private static final String[] NETWORK_KEYS = {"visa","mc","amex","troy","jcb","discover","unionpay","mir","maestro"};
+    private static final String[][] NETWORK_PREFIXES = {
+        {"4"},
+        {"51","52","53","54","55"},
+        {"34","37"},
+        {"9792"},
+        {"352","358"},
+        {"6011","65"},
+        {"62"},
+        {"2200","2201","2202"},
+        {"6304","6759"}
+    };
+    private static final int[] NETWORK_LENGTHS = {16,16,15,16,16,16,16,16,16};
 
-    private static final String[] CARD_TYPES   = {"credit","debit","prepaid"};
-    private static final String[] CARD_STATUS  = {"active","inactive","blocked","expired"};
-    private static final String[] CARD_CATS    = {"classic","gold","platinum","business","infinite"};
-    private static final String[] NETWORKS     = {"Visa","Mastercard","AmericanExpress","Discover","Troy","Mir","JCB","UnionPay","Maestro"};
+    private static final String[] CARD_TYPES   = {"Credit","Debit"};
+    private static final String[] CARD_STATUS  = {"Active","Blocked","Expired"};
+    private static final String[] CARD_CATS    = {"Classic","Gold","Platinum","Business"};
 
-    // ── IBAN country specs: {countryCode, checkLen, bbanLen} ─────────────────
-    //    bbanLen excludes the 2-char country code and 2-char check digits
+    // ── Issuers ────────────────────────────────────────────────────────────────
 
-    private static final String[] TR_BANKS = {"00001","00004","00006","00010","00012","00046"};
-    private static final String[] DE_BANKS = {"10010010","20041133","37040044","50010517","70020270"};
-    private static final String[] FR_BANKS = {"30004","30006","14508","18306","17569"};
-    private static final String[] UK_BANKS = {"NWBK","LOYD","BARC","HSBC","MIDL"};
-    private static final String[] RU_BANKS = {"044525225","044525600","044030653"};
-
-    // ── Issuers (fictional) ───────────────────────────────────────────────────
-
-    private static final String[] ISSUERS_TR = {"Novex Bank TR","Apex Finans","Zircon Kredi","Orbit Bank"};
-    private static final String[] ISSUERS_US = {"Novex Bank US","Atlas Credit","Summit Financial","Crest Bank"};
-    private static final String[] ISSUERS_DE = {"Novex Bank DE","Rhine Capital","Baltic Finance","Elbe Kredit"};
-    private static final String[] ISSUERS_FR = {"Novex Banque","Loire Capital","Seine Finance","Alsace Crédit"};
-    private static final String[] ISSUERS_UK = {"Novex Bank UK","Thames Capital","Severn Finance","Tyne Credit"};
-    private static final String[] ISSUERS_RU = {"Novex Bank RU","Volga Capital","Neva Finance","Ural Kredit"};
+    private static final String[] ISSUERS_TR = {"Türkbank A.Ş.", "AnadoluFinans", "BosphorusBank", "GüvenFinans", "KırmızıBanka", "Boğaz Finans"};
+    private static final String[] ISSUERS_US = {"First National Bank", "Pacific Trust", "American Commerce", "Liberty Bank", "Freedom Financial"};
+    private static final String[] ISSUERS_UK = {"Royal Borough Bank", "Crown Finance Trust", "London Clearing Bank", "Imperial Trust", "Commonwealth Bank"};
+    private static final String[] ISSUERS_DE = {"Volksbank Nord", "Hamburger Sparkasse", "Berliner Bank", "Rhine Finance", "Saxon Trust"};
+    private static final String[] ISSUERS_FR = {"Crédit Parisien", "Banque Nationale", "Société de Crédit", "Paris Finance", "Loire Bank"};
+    private static final String[] ISSUERS_RU = {"Народный Банк", "Столичный Банк", "Восточный Кредит", "Русфинанс", "МоскваБанк"};
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -60,20 +55,20 @@ public final class FinancialGen {
             case "cardtype"     -> pick(rng, CARD_TYPES);
             case "cardstatus"   -> pick(rng, CARD_STATUS);
             case "cardcategory" -> pick(rng, CARD_CATS);
-            case "cvv3"         -> String.format("%03d", rng.nextInt(0, 1000));
-            case "cvv4"         -> String.format("%04d", rng.nextInt(0, 10000));
+            case "cvv3"         -> String.valueOf(rng.nextInt(100, 1000));
+            case "cvv4"         -> String.valueOf(rng.nextInt(1000, 10000));
             case "issuer"       -> issuer(rng, locale);
             case "expiry"       -> expiry(rng);
             case "expirymonth"  -> String.format("%02d", rng.nextInt(1, 13));
-            case "expiryyear"   -> String.valueOf(2025 + rng.nextInt(1, 8));
-            case "pin"          -> String.format("%04d", rng.nextInt(0, 10000));
+            case "expiryyear"   -> String.valueOf(rng.nextInt(0, 6) + (java.time.LocalDate.now().getYear() % 100));
+            case "pin"          -> String.valueOf(rng.nextInt(1000, 10000));
             case "balance"      -> balance(rng, locale, qualifier);
             case "iban"         -> iban(rng, locale);
             case "credit_score" -> creditScore(rng, locale);
             case "sepa_qr"      -> sepaQr(rng, locale);
-            case "emv_qr_p2p"   -> emvQr(rng, locale, "P2P");
-            case "emv_qr_atm"   -> emvQr(rng, locale, "ATM");
-            case "emv_qr_pos"   -> emvQr(rng, locale, "POS");
+            case "emv_qr_p2p"   -> emvQrP2p(rng, locale);
+            case "emv_qr_atm"   -> emvQrAtm(rng, locale);
+            case "emv_qr_pos"   -> emvQrPos(rng, locale);
             case "3ds_cavv"     -> cavv();
             case "3ds_eci"      -> eci(rng, qualifier);
             default             -> "ERROR: Unknown financial type '" + type + "'";
@@ -87,100 +82,67 @@ public final class FinancialGen {
     }
 
     static String cardnum(ThreadLocalRandom rng, String locale, String network) {
-        String[][] bins = cardBins(rng, locale, network);
-        String bin    = bins[0][rng.nextInt(bins[0].length)];
-        int    length = Integer.parseInt(bins[1][0]);
-        StringBuilder sb = new StringBuilder(bin);
+        String key = network.isEmpty() ? "visa" : network.toLowerCase();
+        int idx = -1;
+        for (int i = 0; i < NETWORK_KEYS.length; i++) if (NETWORK_KEYS[i].equals(key)) { idx = i; break; }
+        if (idx < 0) idx = 0; // unknown network -> visa, matching Python's dict.get(..., CARD_NETWORKS["visa"])
+        String[] prefixOptions = NETWORK_PREFIXES[idx];
+        String prefix = prefixOptions[rng.nextInt(prefixOptions.length)];
+        int length = NETWORK_LENGTHS[idx];
+        StringBuilder sb = new StringBuilder(prefix);
         while (sb.length() < length - 1) sb.append(rng.nextInt(0, 10));
         sb.append(IdentityGen.luhnCheckDigit(sb.toString()));
         return sb.toString();
     }
 
-    private static String[][] cardBins(ThreadLocalRandom rng, String locale, String network) {
-        return switch (network.toLowerCase()) {
-            case "visa"                    -> VISA_BINS;
-            case "mastercard","mc"         -> MC_BINS;
-            case "amex","americanexpress"  -> AMEX_BINS;
-            case "discover"                -> DISCOVER_BINS;
-            case "troy"                    -> TROY_BINS;
-            case "mir"                     -> MIR_BINS;
-            case "jcb"                     -> JCB_BINS;
-            case "unionpay","cup"          -> UNIONPAY_BINS;
-            case "maestro"                 -> MAESTRO_BINS;
-            default -> {
-                // no qualifier: Troy for TR 1/3 of the time, otherwise random
-                if ("TR".equals(locale) && rng.nextInt(3) == 0) yield TROY_BINS;
-                String[][][] all = {VISA_BINS, MC_BINS, AMEX_BINS, DISCOVER_BINS};
-                yield all[rng.nextInt(all.length)];
-            }
-        };
-    }
-
     private static String cardnetwork(ThreadLocalRandom rng, String locale) {
-        if ("TR".equals(locale) && rng.nextInt(3) == 0) return "Troy";
-        return pick(rng, NETWORKS);
+        return NETWORK_KEYS[rng.nextInt(NETWORK_KEYS.length)].toUpperCase(java.util.Locale.ROOT);
     }
 
     // ── IBAN — ISO 13616 with MOD-97 check digits ────────────────────────────
 
+    private static final String IBAN_ALNUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
     static String iban(ThreadLocalRandom rng, String locale) {
-        return switch (locale) {
-            case "TR" -> ibanTR(rng);
-            case "DE" -> ibanDE(rng);
-            case "FR" -> ibanFR(rng);
-            case "UK" -> ibanUK(rng);
-            case "RU" -> ibanRU(rng);
-            default   -> ibanTR(rng);
+        String l = locale.toUpperCase(java.util.Locale.ROOT);
+        return switch (l) {
+            case "TR" -> ibanGeneric(rng, "TR", 22); // pure random digits, no bank sub-structure
+            case "UK" -> ibanGeneric(rng, "GB", "alpha4digit14");
+            case "DE" -> ibanGeneric(rng, "DE", 18);
+            case "FR" -> ibanGeneric(rng, "FR", "digit10alnum11digit2");
+            case "US" -> "RT:" + BankingGen.routingNumber(rng) + " ACC:" + randomDigits(rng, 12);
+            case "RU" -> "BIK:04" + randomDigits(rng, 7) + " ACC:40817" + randomDigits(rng, 15);
+            default   -> ibanGeneric(rng, "TR", 22);
         };
     }
 
-    private static String ibanTR(ThreadLocalRandom rng) {
-        // TR: CC(2) + check(2) + reserved(1=0) + bank(5) + account(16) = 26 total
-        String bank    = pick(rng, TR_BANKS);
-        String account = randomDigits(rng, 16);
-        String bban    = "0" + bank + account;
-        String check   = ibanCheckDigits("TR", bban);
-        return "TR" + check + bban;
+    private static String ibanGeneric(ThreadLocalRandom rng, String prefix, int digitLen) {
+        String bban = randomDigits(rng, digitLen);
+        String check = ibanCheckDigits(prefix, bban);
+        return prefix + check + bban;
     }
 
-    private static String ibanDE(ThreadLocalRandom rng) {
-        // DE: CC(2) + check(2) + bank(8) + account(10) = 22 total
-        String bank    = pick(rng, DE_BANKS);
-        String account = randomDigits(rng, 10);
-        String bban    = bank + account;
-        String check   = ibanCheckDigits("DE", bban);
-        return "DE" + check + bban;
+    private static String ibanGeneric(ThreadLocalRandom rng, String prefix, String shape) {
+        String bban;
+        if ("alpha4digit14".equals(shape)) {
+            bban = randomAlpha(rng, 4) + randomDigits(rng, 14);
+        } else { // digit10alnum11digit2 (FR)
+            bban = randomDigits(rng, 10) + randomAlnum(rng, 11) + randomDigits(rng, 2);
+        }
+        String check = ibanCheckDigits(prefix, bban);
+        return prefix + check + bban;
     }
 
-    private static String ibanFR(ThreadLocalRandom rng) {
-        // FR: CC(2) + check(2) + bank(5) + branch(5) + account(11) + key(2) = 27 total
-        String bank    = pick(rng, FR_BANKS);
-        String branch  = randomDigits(rng, 5);
-        String account = randomDigits(rng, 11);
-        String key     = randomDigits(rng, 2);
-        String bban    = bank + branch + account + key;
-        String check   = ibanCheckDigits("FR", bban);
-        return "FR" + check + bban;
+    private static String randomAlpha(ThreadLocalRandom rng, int len) {
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) sb.append((char) ('A' + rng.nextInt(26)));
+        return sb.toString();
     }
 
-    private static String ibanUK(ThreadLocalRandom rng) {
-        // UK: CC(2) + check(2) + bank(4) + sortcode(6) + account(8) = 22 total
-        String bank    = pick(rng, UK_BANKS);
-        String sort    = randomDigits(rng, 6);
-        String account = randomDigits(rng, 8);
-        String bban    = bank + sort + account;
-        String check   = ibanCheckDigits("GB", bban);
-        return "GB" + check + bban;
-    }
-
-    private static String ibanRU(ThreadLocalRandom rng) {
-        // Russia doesn't officially use IBAN but has informal format
-        // Simulate as RU + check + bank(9) + account(15)
-        String bank    = pick(rng, RU_BANKS);
-        String account = randomDigits(rng, 15);
-        String bban    = bank + account;
-        String check   = ibanCheckDigits("RU", bban);
-        return "RU" + check + bban;
+    private static String randomAlnum(ThreadLocalRandom rng, int len) {
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) sb.append(IBAN_ALNUM.charAt(rng.nextInt(IBAN_ALNUM.length())));
+        return sb.toString();
     }
 
     static String ibanCheckDigits(String country, String bban) {
@@ -205,13 +167,13 @@ public final class FinancialGen {
 
     private static String expiry(ThreadLocalRandom rng) {
         int month = rng.nextInt(1, 13);
-        int year  = (java.time.LocalDate.now().getYear() % 100) + rng.nextInt(1, 7);
+        int year  = (java.time.LocalDate.now().getYear() % 100) + rng.nextInt(0, 6);
         return String.format("%02d/%02d", month, year);
     }
 
     // ── Issuer ────────────────────────────────────────────────────────────────
 
-    private static String issuer(ThreadLocalRandom rng, String locale) {
+    static String issuer(ThreadLocalRandom rng, String locale) {
         return switch (locale) {
             case "TR" -> pick(rng, ISSUERS_TR);
             case "US" -> pick(rng, ISSUERS_US);
@@ -244,25 +206,130 @@ public final class FinancialGen {
 
     // ── SEPA QR ───────────────────────────────────────────────────────────────
 
-    private static final String[] SEPA_INST_CODES = {"NOVX","FXMK","TRST","LBLK","ZNTL","AXMK"};
-    private static final String[] SEPA_INST_NAMES = {"Novex Trust Corp","Fexmark Payments","Trustline Bank","Labelbank SA","Zentral Finance","Axmark Corp"};
+    private static String sepaFallbackLocale(String locale) {
+        return switch (locale) { case "DE","FR","UK" -> locale; default -> "DE"; };
+    }
+
+    private static String[] namePool(String locale, String key) {
+        return switch (locale + "_" + key) {
+            case "TR_male" -> NameData.TR_MALE; case "TR_female" -> NameData.TR_FEMALE; case "TR_last" -> NameData.TR_LAST;
+            case "US_male" -> NameData.US_MALE; case "US_female" -> NameData.US_FEMALE; case "US_last" -> NameData.US_LAST;
+            case "UK_male" -> NameData.UK_MALE; case "UK_female" -> NameData.UK_FEMALE; case "UK_last" -> NameData.UK_LAST;
+            case "DE_male" -> NameData.DE_MALE; case "DE_female" -> NameData.DE_FEMALE; case "DE_last" -> NameData.DE_LAST;
+            case "FR_male" -> NameData.FR_MALE; case "FR_female" -> NameData.FR_FEMALE; case "FR_last" -> NameData.FR_LAST;
+            case "RU_male" -> NameData.RU_MALE; case "RU_female" -> NameData.RU_FEMALE; case "RU_last" -> NameData.RU_LAST;
+            default -> NameData.DE_MALE;
+        };
+    }
+
+    private static String randomFullName(ThreadLocalRandom rng, String locale) {
+        String first = pick(rng, namePool(locale, rng.nextBoolean() ? "male" : "female"));
+        String last = pick(rng, namePool(locale, "last"));
+        return first + " " + last;
+    }
 
     private static String sepaQr(ThreadLocalRandom rng, String locale) {
-        String iban   = iban(rng, locale.equals("TR") ? "DE" : locale);
-        double amount = rng.nextDouble(1.00, 1000.00);
-        int idx = rng.nextInt(SEPA_INST_CODES.length);
-        String bic  = SEPA_INST_CODES[idx] + "DEFT";
-        String name = SEPA_INST_NAMES[idx];
-        return String.format("BCD\n001\n1\nSCT\n%s\n%s\n%s\nEUR%.2f\n\nTest payment\n", bic, name, iban, amount);
+        String sepaLoc = sepaFallbackLocale(locale);
+        String name = randomFullName(rng, sepaLoc);
+        String ibanStr = iban(rng, sepaLoc);
+        String bicCc = switch (sepaLoc) { case "DE" -> "DE"; case "FR" -> "FR"; case "UK" -> "GB"; default -> "DE"; };
+        String bic = randomAlpha(rng, 4) + bicCc + "2X";
+        String amount = rng.nextInt(10, 1000) + "." + (rng.nextBoolean() ? "00" : "50");
+        String reference = "INV-" + java.time.LocalDate.now().getYear() + "-" + rng.nextInt(1000, 10000);
+        return String.format("BCD\n002\n1\nSCT\n%s\n%s\n%s\nEUR%s\n\n%s\n\n", bic, name, ibanStr, amount, reference);
     }
 
     // ── EMV QR ────────────────────────────────────────────────────────────────
 
-    private static String emvQr(ThreadLocalRandom rng, String locale, String txType) {
-        String merchant = String.format("MOCKJM%09d", rng.nextInt(100000000, 999999999));
-        String ccy = switch (locale) { case "DE","FR" -> "978"; case "UK" -> "826"; case "US" -> "840"; case "RU" -> "643"; default -> "949"; };
-        return String.format("000201010211520400005303%s5402%.2f5802TR5910MOCK%s6304ABCD",
-            ccy, rng.nextDouble(1, 500), txType);
+    private static final java.util.Map<String,String> EMV_CURRENCY = java.util.Map.of(
+        "TR","949", "DE","978", "FR","978", "US","840", "UK","826", "RU","643");
+    private static final java.util.Map<String,String> EMV_COUNTRY = java.util.Map.of(
+        "TR","TR", "DE","DE", "FR","FR", "US","US", "UK","GB", "RU","RU");
+    private static final java.util.Map<String,String> EMV_CITY = java.util.Map.of(
+        "TR","ISTANBUL", "DE","BERLIN", "FR","PARIS", "US","NEW YORK", "UK","LONDON", "RU","MOSCOW");
+
+    private static String[] emvLocaleData(String locale) {
+        String loc = EMV_CURRENCY.containsKey(locale) ? locale : "TR";
+        return new String[]{loc, EMV_CURRENCY.get(loc), EMV_COUNTRY.get(loc)};
+    }
+
+    private static String crc16Emvco(String data) {
+        int crc = 0xFFFF;
+        for (int i = 0; i < data.length(); i++) {
+            crc ^= (data.charAt(i) & 0xFF) << 8;
+            for (int b = 0; b < 8; b++) {
+                crc = ((crc & 0x8000) != 0) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+                crc &= 0xFFFF;
+            }
+        }
+        return String.format("%04X", crc);
+    }
+
+    private static String tlv(String tag, String value) {
+        return tag + String.format("%02d", value.length()) + value;
+    }
+
+    private static String emvQrP2p(ThreadLocalRandom rng, String locale) {
+        String[] ld = emvLocaleData(locale);
+        String loc = ld[0], currency = ld[1], countryCode = ld[2];
+        String name = randomFullName(rng, "TR".equals(loc) ? "TR" : loc);
+        String ibanStr = iban(rng, loc);
+        String amount = rng.nextInt(10, 5000) + "." + (rng.nextBoolean() ? "00" : "50");
+
+        String p00 = "000201";
+        String p01 = "010211";
+        String p53 = "5303" + currency;
+        String p54 = tlv("54", amount);
+        String p58 = "5802" + countryCode;
+        String p59 = tlv("59", name);
+        String merchInfo = tlv("01", ibanStr);
+        String p26 = tlv("26", merchInfo);
+        String payload = p00 + p01 + p26 + p53 + p54 + p58 + p59 + "6304";
+        return payload + crc16Emvco(payload);
+    }
+
+    private static String emvQrAtm(ThreadLocalRandom rng, String locale) {
+        String[] ld = emvLocaleData(locale);
+        String loc = ld[0], currency = ld[1], countryCode = ld[2];
+        String p00 = "000201";
+        String p01 = "010212";
+        String p53 = "5303" + currency;
+        String p58 = "5802" + countryCode;
+        String atmName = "ATM " + loc + "-" + rng.nextInt(1000, 10000);
+        String p59 = tlv("59", atmName);
+        String tid = "T" + rng.nextInt(1000000, 10000000);
+        String token = "TOK" + rng.nextInt(10000000, 100000000);
+        String tag6207 = tlv("07", tid);
+        String tag6208 = tlv("08", token);
+        String tag62Val = tag6207 + tag6208;
+        String p62 = tlv("62", tag62Val);
+        String payload = p00 + p01 + p53 + p58 + p59 + p62 + "6304";
+        return payload + crc16Emvco(payload);
+    }
+
+    private static String emvQrPos(ThreadLocalRandom rng, String locale) {
+        String[] ld = emvLocaleData(locale);
+        String loc = ld[0], currency = ld[1], countryCode = ld[2];
+        String p00 = "000201";
+        String p01 = "010211";
+        String mcc = String.valueOf(rng.nextInt(5000, 6000));
+        String p52 = "5204" + mcc;
+        String p53 = "5303" + currency;
+        String[] centOpts = {"00","25","50","75"};
+        String amount = rng.nextInt(10, 1000) + "." + centOpts[rng.nextInt(4)];
+        String p54 = tlv("54", amount);
+        String p58 = "5802" + countryCode;
+        String lastName = pick(rng, namePool(loc, "last"));
+        String suffix = "TR".equals(loc) ? "A.S." : "DE".equals(loc) ? "GmbH" : "US".equals(loc) ? "LLC" : "LTD";
+        String merchName = lastName.toUpperCase(java.util.Locale.ROOT) + " " + suffix;
+        String p59 = tlv("59", merchName);
+        String city = EMV_CITY.getOrDefault(loc, "CAPITAL");
+        String p60 = tlv("60", city);
+        String merchId = String.valueOf(rng.nextLong(1000000000L, 10000000000L));
+        String tag2601 = tlv("01", merchId);
+        String p26 = tlv("26", tag2601);
+        String payload = p00 + p01 + p26 + p52 + p53 + p54 + p58 + p59 + p60 + "6304";
+        return payload + crc16Emvco(payload);
     }
 
     // ── 3DS ───────────────────────────────────────────────────────────────────

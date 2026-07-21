@@ -13,10 +13,10 @@ public final class HardwareGen {
 
     // Track1 surname pool (MOCKJ prefix, uppercase, no spaces per ISO 7813)
     private static final String[] TRACK1_SURNAMES = {
-        "MOCKJDOE","MOCKJROE","MOCKJSMITH","MOCKJJONES","MOCKJLEE"
+        "MOCKJDOE","MOCKJROE","MOCKJKIM","MOCKJLEE","MOCKJRAY"
     };
     private static final String[] TRACK1_GIVEN = {
-        "MOCKJJOHN","MOCKJJANE","MOCKJTEST","MOCKJALPHA","MOCKJBETA"
+        "MOCKJJOHN","MOCKJJANE","MOCKJBOB","MOCKJANN","MOCKJMAX"
     };
 
     // Service codes: position 1 = 1 (international) or 2 (national only)
@@ -57,7 +57,7 @@ public final class HardwareGen {
 
     private static String track2(ThreadLocalRandom rng, String locale) {
         String pan = FinancialGen.cardnum(rng, locale);
-        int yy = (java.time.LocalDate.now().getYear() % 100) + rng.nextInt(1, 6);
+        int yy = (java.time.LocalDate.now().getYear() % 100) + rng.nextInt(1, 11);
         int mm = rng.nextInt(1, 13);
         String sc = pick(rng, SERVICE_CODES);
         int discLen = 3 + rng.nextInt(3); // 3-5
@@ -73,14 +73,13 @@ public final class HardwareGen {
         String ccy = CURRENCY_TLV.getOrDefault(locale, "0949");
 
         // 9F02: amount authorised 6 bytes BCD (12 digits, padded)
-        long amount = (long)(rng.nextDouble(0.01, 9999.99) * 100);
-        String tag9F02 = String.format("9F0206%012d", amount);
+        String tag9F02 = String.format("9F0206%012d", rng.nextLong(0, 100000000000L));
 
         // 9F03: other amount 6 bytes BCD
-        String tag9F03 = "9F030600000000" + String.format("%04d", rng.nextInt(10000));
+        String tag9F03 = String.format("9F0306%012d", rng.nextLong(0, 100000000000L));
 
-        // 9505: TVR 5 bytes
-        String tag9505 = "95050000000000" + randomHexUpper(rng, 4);
+        // 9505: Terminal Verification Results 5 bytes
+        String tag9505 = String.format("9505%010X", rng.nextLong(0, 10000000000L));
 
         // 5F2A: currency code 2 bytes
         String tag5F2A = "5F2A02" + ccy;
@@ -90,9 +89,8 @@ public final class HardwareGen {
         String tag9A = String.format("9A03%02d%02d%02d",
             today.getYear() % 100, today.getMonthValue(), today.getDayOfMonth());
 
-        // 9C: transaction type 1 byte (00=purchase, 01=cash, 09=purchase+cashback)
-        String[] txTypes = {"00","01","09"};
-        String tag9C = "9C01" + txTypes[rng.nextInt(txTypes.length)];
+        // 9C: transaction type 1 byte (fixed: 00 = purchase)
+        String tag9C = "9C0100";
 
         return tag9F02 + tag9F03 + tag9505 + tag5F2A + tag9A + tag9C;
     }
@@ -126,13 +124,6 @@ public final class HardwareGen {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private static String randomHexUpper(ThreadLocalRandom rng, int chars) {
-        StringBuilder sb = new StringBuilder(chars);
-        String hex = "0123456789ABCDEF";
-        for (int i = 0; i < chars; i++) sb.append(hex.charAt(rng.nextInt(16)));
-        return sb.toString();
-    }
 
     private static <T> T pick(ThreadLocalRandom rng, T[] arr) { return arr[rng.nextInt(arr.length)]; }
 }

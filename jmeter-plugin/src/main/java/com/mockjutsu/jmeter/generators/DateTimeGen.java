@@ -2,7 +2,6 @@ package com.mockjutsu.jmeter.generators;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -12,7 +11,7 @@ public final class DateTimeGen {
     private DateTimeGen() {}
 
     private static final DateTimeFormatter DATE_FMT     = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final DateTimeFormatter TIME_FMT     = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public static String generate(String type, String locale) {
@@ -35,11 +34,11 @@ public final class DateTimeGen {
     }
 
     private static String pastDate(ThreadLocalRandom rng) {
-        return LocalDate.now().minusDays(rng.nextInt(1, 3650)).format(DATE_FMT);
+        return LocalDate.now().minusDays(rng.nextInt(1, 1826)).format(DATE_FMT);
     }
 
     private static String futureDate(ThreadLocalRandom rng) {
-        return LocalDate.now().plusDays(rng.nextInt(1, 3650)).format(DATE_FMT);
+        return LocalDate.now().plusDays(rng.nextInt(1, 1826)).format(DATE_FMT);
     }
 
     private static String dateBetween(ThreadLocalRandom rng, String qualifier) {
@@ -56,19 +55,17 @@ public final class DateTimeGen {
     }
 
     private static String dateThisYear(ThreadLocalRandom rng) {
-        LocalDate start = LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate end   = LocalDate.now();
+        int year = LocalDate.now().getYear();
+        LocalDate start = LocalDate.of(year, 1, 1);
+        LocalDate end = LocalDate.of(year, 12, 31);
         long range = end.toEpochDay() - start.toEpochDay();
-        if (range <= 0) return start.format(DATE_FMT);
-        return start.plusDays(rng.nextLong(0, range)).format(DATE_FMT);
+        return start.plusDays(rng.nextLong(0, range + 1)).format(DATE_FMT);
     }
 
     private static String dateThisMonth(ThreadLocalRandom rng) {
-        LocalDate start = LocalDate.now().withDayOfMonth(1);
-        LocalDate end   = LocalDate.now();
-        long range = end.toEpochDay() - start.toEpochDay();
-        if (range <= 0) return start.format(DATE_FMT);
-        return start.plusDays(rng.nextLong(0, range)).format(DATE_FMT);
+        LocalDate today = LocalDate.now();
+        int lastDay = today.lengthOfMonth();
+        return LocalDate.of(today.getYear(), today.getMonthValue(), rng.nextInt(1, lastDay + 1)).format(DATE_FMT);
     }
 
     private static String timeOnly(ThreadLocalRandom rng) {
@@ -76,12 +73,12 @@ public final class DateTimeGen {
     }
 
     private static String pastDatetime(ThreadLocalRandom rng) {
-        LocalDateTime dt = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(rng.nextLong(1, 3650L * 24 * 3600));
+        LocalDateTime dt = LocalDateTime.now().minusSeconds(rng.nextLong(60, 86400L * 365 * 5 + 1));
         return dt.format(DATETIME_FMT);
     }
 
     private static String futureDatetime(ThreadLocalRandom rng) {
-        LocalDateTime dt = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(rng.nextLong(1, 3650L * 24 * 3600));
+        LocalDateTime dt = LocalDateTime.now().plusSeconds(rng.nextLong(60, 86400L * 365 * 5 + 1));
         return dt.format(DATETIME_FMT);
     }
 }

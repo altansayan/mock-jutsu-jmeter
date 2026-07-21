@@ -1,5 +1,8 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** NMEA — GPGGA, GPRMC with correct NMEA checksum. Mirrors nmea.py. */
@@ -18,44 +21,64 @@ public final class NmeaGen {
     // ── GPGGA ─────────────────────────────────────────────────────────────────
 
     private static String gpgga(ThreadLocalRandom rng) {
-        String time   = String.format("%02d%02d%05.2f", rng.nextInt(0,24), rng.nextInt(0,60), rng.nextDouble(0,60));
-        String lat    = nmeaLat(rng);
-        char   latH   = rng.nextBoolean() ? 'N' : 'S';
-        String lon    = nmeaLon(rng);
-        char   lonH   = rng.nextBoolean() ? 'E' : 'W';
-        int    fix    = rng.nextInt(1,7);
-        int    sats   = rng.nextInt(4,12);
-        double hdop   = 0.8 + rng.nextDouble(3);
-        double alt    = rng.nextDouble(500);
-        String body   = String.format(java.util.Locale.US, "GPGGA,%s,%s,%c,%s,%c,%d,%02d,%.1f,%.1f,M,0.0,M,,",
-            time, lat, latH, lon, lonH, fix, sats, hdop, alt);
-        String sentence = "$" + body + "*" + nmeaChecksum(body);
+        String timeStr = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("HHmmss")) + ".00";
+
+        double latDeg = rng.nextDouble(0.0, 90.0);
+        char latDir = rng.nextBoolean() ? 'N' : 'S';
+        double lonDeg = rng.nextDouble(0.0, 180.0);
+        char lonDir = rng.nextBoolean() ? 'E' : 'W';
+        String latStr = latNmea(latDeg);
+        String lonStr = lonNmea(lonDeg);
+
+        int fixQuality = rng.nextBoolean() ? 1 : 2;
+        int numSats = rng.nextInt(4, 13);
+        double hdop = round1(rng.nextDouble(0.5, 5.0));
+        double altitude = round1(rng.nextDouble(-50.0, 8849.0));
+        double geoid = round1(rng.nextDouble(-100.0, 100.0));
+
+        String body = String.format(java.util.Locale.US,
+            "GPGGA,%s,%s,%c,%s,%c,%d,%02d,%s,%s,M,%s,M,,",
+            timeStr, latStr, latDir, lonStr, lonDir, fixQuality, numSats,
+            fmtNum(hdop), fmtNum(altitude), fmtNum(geoid));
+        String checksum = nmeaChecksum(body);
+        String sentence = "$" + body + "*" + checksum;
+
         return String.format(java.util.Locale.US,
             "{\"sentence\":\"%s\",\"type\":\"GPGGA\",\"time\":\"%s\",\"lat\":\"%s\",\"lat_dir\":\"%c\"," +
             "\"lon\":\"%s\",\"lon_dir\":\"%c\",\"fix_quality\":%d,\"num_satellites\":%d," +
-            "\"hdop\":%.1f,\"altitude\":%.1f,\"geoid_height\":0.0,\"checksum\":\"%s\"}",
-            sentence, time, lat, latH, lon, lonH, fix, sats, hdop, alt, nmeaChecksum(body));
+            "\"hdop\":%s,\"altitude\":%s,\"geoid_height\":%s,\"checksum\":\"%s\"}",
+            sentence, timeStr, latStr, latDir, lonStr, lonDir, fixQuality, numSats,
+            fmtNum(hdop), fmtNum(altitude), fmtNum(geoid), checksum);
     }
 
     // ── GPRMC ─────────────────────────────────────────────────────────────────
 
     private static String gprmc(ThreadLocalRandom rng) {
-        String time   = String.format("%02d%02d%05.2f", rng.nextInt(0,24), rng.nextInt(0,60), rng.nextDouble(0,60));
-        String date   = String.format("%02d%02d%02d", rng.nextInt(1,29), rng.nextInt(1,13), rng.nextInt(24,30));
-        String lat    = nmeaLat(rng);
-        char   latH   = rng.nextBoolean() ? 'N' : 'S';
-        String lon    = nmeaLon(rng);
-        char   lonH   = rng.nextBoolean() ? 'E' : 'W';
-        double speed  = rng.nextDouble(100);
-        double course = rng.nextDouble(360);
-        String body   = String.format(java.util.Locale.US, "GPRMC,%s,A,%s,%c,%s,%c,%.1f,%.1f,%s,,,A",
-            time, lat, latH, lon, lonH, speed, course, date);
-        String sentence = "$" + body + "*" + nmeaChecksum(body);
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        String timeStr = now.format(DateTimeFormatter.ofPattern("HHmmss")) + ".00";
+        String dateStr = now.format(DateTimeFormatter.ofPattern("ddMMyy"));
+
+        double latDeg = rng.nextDouble(0.0, 90.0);
+        char latDir = rng.nextBoolean() ? 'N' : 'S';
+        double lonDeg = rng.nextDouble(0.0, 180.0);
+        char lonDir = rng.nextBoolean() ? 'E' : 'W';
+        String latStr = latNmea(latDeg);
+        String lonStr = lonNmea(lonDeg);
+
+        double speed = round1(rng.nextDouble(0.0, 100.0));
+        double course = round1(rng.nextDouble(0.0, 359.9));
+
+        String body = String.format(java.util.Locale.US,
+            "GPRMC,%s,A,%s,%c,%s,%c,%s,%s,%s,,",
+            timeStr, latStr, latDir, lonStr, lonDir, fmtNum(speed), fmtNum(course), dateStr);
+        String checksum = nmeaChecksum(body);
+        String sentence = "$" + body + "*" + checksum;
+
         return String.format(java.util.Locale.US,
             "{\"sentence\":\"%s\",\"type\":\"GPRMC\",\"time\":\"%s\",\"status\":\"A\"," +
             "\"lat\":\"%s\",\"lat_dir\":\"%c\",\"lon\":\"%s\",\"lon_dir\":\"%c\"," +
-            "\"speed_knots\":%.1f,\"course\":%.1f,\"date\":\"%s\",\"checksum\":\"%s\"}",
-            sentence, time, lat, latH, lon, lonH, speed, course, date, nmeaChecksum(body));
+            "\"speed_knots\":%s,\"course\":%s,\"date\":\"%s\",\"checksum\":\"%s\"}",
+            sentence, timeStr, latStr, latDir, lonStr, lonDir, fmtNum(speed), fmtNum(course), dateStr, checksum);
     }
 
     // ── NMEA checksum: XOR of all bytes between $ and * ──────────────────────
@@ -66,15 +89,23 @@ public final class NmeaGen {
         return String.format("%02X", cs);
     }
 
-    private static String nmeaLat(ThreadLocalRandom rng) {
-        int deg   = rng.nextInt(0,90);
-        double min = rng.nextDouble(60);
-        return String.format("%02d%07.4f", deg, min);
+    private static String latNmea(double deg) {
+        int d = (int) deg;
+        double m = (deg - d) * 60.0;
+        return String.format(java.util.Locale.US, "%02d%07.4f", d, m);
     }
 
-    private static String nmeaLon(ThreadLocalRandom rng) {
-        int deg   = rng.nextInt(0,180);
-        double min = rng.nextDouble(60);
-        return String.format("%03d%07.4f", deg, min);
+    private static String lonNmea(double deg) {
+        int d = (int) deg;
+        double m = (deg - d) * 60.0;
+        return String.format(java.util.Locale.US, "%03d%07.4f", d, m);
+    }
+
+    private static double round1(double v) {
+        return Math.round(v * 10.0) / 10.0;
+    }
+
+    private static String fmtNum(double v) {
+        return String.format(java.util.Locale.US, "%.1f", v);
     }
 }

@@ -18,15 +18,31 @@ public final class MetaGen {
 
     private static final String[] BROWSER_NAMES    = {"Chrome","Firefox","Safari","Edge","Opera"};
     private static final String[] BROWSER_ENGINES  = {"Blink","Gecko","WebKit","Blink","Blink"};
-    private static final String[] TLDS             = {"com","net","org","io","co","app","dev"};
-    private static final String[] COLORS           = {
-        "#FF5733","#33FF57","#3357FF","#FF33F5","#F5FF33",
-        "#33F5FF","#FF8333","#8333FF","#33FF83","#FF3383"
-    };
-    private static final String[] PROTOCOLS        = {"https://","http://"};
-    private static final String[] UA_CHROME_VER    = {"120.0.0","121.0.0","122.0.0","123.0.0","124.0.0"};
+    private static final int[][] BROWSER_MAJOR_RANGE = {{120,126},{120,127},{16,18},{120,126},{105,110}};
+    private static final String[] TLDS             = {".com",".net",".org",".io",".co",".dev",".app",".ai",".tech",".cloud"};
 
-    private static final String BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    private static final java.util.Map<String, String[]> DOMAIN_TLDS = java.util.Map.of(
+        "TR", new String[]{".com.tr",".net.tr",".org.tr",".com"},
+        "US", new String[]{".com",".net",".org",".io",".co"},
+        "UK", new String[]{".co.uk",".org.uk",".me.uk",".com"},
+        "DE", new String[]{".de",".com",".net"},
+        "FR", new String[]{".fr",".com",".net"},
+        "RU", new String[]{".ru",".com"}
+    );
+
+    private static final String[] URL_PATHS = {
+        "/api/v1/users","/api/v2/transactions","/api/v1/accounts",
+        "/products/list","/orders/pending","/invoices/2024",
+        "/auth/login","/auth/refresh","/dashboard/overview",
+        "/settings/profile","/reports/monthly","/webhook/events"
+    };
+
+    private static final String[][] COLOR_NAMES_HEX = {
+        {"Crimson","#DC143C"}, {"Dodger Blue","#1E90FF"}, {"Emerald","#50C878"},
+        {"Goldenrod","#DAA520"}, {"Orchid","#DA70D6"}, {"Tomato","#FF6347"},
+        {"Steel Blue","#4682B4"}, {"Coral","#FF7F50"}, {"Medium Purple","#9370DB"},
+        {"Sea Green","#2E8B57"}, {"Sienna","#A0522D"}, {"Slate Gray","#708090"}
+    };
 
     public static String generate(String type, String locale) {
         return generate(type, locale, "");
@@ -49,60 +65,94 @@ public final class MetaGen {
             case "browser_version"   -> browserVersion(rng);
             case "browser_engine"    -> pick(rng, BROWSER_ENGINES);
             case "useragent"         -> userAgent(rng);
-            case "timestamp"         -> String.valueOf(System.currentTimeMillis());
-            case "timestamp_iso"     -> Instant.now().toString();
-            case "clientversion"     -> String.format("%d.%d.%d", rng.nextInt(1,5), rng.nextInt(0,20), rng.nextInt(0,100));
+            case "timestamp"         -> String.valueOf(System.currentTimeMillis() / 1000);
+            case "timestamp_iso"     -> timestampIso();
+            case "clientversion"     -> String.format("%d.%d.%d", rng.nextInt(1,5), rng.nextInt(0,10), rng.nextInt(0,10));
             case "bearertoken"       -> "Bearer " + jwt(rng);
             case "signature"         -> signature(qualifier);
             case "apppassword"       -> appPassword(rng);
             case "jwt"               -> jwt(rng);
             case "hash"              -> hash(qualifier);
             case "mac_address"       -> macAddress(rng);
-            case "domain"            -> domain(rng);
-            case "url"               -> url(rng);
+            case "domain"            -> domain(rng, locale);
+            case "url"               -> url(rng, locale);
             case "color"             -> color(rng, qualifier);
             case "api_key"           -> apiKey(rng);
             case "totp_code"         -> String.format("%06d", rng.nextInt(0, 1000000));
             case "webhook_signature" -> "sha256=" + hash("");
-            case "transaction_id"    -> "TXN" + randomHex(rng, 8).toUpperCase();
+            case "transaction_id"    -> "TXN" + randomHex(rng, 16).toUpperCase();
             case "slug"              -> slug(rng);
-            case "http_method"       -> pick(rng, new String[]{"GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS"});
-            case "http_status_code"  -> pick(rng, new String[]{"200","201","204","301","302","400","401","403","404","409","422","429","500","502","503"});
-            case "port_number"       -> String.valueOf(rng.nextInt(1, 65536));
+            case "http_method"       -> pick(rng, new String[]{"GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS"});
+            case "http_status_code"  -> String.valueOf(pick(rng, HTTP_STATUS_CODES));
+            case "port_number"       -> portNumber(rng);
             case "hostname"          -> hostname(rng);
             case "tld"               -> pick(rng, TLDS);
-            case "uri_path"          -> uriPath(rng);
+            case "uri_path"          -> pick(rng, URI_PATHS);
             default                  -> "ERROR: Unknown meta type '" + type + "'";
         };
     }
 
+    private static final int[] HTTP_STATUS_CODES = {
+        200,201,204, 301,302,304, 400,401,403,404,405,409,410,422,429, 500,502,503,504
+    };
+    private static final int[] COMMON_PORTS = {
+        80,443,8080,8443,3000,3306,5432,6379,9200,27017,
+        22,25,53,110,143,993,995,8000,8888,9000
+    };
+    private static final String[] URI_PATHS = {
+        "/api/v1/users","/api/v1/accounts","/api/v2/payments",
+        "/api/v1/orders","/api/v1/products","/api/v1/invoices",
+        "/api/v2/reports","/api/v1/customers","/api/v1/transactions",
+        "/api/v1/settings","/api/v1/sessions","/api/v1/webhooks",
+        "/admin/users","/admin/reports","/admin/audit-logs",
+        "/public/assets","/static/files","/data/exports",
+        "/api/v1/search","/api/v1/notifications","/api/v1/analytics"
+    };
+
+    private static String portNumber(ThreadLocalRandom rng) {
+        if (rng.nextDouble() < 0.4) return String.valueOf(pick(rng, COMMON_PORTS));
+        return String.valueOf(rng.nextInt(1024, 65536));
+    }
+
+    private static String timestampIso() {
+        return java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"));
+    }
+
     // ── IPv4 ──────────────────────────────────────────────────────────────────
 
+    private static final java.util.Set<Integer> RESERVED_FIRST_OCTETS = java.util.Set.of(
+        0,10,127,169,172,192,198,203,
+        224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+        240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
+    );
+
+    private static boolean isPublicIpv4(int a, int b) {
+        if (RESERVED_FIRST_OCTETS.contains(a)) return false;
+        if (a == 172 && b >= 16 && b <= 31) return false;
+        if (a == 192 && b == 168) return false;
+        return true;
+    }
+
     static String ipv4(ThreadLocalRandom rng) {
-        return rng.nextInt(1,256) + "." + rng.nextInt(0,256) + "." +
-               rng.nextInt(0,256) + "." + rng.nextInt(1,255);
+        return ipv4Public(rng);
     }
 
     private static String ipv4Public(ThreadLocalRandom rng) {
-        // Avoid private/reserved ranges (RFC 1918, RFC 5735)
-        int a, b;
+        int a, b, c, d;
         do {
-            a = rng.nextInt(1, 256);
+            a = rng.nextInt(0, 256);
             b = rng.nextInt(0, 256);
-        } while (
-            a == 10                          // 10.0.0.0/8
-            || a == 127                      // 127.0.0.0/8 loopback
-            || (a == 172 && b >= 16 && b <= 31) // 172.16.0.0/12
-            || (a == 192 && b == 168)        // 192.168.0.0/16
-        );
-        return a + "." + b + "." + rng.nextInt(0,256) + "." + rng.nextInt(1,255);
+        } while (!isPublicIpv4(a, b));
+        c = rng.nextInt(0, 256);
+        d = rng.nextInt(0, 256);
+        return a + "." + b + "." + c + "." + d;
     }
 
     private static String ipv4Private(ThreadLocalRandom rng) {
         return switch (rng.nextInt(3)) {
-            case 0  -> "10." + rng.nextInt(0,256) + "." + rng.nextInt(0,256) + "." + rng.nextInt(1,255);
-            case 1  -> "172." + rng.nextInt(16,32) + "." + rng.nextInt(0,256) + "." + rng.nextInt(1,255);
-            default -> "192.168." + rng.nextInt(0,256) + "." + rng.nextInt(1,255);
+            case 0  -> "10." + rng.nextInt(0,256) + "." + rng.nextInt(0,256) + "." + rng.nextInt(0,256);
+            case 1  -> "172." + rng.nextInt(16,32) + "." + rng.nextInt(0,256) + "." + rng.nextInt(0,256);
+            default -> "192.168." + rng.nextInt(0,256) + "." + rng.nextInt(0,256);
         };
     }
 
@@ -120,34 +170,40 @@ public final class MetaGen {
     // ── Browser ───────────────────────────────────────────────────────────────
 
     private static String browserVersion(ThreadLocalRandom rng) {
-        return String.format("%d.%d.%d.%d",
-            rng.nextInt(80,130), rng.nextInt(0,10), rng.nextInt(0,10000), rng.nextInt(0,200));
+        int idx = rng.nextInt(BROWSER_NAMES.length);
+        int lo = BROWSER_MAJOR_RANGE[idx][0], hi = BROWSER_MAJOR_RANGE[idx][1];
+        int major = rng.nextInt(lo, hi + 1);
+        return String.format("%d.0.%d.%d", major, rng.nextInt(1000, 10000), rng.nextInt(10, 100));
     }
 
+    private static final String[] UA_PLATFORMS = {
+        "Windows NT 10.0", "Windows NT 11.0",
+        "Macintosh; Intel Mac OS X 10_15_7",
+        "X11; Linux x86_64",
+        "iPhone; CPU iPhone OS 17_5 like Mac OS X"
+    };
+    private static final String[] UA_ARCHS = {"Win64; x64", "WOW64", "ARM64", "x86_64"};
+
     private static String userAgent(ThreadLocalRandom rng) {
-        String os = switch (rng.nextInt(4)) {
-            case 0 -> "Windows NT 10.0; Win64; x64";
-            case 1 -> "Macintosh; Intel Mac OS X 10_15_7";
-            case 2 -> "X11; Linux x86_64";
-            default -> "iPhone; CPU iPhone OS 17_0 like Mac OS X";
-        };
-        String ver = pick(rng, UA_CHROME_VER);
-        return String.format("Mozilla/5.0 (%s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36", os, ver);
+        String chromeV = String.format("%d.0.%d.%d", rng.nextInt(120, 127), rng.nextInt(1000, 10000), rng.nextInt(10, 100));
+        String safariV = String.format("%d.%d", rng.nextInt(530, 601), rng.nextInt(1, 41));
+        String plat = UA_PLATFORMS[rng.nextInt(UA_PLATFORMS.length)];
+        String arch = (plat.contains("Windows") || plat.contains("Linux")) ? UA_ARCHS[rng.nextInt(UA_ARCHS.length)] : "";
+        String platPart = plat + (arch.isEmpty() ? "" : "; " + arch);
+        return String.format("Mozilla/5.0 (%s) AppleWebKit/%s (KHTML, like Gecko) Chrome/%s Safari/%s",
+            platPart, safariV, chromeV, safariV);
     }
 
     // ── JWT ───────────────────────────────────────────────────────────────────
 
     static String jwt(ThreadLocalRandom rng) {
-        // Header
         String header  = b64url("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
-        // Payload
         long iat = System.currentTimeMillis() / 1000;
-        long exp = iat + 900; // 15 minutes
+        long exp = iat + 3600; // 1 hour
         String sub = UUID.randomUUID().toString();
         String payload = b64url(String.format(
-            "{\"sub\":\"%s\",\"iat\":%d,\"exp\":%d,\"jti\":\"%s\"}",
-            sub, iat, exp, randomHex(rng, 8)));
-        // Signature (random bytes — not verifiable, correct structure)
+            "{\"sub\":\"%s\",\"iss\":\"https://auth.mockjutsu.dev\",\"aud\":\"mockjutsu-api\",\"iat\":%d,\"exp\":%d}",
+            sub, iat, exp));
         byte[] sig = new byte[32];
         SEC.nextBytes(sig);
         String signature = Base64.getUrlEncoder().withoutPadding().encodeToString(sig);
@@ -192,42 +248,54 @@ public final class MetaGen {
         return HexFormat.of().formatHex(b);
     }
 
-    private static final String[] COLOR_NAMES = {
-        "red","blue","green","yellow","purple","orange","pink","cyan","magenta","black","white","gray","indigo","teal","lime"
-    };
-
     private static String color(ThreadLocalRandom rng, String format) {
-        int r = rng.nextInt(256), g = rng.nextInt(256), b = rng.nextInt(256);
+        String[] entry = COLOR_NAMES_HEX[rng.nextInt(COLOR_NAMES_HEX.length)];
+        String name = entry[0], hex = entry[1];
+        int r = Integer.parseInt(hex.substring(1,3), 16);
+        int g = Integer.parseInt(hex.substring(3,5), 16);
+        int b = Integer.parseInt(hex.substring(5,7), 16);
         return switch (format.toLowerCase()) {
             case "rgb"  -> String.format("rgb(%d, %d, %d)", r, g, b);
-            case "hsl"  -> String.format("hsl(%d, %d%%, %d%%)", rng.nextInt(360), 20 + rng.nextInt(81), 20 + rng.nextInt(61));
-            case "name" -> COLOR_NAMES[rng.nextInt(COLOR_NAMES.length)];
-            default     -> String.format("#%02X%02X%02X", r, g, b); // hex (default)
+            case "hsl"  -> rgbToHsl(r, g, b);
+            case "name" -> name;
+            default     -> hex; // hex (default)
         };
+    }
+
+    private static String rgbToHsl(int r, int g, int b) {
+        double rf = r / 255.0, gf = g / 255.0, bf = b / 255.0;
+        double max = Math.max(rf, Math.max(gf, bf)), min = Math.min(rf, Math.min(gf, bf));
+        double l = (max + min) / 2.0;
+        double h, s;
+        if (max == min) { h = 0; s = 0; }
+        else {
+            double d = max - min;
+            s = l > 0.5 ? d / (2.0 - max - min) : d / (max + min);
+            if (max == rf) h = (gf - bf) / d + (gf < bf ? 6 : 0);
+            else if (max == gf) h = (bf - rf) / d + 2;
+            else h = (rf - gf) / d + 4;
+            h /= 6.0;
+        }
+        return String.format("hsl(%d, %d%%, %d%%)", (int)(h*360), (int)(s*100), (int)(l*100));
     }
 
     // ── Signature ─────────────────────────────────────────────────────────────
 
     private static String signature(String qualifier) {
-        if (qualifier.isEmpty()) {
-            // default: 64 random bytes as Base64 (88 chars)
-            byte[] bytes = new byte[64];
-            SEC.nextBytes(bytes);
-            return Base64.getEncoder().encodeToString(bytes);
+        String secret = "ninja";
+        String payload = "mock";
+        if (!qualifier.isEmpty()) {
+            String[] parts = qualifier.split("\\|", 2);
+            if (!parts[0].isEmpty()) secret = parts[0];
+            if (parts.length > 1 && !parts[1].isEmpty()) payload = parts[1];
         }
-        // qualifier: "secret|payload" — HMAC-SHA256, returned as Base64
-        String[] parts = qualifier.split("\\|", 2);
-        String secret  = parts[0].isEmpty() ? "ninja" : parts[0];
-        String payload = (parts.length > 1 && !parts[1].isEmpty()) ? parts[1] : "mock";
         try {
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
             mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] sig = mac.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(sig); // 44 chars
+            return HexFormat.of().formatHex(sig);
         } catch (Exception e) {
-            byte[] bytes = new byte[64];
-            SEC.nextBytes(bytes);
-            return Base64.getEncoder().encodeToString(bytes);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -250,8 +318,10 @@ public final class MetaGen {
     }
 
     private static boolean hasSequentialRun(int[] d) {
-        for (int i = 0; i < d.length - 2; i++)
-            if (d[i + 1] == d[i] + 1 && d[i + 2] == d[i] + 2) return true;
+        for (int i = 0; i < d.length - 2; i++) {
+            if (d[i + 1] - d[i] == 1 && d[i + 2] - d[i + 1] == 1) return true;
+            if (d[i] - d[i + 1] == 1 && d[i + 1] - d[i + 2] == 1) return true;
+        }
         return false;
     }
 
@@ -260,7 +330,9 @@ public final class MetaGen {
     private static final String[] OUI_PREFIXES = {
         "A4:C3:F0","3C:22:FB","B8:27:EB","DC:2C:6E","00:50:56","08:00:27",
         "D8:BB:2C","28:6F:7F","F0:18:98","00:1C:42","00:23:AE","AC:BC:32",
-        "F4:5C:89","70:F0:96","CC:46:D6","00:0C:29","44:38:39","2C:F0:5D"
+        "F4:5C:89","70:F0:96","CC:46:D6","00:0C:29","44:38:39","2C:F0:5D",
+        "B0:BE:83","00:25:90","3C:D9:2B","78:E3:B5","00:1A:11","54:EE:75",
+        "00:17:88","18:B4:30","70:85:C2","00:27:22","44:D9:E7","A8:40:41"
     };
 
     private static String macAddress(ThreadLocalRandom rng) {
@@ -271,46 +343,66 @@ public final class MetaGen {
 
     // ── Domain & URL ─────────────────────────────────────────────────────────
 
-    private static String domain(ThreadLocalRandom rng) {
-        String[] words = {"mock","test","demo","sample","example","data","api","dev"};
-        return words[rng.nextInt(words.length)] + rng.nextInt(10, 999) + "." + pick(rng, TLDS);
+    private static final String[] DOMAIN_WORDS = {"api","data","test","mock","demo","dev","sample","sandbox","lab","platform"};
+
+    private static String[] tldsForLocale(String locale) {
+        String[] tlds = DOMAIN_TLDS.get(locale);
+        return tlds != null ? tlds : DOMAIN_TLDS.get("TR");
     }
 
-    private static String url(ThreadLocalRandom rng) {
-        String d    = domain(rng);
-        String path = "/api/v" + rng.nextInt(1, 4) + "/" + new String[]{"users","orders","products","accounts"}[rng.nextInt(4)];
-        return pick(rng, PROTOCOLS) + d + path;
+    private static String domain(ThreadLocalRandom rng, String locale) {
+        String tld = pick(rng, tldsForLocale(locale));
+        return pick(rng, DOMAIN_WORDS) + "-" + rng.nextInt(10, 100) + tld;
+    }
+
+    private static String url(ThreadLocalRandom rng, String locale) {
+        String tld = pick(rng, tldsForLocale(locale));
+        String host = "mockapi-" + rng.nextInt(100, 1000) + tld;
+        String path = pick(rng, URL_PATHS);
+        return "https://" + host + path;
     }
 
     // ── API key ───────────────────────────────────────────────────────────────
 
+    private static final String API_KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
     private static String apiKey(ThreadLocalRandom rng) {
-        return "mk_" + (rng.nextBoolean() ? "live" : "test") + "_" + randomHex(rng, 32);
+        StringBuilder sb = new StringBuilder(48);
+        for (int i = 0; i < 48; i++) sb.append(API_KEY_CHARS.charAt(rng.nextInt(API_KEY_CHARS.length())));
+        return "mjk-" + sb;
     }
 
     // ── Slug ──────────────────────────────────────────────────────────────────
 
+    private static final String[] SLUG_WORDS = {
+        "api","user","account","payment","order","product","invoice",
+        "customer","transaction","report","dashboard","settings","profile",
+        "upload","download","search","filter","export","import","webhook",
+        "session","auth","token","refresh","verify","confirm","reset",
+        "admin","public","private","internal","external"
+    };
+
     private static String slug(ThreadLocalRandom rng) {
-        String[] nouns = {"upload","product","order","user","report","event","session","record","item","ticket"};
-        String[] adjs  = {"public","private","new","active","pending","archived","shared","draft"};
-        int year = java.time.LocalDate.now().getYear();
-        return adjs[rng.nextInt(adjs.length)] + "-" + nouns[rng.nextInt(nouns.length)] + "-" + year;
+        int n = rng.nextInt(2, 4);
+        java.util.List<String> pool = new java.util.ArrayList<>(java.util.Arrays.asList(SLUG_WORDS));
+        java.util.Collections.shuffle(pool, new java.util.Random(rng.nextLong()));
+        java.util.List<String> parts = new java.util.ArrayList<>(pool.subList(0, n));
+        if (rng.nextDouble() < 0.3) parts.add(String.valueOf(rng.nextInt(2020, 2027)));
+        return String.join("-", parts);
     }
 
     // ── Hostname ──────────────────────────────────────────────────────────────
 
+    private static final String[] HOSTNAME_WORDS = {
+        "api","data","auth","gateway","proxy","cache","cdn","static",
+        "media","stream","metrics","monitor","log","trace","event",
+        "broker","queue","worker","scheduler","webhook","notify"
+    };
+
     private static String hostname(ThreadLocalRandom rng) {
-        String[] prefixes = {"api","web","app","srv","db","cache","worker","proxy","gateway","node"};
-        return prefixes[rng.nextInt(prefixes.length)] + "-" + rng.nextInt(1, 100) + "." + domain(rng);
-    }
-
-    // ── URI Path ──────────────────────────────────────────────────────────────
-
-    private static String uriPath(ThreadLocalRandom rng) {
-        String[] resources = {"users","orders","products","accounts","payments","invoices","reports","events"};
-        String   res = resources[rng.nextInt(resources.length)];
-        int      id  = rng.nextInt(1, 10000);
-        return "/api/v" + rng.nextInt(1, 4) + "/" + res + "/" + id;
+        String prefix = pick(rng, HOSTNAME_WORDS);
+        String suffix = rng.nextDouble() < 0.5 ? String.format("-%02d", rng.nextInt(1, 100)) : "";
+        return prefix + suffix;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -322,6 +414,10 @@ public final class MetaGen {
     }
 
     private static <T> T pick(ThreadLocalRandom rng, T[] arr) {
+        return arr[rng.nextInt(arr.length)];
+    }
+
+    private static int pick(ThreadLocalRandom rng, int[] arr) {
         return arr[rng.nextInt(arr.length)];
     }
 }

@@ -2,6 +2,7 @@ package com.mockjutsu.jmeter.generators;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/** Quaternion and NavMesh path generator. Mirrors gamedev.py. */
 public final class GameDevGen {
     private GameDevGen() {}
 
@@ -14,23 +15,36 @@ public final class GameDevGen {
         };
     }
 
+    // ── Quaternion — L2-normalized unit quaternion + Euler angles (ZYX) ───────
+
     private static String quaternion(ThreadLocalRandom rng) {
-        // Mirrors gamedev.py: adds magnitude (always ~1.0) and euler_degrees
-        double[] q = randomQuaternion(rng);
-        double mag = Math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
-        // Convert quaternion to Euler angles (yaw/pitch/roll)
-        double sinrCosp = 2 * (q[3]*q[0] + q[1]*q[2]);
-        double cosrCosp = 1 - 2 * (q[0]*q[0] + q[1]*q[1]);
-        double roll  = Math.toDegrees(Math.atan2(sinrCosp, cosrCosp));
-        double sinp  = 2 * (q[3]*q[1] - q[2]*q[0]);
-        double pitch = Math.toDegrees(Math.abs(sinp) >= 1 ? Math.copySign(Math.PI/2, sinp) : Math.asin(sinp));
-        double sinyCosp = 2 * (q[3]*q[2] + q[0]*q[1]);
-        double cosyCosp = 1 - 2 * (q[1]*q[1] + q[2]*q[2]);
-        double yaw   = Math.toDegrees(Math.atan2(sinyCosp, cosyCosp));
+        double[] raw = randomQuaternion(rng);
+        double x = round(raw[0], 1e8);
+        double y = round(raw[1], 1e8);
+        double z = round(raw[2], 1e8);
+        double w = round(raw[3], 1e8);
+        double magnitude = round(Math.sqrt(x*x + y*y + z*z + w*w), 1e10);
+
+        double sinr = 2.0 * (w*x + y*z);
+        double cosr = 1.0 - 2.0 * (x*x + y*y);
+        double roll = Math.toDegrees(Math.atan2(sinr, cosr));
+
+        double sinp = 2.0 * (w*y - z*x);
+        sinp = Math.max(-1.0, Math.min(1.0, sinp));
+        double pitch = Math.toDegrees(Math.asin(sinp));
+
+        double siny = 2.0 * (w*z + x*y);
+        double cosy = 1.0 - 2.0 * (y*y + z*z);
+        double yaw = Math.toDegrees(Math.atan2(siny, cosy));
+
+        pitch = round(pitch, 1e4);
+        yaw   = round(yaw, 1e4);
+        roll  = round(roll, 1e4);
+
         return String.format(java.util.Locale.US,
-            "{\"x\":%.6f,\"y\":%.6f,\"z\":%.6f,\"w\":%.6f,\"magnitude\":%.6f," +
-            "\"euler_degrees\":{\"roll\":%.4f,\"pitch\":%.4f,\"yaw\":%.4f}}",
-            q[0], q[1], q[2], q[3], mag, roll, pitch, yaw);
+            "{\"x\":%.8f,\"y\":%.8f,\"z\":%.8f,\"w\":%.8f,\"magnitude\":%.10f," +
+            "\"euler_degrees\":{\"pitch\":%.4f,\"yaw\":%.4f,\"roll\":%.4f}}",
+            x, y, z, w, magnitude, pitch, yaw, roll);
     }
 
     private static double[] randomQuaternion(ThreadLocalRandom rng) {
@@ -46,31 +60,56 @@ public final class GameDevGen {
         return new double[]{x/norm, y/norm, z/norm, w/norm};
     }
 
+    // ── NavMesh Path — heading-based random walk, 3-15 waypoints ─────────────
+
     private static String navmeshPath(ThreadLocalRandom rng) {
-        // Mirrors gamedev.py: {waypoints, start, end, total_distance, waypoint_count}
-        int nodeCount = rng.nextInt(3, 10);
-        double startX = rng.nextDouble(-100, 100);
-        double startY = rng.nextDouble(-10, 10);
-        double startZ = rng.nextDouble(-100, 100);
-        double endX   = rng.nextDouble(-100, 100);
-        double endY   = rng.nextDouble(-10, 10);
-        double endZ   = rng.nextDouble(-100, 100);
-        StringBuilder waypointsSb = new StringBuilder("[");
-        double totalDist = 0;
-        double prevX = startX, prevZ = startZ;
-        for (int i = 0; i < nodeCount; i++) {
-            if (i > 0) waypointsSb.append(",");
-            double wx = i == 0 ? startX : (i == nodeCount-1 ? endX : rng.nextDouble(-100,100));
-            double wz = i == 0 ? startZ : (i == nodeCount-1 ? endZ : rng.nextDouble(-100,100));
-            waypointsSb.append(String.format(java.util.Locale.US, "{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f}", wx, rng.nextDouble(-10,10), wz));
-            totalDist += Math.sqrt((wx-prevX)*(wx-prevX) + (wz-prevZ)*(wz-prevZ));
-            prevX = wx; prevZ = wz;
+        int n = rng.nextInt(3, 16);
+        double cx = round(rng.nextDouble(-200.0, 200.0), 1e3);
+        double cy = round(rng.nextDouble(-2.0, 2.0), 1e3);
+        double cz = round(rng.nextDouble(-200.0, 200.0), 1e3);
+
+        java.util.List<double[]> waypoints = new java.util.ArrayList<>();
+        waypoints.add(new double[]{cx, cy, cz});
+        double angle = rng.nextDouble(0.0, 2.0 * Math.PI);
+
+        for (int i = 0; i < n - 1; i++) {
+            double step = rng.nextDouble(5.0, 25.0);
+            angle += rng.nextDouble(-Math.PI / 3.0, Math.PI / 3.0);
+            cx = round(cx + step * Math.cos(angle), 1e3);
+            cy = round(Math.max(-5.0, Math.min(5.0, cy + rng.nextDouble(-0.5, 0.5))), 1e3);
+            cz = round(cz + step * Math.sin(angle), 1e3);
+            waypoints.add(new double[]{cx, cy, cz});
         }
-        waypointsSb.append("]");
+
+        double total = 0.0;
+        for (int i = 1; i < waypoints.size(); i++) {
+            double[] a = waypoints.get(i - 1);
+            double[] b = waypoints.get(i);
+            double dx = b[0]-a[0], dy = b[1]-a[1], dz = b[2]-a[2];
+            total += Math.sqrt(dx*dx + dy*dy + dz*dz);
+        }
+        total = round(total, 1e3);
+
+        StringBuilder wsb = new StringBuilder("[");
+        for (int i = 0; i < waypoints.size(); i++) {
+            if (i > 0) wsb.append(",");
+            double[] p = waypoints.get(i);
+            wsb.append(String.format(java.util.Locale.US, "{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f}", p[0], p[1], p[2]));
+        }
+        wsb.append("]");
+
+        double[] start = waypoints.get(0);
+        double[] end = waypoints.get(waypoints.size() - 1);
+
         return String.format(java.util.Locale.US,
-            "{\"waypoints\":%s,\"start\":{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f}," +
+            "{\"start\":{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f}," +
             "\"end\":{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f}," +
-            "\"total_distance\":%.2f,\"waypoint_count\":%d}",
-            waypointsSb, startX, startY, startZ, endX, endY, endZ, totalDist, nodeCount);
+            "\"waypoints\":%s," +
+            "\"total_distance\":%.3f,\"waypoint_count\":%d}",
+            start[0], start[1], start[2], end[0], end[1], end[2], wsb, total, waypoints.size());
+    }
+
+    private static double round(double v, double scale) {
+        return Math.round(v * scale) / scale;
     }
 }

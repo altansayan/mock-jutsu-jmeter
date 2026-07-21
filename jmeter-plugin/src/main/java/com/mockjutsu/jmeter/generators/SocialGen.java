@@ -17,22 +17,22 @@ public final class SocialGen {
         "tech","ai","dev","code","startup","fintech","java","mock","test","data",
         "cloud","devops","python","security","mobile","backend","frontend","api","ux","infra"
     };
-    private static final String[] BIO_TMPL = {
-        "Building things with code",
-        "Senior %s developer | %s enthusiast",
-        "Open source contributor | %s lover",
-        "Making the web better one commit at a time",
-        "Coffee-driven developer",
-        "%s engineer by day, %s hacker by night",
-        "Turning coffee into %s code",
-        "Passionate about %s and %s"
-    };
-    private static final String[] LANGS = {"Java","Python","Go","Rust","TypeScript","Kotlin","Swift","Dart"};
-
-    // Power-law tier weights matching social.py: tiers (max, weight)
-    // 0-99: w=40, 100-999: w=30, 1k-9999: w=18, 10k-99999: w=8, 100k-999999: w=3, 1M-5M: w=1
-    private static final int[][] FOLLOWER_TIERS = {
-        {100, 40}, {1000, 30}, {10000, 18}, {100000, 8}, {1000000, 3}, {5000000, 1}
+    private static final String[] BIO_TEMPLATES = {
+        "Building the future one line of code at a time.",
+        "Developer, maker, and coffee enthusiast.",
+        "Turning ideas into products since day one.",
+        "Passionate about technology and design.",
+        "Open source advocate. Always learning.",
+        "Entrepreneur | Engineer | Dreamer.",
+        "Making the web a better place.",
+        "Data nerd. Problem solver. Cat person.",
+        "Exploring the intersection of AI and creativity.",
+        "Full-stack developer by day, gamer by night.",
+        "Startup founder. Failed fast, learned faster.",
+        "Minimalist. Futurist. Software craftsman.",
+        "I ship products people actually use.",
+        "Code. Coffee. Repeat.",
+        "Engineering manager who still loves to code."
     };
 
     public static String generate(String type, String locale) {
@@ -76,28 +76,17 @@ public final class SocialGen {
     }
 
     private static String bio(ThreadLocalRandom rng) {
-        String tmpl = BIO_TMPL[rng.nextInt(BIO_TMPL.length)];
-        long pct = tmpl.chars().filter(c -> c == '%').count();
-        if (pct == 0) return tmpl;
-        if (pct == 1) return String.format(tmpl, pick(rng, LANGS));
-        return String.format(tmpl, pick(rng, LANGS), pick(rng, LANGS));
+        return BIO_TEMPLATES[rng.nextInt(BIO_TEMPLATES.length)];
     }
 
     private static int followerCount(ThreadLocalRandom rng) {
-        int totalWeight = 0;
-        for (int[] tier : FOLLOWER_TIERS) totalWeight += tier[1];
-        int r = rng.nextInt(totalWeight);
-        int cumulative = 0;
-        int min = 0;
-        for (int[] tier : FOLLOWER_TIERS) {
-            cumulative += tier[1];
-            if (r < cumulative) {
-                int max = tier[0];
-                return min + rng.nextInt(max - min);
-            }
-            min = tier[0];
-        }
-        return rng.nextInt(1000000);
+        int tier = rng.nextInt(100);
+        if (tier < 40) return rng.nextInt(1, 500);
+        if (tier < 65) return rng.nextInt(4500) + 500;
+        if (tier < 80) return rng.nextInt(45000) + 5000;
+        if (tier < 92) return rng.nextInt(450000) + 50000;
+        if (tier < 98) return rng.nextInt(4500000) + 500000;
+        return rng.nextInt(45000000) + 5000000;
     }
 
     private static <T> T pick(ThreadLocalRandom rng, T[] arr) { return arr[rng.nextInt(arr.length)]; }
