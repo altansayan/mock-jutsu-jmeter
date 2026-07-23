@@ -28,7 +28,17 @@ ${__mockjutsu_financial(cardnum:visa|TR|myCard)}    → stores result in ${myCar
 
 ## Installation
 
-1. Download `mock-jutsu-jmeter-1.0.0.jar` from [Releases](https://github.com/altansayan/mock-jutsu-jmeter/releases)
+### Method 1: JMeter Plugins Manager (recommended)
+
+1. Install [Plugins Manager](https://jmeter-plugins.org/install/Install/) if you haven't already
+2. In JMeter, open **Options → Plugins Manager → Available Plugins**
+3. Search for `Mock Jutsu`, check it, and click **Apply Changes and Restart JMeter**
+
+![JMeter Plugins Manager showing Mock Jutsu](assets/plugins-manager-preview.png)
+
+### Method 2: Manual Installation (Function Helper Dialog)
+
+1. Download `mock-jutsu-jmeter-1.0.1.jar` from [Releases](https://github.com/altansayan/mock-jutsu-jmeter/releases)
 2. Copy to `$JMETER_HOME/lib/ext/`
 3. Restart JMeter
 4. Open **Options → Function Helper Dialog** — search for `mockjutsu`
