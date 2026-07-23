@@ -54,7 +54,13 @@ Official Plugin Page: [jmeter-plugins.org/?search=mock-jutsu](https://jmeter-plu
 3. Copy its function snippet from the JMeter widget
 4. Paste it directly into any JMeter field — no scripting needed
 
-[![Mock Jutsu JMeter Plugin — Usage Demo](https://img.youtube.com/vi/6IEy3rCa2c0/0.jpg)](https://www.youtube.com/watch?v=6IEy3rCa2c0)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=6IEy3rCa2c0">
+    <img src="https://img.youtube.com/vi/6IEy3rCa2c0/maxresdefault.jpg" alt="Mock Jutsu JMeter Plugin — Usage Demo" width="600">
+  </a>
+  <br>
+  <a href="https://www.youtube.com/watch?v=6IEy3rCa2c0">▶️ Watch the Usage Demo on YouTube</a>
+</p>
 
 ### Syntax
 
