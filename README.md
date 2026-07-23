@@ -49,6 +49,13 @@ Official Plugin Page: [jmeter-plugins.org/?search=mock-jutsu](https://jmeter-plu
 
 ## Usage
 
+1. Open the Helper Docs: [altansayan.github.io/mock-jutsu-api](https://altansayan.github.io/mock-jutsu-api/)
+2. Find the function you want to use
+3. Copy its function snippet from the JMeter widget
+4. Paste it directly into any JMeter field — no scripting needed
+
+[![Mock Jutsu JMeter Plugin — Usage Demo](https://img.youtube.com/vi/6IEy3rCa2c0/0.jpg)](https://www.youtube.com/watch?v=6IEy3rCa2c0)
+
 ### Syntax
 
 Use **pipe `|`** to separate options inside the Function Helper — JMeter does not escape `|`, so the output is always clean with no backslashes.
