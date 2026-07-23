@@ -34,6 +34,8 @@ ${__mockjutsu_financial(cardnum:visa|TR|myCard)}    → stores result in ${myCar
 2. In JMeter, open **Options → Plugins Manager → Available Plugins**
 3. Search for `Mock Jutsu`, check it, and click **Apply Changes and Restart JMeter**
 
+Official Plugin Page: [jmeter-plugins.org/?search=mock-jutsu](https://jmeter-plugins.org/?search=mock-jutsu)
+
 ![JMeter Plugins Manager showing Mock Jutsu](assets/plugins-manager-preview.png)
 
 ### Method 2: Manual Installation (Function Helper Dialog)
