@@ -4,6 +4,7 @@
 [![Java](https://img.shields.io/badge/Java-17%2B-blue)](https://adoptium.net)
 [![JMeter](https://img.shields.io/badge/JMeter-5.6%2B-red)](https://jmeter.apache.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![JMeter Plugin](https://img.shields.io/badge/JMeter%20Plugin-v1.0.1-red?logo=apache&logoColor=white)](https://jmeter-plugins.org/?search=mock-jutsu)
 
 Generate **5955-tested**, format-valid synthetic test data directly inside JMeter test plans — no Python, no subprocess, no external dependencies.
 
@@ -345,6 +346,8 @@ mvn package       # produces target/mock-jutsu-jmeter-1.0.0.jar
 
 ---
 
+<div align="center">
+
 ## 💖 Support Mock Jutsu
 
 Mock Jutsu is **free and open-source**. If it saved you hours of test data setup, consider buying me a coffee ☕
@@ -356,6 +359,8 @@ Mock Jutsu is **free and open-source**. If it saved you hours of test data setup
 | Ξ **Ethereum (ETH)** | `0x8D2fF0a795E3a19D41758Cb9b4451C39D528BbAF` |
 
 _This section will be updated with our sponsors._
+
+</div>
 
 ---
 

@@ -416,8 +416,9 @@ class FormatValidationTest {
     @RepeatedTest(10) void hashtag_hash_prefix() { assertTrue(g("hashtag","TR").startsWith("#")); }
 
     @RepeatedTest(10) void follower_count_range() {
+        // Power-law distribution, top tier is 5M-49M followers — matches Python exactly.
         int fc = Integer.parseInt(g("follower_count","TR"));
-        assertTrue(fc >= 0 && fc < 5_000_000, "Follower count: " + fc);
+        assertTrue(fc >= 0 && fc < 50_000_000, "Follower count: " + fc);
     }
 
     // ── Hardware ──────────────────────────────────────────────────────────────
