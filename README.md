@@ -57,11 +57,11 @@ Official Plugin Page: [jmeter-plugins.org/?search=mock-jutsu](https://jmeter-plu
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=6IEy3rCa2c0">▶️ Watch the Usage Demo on YouTube</a>
-  <br>
+  <br><br>
   <a href="https://www.youtube.com/watch?v=6IEy3rCa2c0">
     <img src="assets/usage-demo-player.png" alt="Mock Jutsu JMeter Plugin — Usage Demo" width="600">
   </a>
-  <br>
+  <br><br>
   <a href="https://www.youtube.com/watch?v=6IEy3rCa2c0">▶️ Watch the Usage Demo on YouTube</a>
 </p>
 
