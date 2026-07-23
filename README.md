@@ -346,6 +346,15 @@ mvn package       # produces target/mock-jutsu-jmeter-1.0.0.jar
 
 ---
 
+## ⚖️ Legal Disclaimer
+
+Generated data is **entirely synthetic** and for development/testing environments only.
+
+- Do not submit to real financial, government, or telecom production systems.
+- Generated IBANs, card numbers, and national IDs are mathematically valid but **do not belong to real entities**.
+
+---
+
 <div align="center">
 
 ## 💖 Support Mock Jutsu
@@ -360,10 +369,10 @@ Mock Jutsu is **free and open-source**. If it saved you hours of test data setup
 
 _This section will be updated with our sponsors._
 
-</div>
-
 ---
 
-## License
+**If mock-jutsu saved you from debugging a "valid-looking but broken" test ID, please leave a ⭐!**
 
-MIT © 2026 Altan Sezer Ayan
+Released under the [MIT License](LICENSE) • Copyright © 2026 [Altan Sezer Ayan — A.S.A](https://github.com/altansayan)
+
+</div>
