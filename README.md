@@ -1,4 +1,4 @@
-# mock-jutsu — JMeter Function Plugin
+# Mock Jutsu - JMeter Plugin
 
 [![Build Status](https://github.com/altansayan/mock-jutsu-jmeter/actions/workflows/build.yml/badge.svg)](https://github.com/altansayan/mock-jutsu-jmeter/actions)
 [![Java](https://img.shields.io/badge/Java-17%2B-blue)](https://adoptium.net)
