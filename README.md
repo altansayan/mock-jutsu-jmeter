@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![JMeter Plugin](https://img.shields.io/badge/JMeter%20Plugin-v1.0.1-red?logo=apache&logoColor=white)](https://jmeter-plugins.org/?search=mock-jutsu)
 
-Generate **5955-tested**, format-valid synthetic test data directly inside JMeter test plans — no Python, no subprocess, no external dependencies.
+Generate **5955-tested**, format-valid mock test data directly inside JMeter test plans — no Python, no subprocess, no external dependencies.
 
 ```
 ${__mockjutsu_identity(tckn|TR)}                    → 46396909916
