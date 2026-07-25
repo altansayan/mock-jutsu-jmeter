@@ -3,13 +3,19 @@ package com.mockjutsu.jmeter.generators;
 import com.mockjutsu.jmeter.Randoms;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Signature;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECGenParameterSpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** OIDC / JWT cryptographic signature kit — real ES256 (P-256) + HS256. Mirrors oidc.py. */
+/** OIDC / JWT — ES256 (P-256 via JDK native EC) + HS256. Mirrors oidc.py. */
 public final class OidcGen {
     private OidcGen() {}
     private static final Logger log = LoggerFactory.getLogger(OidcGen.class);
@@ -37,14 +43,19 @@ public final class OidcGen {
             "@example.com\",\"name\":\"Mock User " + rng.nextInt(1, 1000) + "\"}";
     }
 
+    private static KeyPair genP256KeyPair() throws Exception {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        kpg.initialize(new ECGenParameterSpec("secp256r1"), Randoms.SECURE);
+        return kpg.generateKeyPair();
+    }
+
     private static String tokenSet(ThreadLocalRandom rng) throws Exception {
-        BigInteger nMinus1 = EcCrypto.P256_N.subtract(BigInteger.ONE);
-        BigInteger privkey = new BigInteger(EcCrypto.P256_N.bitLength(), Randoms.SECURE).mod(nMinus1).add(BigInteger.ONE);
-        EcCrypto.Point pub = EcCrypto.p256MultiplyBase(privkey);
+        KeyPair kp = genP256KeyPair();
+        ECPublicKey pub = (ECPublicKey) kp.getPublic();
         String kid = UUID.randomUUID().toString().substring(0, 8);
 
-        String xB64 = b64uBigInt(pub.x());
-        String yB64 = b64uBigInt(pub.y());
+        String xB64 = b64uBigInt(pub.getW().getAffineX());
+        String yB64 = b64uBigInt(pub.getW().getAffineY());
         String jwk = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"" + xB64 + "\",\"y\":\"" + yB64 +
             "\",\"kid\":\"" + kid + "\",\"use\":\"sig\",\"alg\":\"ES256\"}";
 
@@ -52,21 +63,23 @@ public final class OidcGen {
         String header = b64u(("{\"alg\":\"ES256\",\"typ\":\"JWT\",\"kid\":\"" + kid + "\"}").getBytes(StandardCharsets.UTF_8));
         String payload = b64u(claims.getBytes(StandardCharsets.UTF_8));
         byte[] signing = (header + "." + payload).getBytes(StandardCharsets.UTF_8);
-        byte[] msgHash = EcCrypto.sha256(signing);
-        byte[] sig = EcCrypto.ecdsaSignP256(privkey, msgHash, Randoms.SECURE);
-        String token = header + "." + payload + "." + b64u(sig);
 
+        Signature signer = Signature.getInstance("SHA256withECDSA");
+        signer.initSign(kp.getPrivate(), Randoms.SECURE);
+        signer.update(signing);
+        byte[] rawSig = derToRaw(signer.sign());
+
+        String token = header + "." + payload + "." + b64u(rawSig);
         return "{\"token\":\"" + token + "\",\"jwks\":{\"keys\":[" + jwk + "]},\"kid\":\"" + kid +
             "\",\"claims\":" + claims + "}";
     }
 
     private static String jwks() throws Exception {
-        BigInteger nMinus1 = EcCrypto.P256_N.subtract(BigInteger.ONE);
-        BigInteger privkey = new BigInteger(EcCrypto.P256_N.bitLength(), Randoms.SECURE).mod(nMinus1).add(BigInteger.ONE);
-        EcCrypto.Point pub = EcCrypto.p256MultiplyBase(privkey);
+        KeyPair kp = genP256KeyPair();
+        ECPublicKey pub = (ECPublicKey) kp.getPublic();
         String kid = UUID.randomUUID().toString().substring(0, 8);
-        String xB64 = b64uBigInt(pub.x());
-        String yB64 = b64uBigInt(pub.y());
+        String xB64 = b64uBigInt(pub.getW().getAffineX());
+        String yB64 = b64uBigInt(pub.getW().getAffineY());
         return "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"" + xB64 + "\",\"y\":\"" + yB64 +
             "\",\"kid\":\"" + kid + "\",\"use\":\"sig\",\"alg\":\"ES256\"}]}";
     }
@@ -80,6 +93,25 @@ public final class OidcGen {
         byte[] signing = (header + "." + payload).getBytes(StandardCharsets.UTF_8);
         byte[] sig = CryptoFuzzGen.hmacSha256(secret, signing);
         return header + "." + payload + "." + b64u(sig);
+    }
+
+    /** Convert DER-encoded ECDSA signature to raw R||S (64 bytes) for JWT ES256. */
+    private static byte[] derToRaw(byte[] der) {
+        // DER: 0x30 <totalLen> 0x02 <rLen> <r...> 0x02 <sLen> <s...>
+        int pos = 2;
+        int rLen = der[pos + 1] & 0xFF;
+        byte[] r = Arrays.copyOfRange(der, pos + 2, pos + 2 + rLen);
+        pos = pos + 2 + rLen;
+        int sLen = der[pos + 1] & 0xFF;
+        byte[] s = Arrays.copyOfRange(der, pos + 2, pos + 2 + sLen);
+
+        byte[] out = new byte[64];
+        // R and S may have a leading 0x00 byte (positive BigInteger encoding)
+        if (r.length > 32) r = Arrays.copyOfRange(r, r.length - 32, r.length);
+        if (s.length > 32) s = Arrays.copyOfRange(s, s.length - 32, s.length);
+        System.arraycopy(r, 0, out, 32 - r.length, r.length);
+        System.arraycopy(s, 0, out, 64 - s.length, s.length);
+        return out;
     }
 
     private static String b64u(byte[] b) {

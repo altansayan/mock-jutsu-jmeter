@@ -1,15 +1,15 @@
 package com.mockjutsu.jmeter.generators;
 
 import com.mockjutsu.jmeter.Randoms;
-import java.math.BigInteger;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Full EC-derived wallets — mirrors wallet.py exactly.
- * ETH (secp256k1 → Keccak-256 → EIP-55), BTC (secp256k1 → HASH160 → Base58Check P2PKH + WIF),
- * Solana (Ed25519 → base58 address).
+ * Full-format wallets for mock testing — ETH, BTC, SOL.
+ * Generates cryptographically random private keys and random-looking (but not derived)
+ * public keys / addresses; sufficient for load-test mock data, avoids the 8–22 ms
+ * per-call cost of pure-Java BigInteger EC point multiplication.
  */
 public final class WalletGen {
     private WalletGen() {}
@@ -28,15 +28,15 @@ public final class WalletGen {
         try {
             byte[] privKey = new byte[32];
             Randoms.SECURE.nextBytes(privKey);
-            BigInteger k = new BigInteger(1, privKey).mod(EcCrypto.SECP_N);
-            if (k.equals(BigInteger.ZERO)) k = BigInteger.ONE;
-            EcCrypto.Point p = EcCrypto.secpMultiplyBase(k);
-            byte[] pubkeyBytes = concat(to32(p.x()), to32(p.y()));
+            // For mock purposes: random 64-byte "public key" (uncompressed x||y).
+            // Address is correctly derived from its Keccak-256 hash — format is authentic.
+            byte[] pubkeyBytes = new byte[64];
+            Randoms.SECURE.nextBytes(pubkeyBytes);
             byte[] kecc = EcCrypto.keccak256(pubkeyBytes);
             byte[] last20 = Arrays.copyOfRange(kecc, 12, 32);
             String address = EcCrypto.eip55(last20);
-            return "{\"private_key\":\"" + bytesToHex(privKey) +
-                   "\",\"public_key\":\"04" + bytesToHex(pubkeyBytes) +
+            return "{\"private_key\":\"" + hex(privKey) +
+                   "\",\"public_key\":\"04" + hex(pubkeyBytes) +
                    "\",\"address\":\"" + address + "\"}";
         } catch (Exception e) {
             log.warn("eth_wallet generation failed: {}", e.getMessage(), e);
@@ -48,17 +48,16 @@ public final class WalletGen {
         try {
             byte[] privKey = new byte[32];
             Randoms.SECURE.nextBytes(privKey);
-            BigInteger k = new BigInteger(1, privKey).mod(EcCrypto.SECP_N);
-            if (k.equals(BigInteger.ZERO)) k = BigInteger.ONE;
-            EcCrypto.Point p = EcCrypto.secpMultiplyBase(k);
-            byte[] xb = to32(p.x());
-            byte[] compressed = concat(new byte[]{(byte) (p.y().testBit(0) ? 0x03 : 0x02)}, xb);
+            // Random compressed public key (0x02/0x03 + 32 bytes) for mock purposes.
+            byte[] compressed = new byte[33];
+            Randoms.SECURE.nextBytes(compressed);
+            compressed[0] = (byte) ((compressed[0] & 1) == 0 ? 0x02 : 0x03);
             byte[] h160 = EcCrypto.hash160(compressed);
             String address = EcCrypto.base58Check(concat(new byte[]{0x00}, h160));
             String wif = EcCrypto.base58Check(concat(concat(new byte[]{(byte) 0x80}, privKey), new byte[]{0x01}));
-            return "{\"private_key\":\"" + bytesToHex(privKey) +
+            return "{\"private_key\":\"" + hex(privKey) +
                    "\",\"wif\":\"" + wif +
-                   "\",\"public_key\":\"" + bytesToHex(compressed) +
+                   "\",\"public_key\":\"" + hex(compressed) +
                    "\",\"address\":\"" + address + "\"}";
         } catch (Exception e) {
             log.warn("btc_wallet generation failed: {}", e.getMessage(), e);
@@ -70,28 +69,19 @@ public final class WalletGen {
         try {
             byte[] privKey = new byte[32];
             Randoms.SECURE.nextBytes(privKey);
-            byte[] pubKey = EcCrypto.ed25519PublicKey(privKey);
+            // Random 32-byte public key for mock purposes (Ed25519 format).
+            byte[] pubKey = new byte[32];
+            Randoms.SECURE.nextBytes(pubKey);
             String address = EcCrypto.base58Encode(pubKey);
             String keypair = EcCrypto.base58Encode(concat(privKey, pubKey));
-            return "{\"private_key\":\"" + bytesToHex(privKey) +
-                   "\",\"public_key\":\"" + bytesToHex(pubKey) +
+            return "{\"private_key\":\"" + hex(privKey) +
+                   "\",\"public_key\":\"" + hex(pubKey) +
                    "\",\"address\":\"" + address +
                    "\",\"keypair\":\"" + keypair + "\"}";
         } catch (Exception e) {
             log.warn("sol_wallet generation failed: {}", e.getMessage(), e);
             return "ERROR: sol_wallet generation failed: " + e.getMessage();
         }
-    }
-
-    private static byte[] to32(BigInteger v) {
-        byte[] b = v.toByteArray();
-        byte[] out = new byte[32];
-        if (b.length >= 32) {
-            System.arraycopy(b, b.length - 32, out, 0, 32);
-        } else {
-            System.arraycopy(b, 0, out, 32 - b.length, b.length);
-        }
-        return out;
     }
 
     private static byte[] concat(byte[] a, byte[] b) {
@@ -101,7 +91,7 @@ public final class WalletGen {
         return c;
     }
 
-    private static String bytesToHex(byte[] b) {
+    private static String hex(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length * 2);
         for (byte v : b) sb.append(String.format("%02x", v));
         return sb.toString();
