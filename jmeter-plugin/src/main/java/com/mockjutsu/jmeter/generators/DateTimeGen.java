@@ -50,8 +50,8 @@ public final class DateTimeGen {
         LocalDate end   = LocalDate.now();
         if (!qualifier.isEmpty() && qualifier.contains("|")) {
             String[] parts = qualifier.split("\\|", 2);
-            try { start = LocalDate.parse(parts[0].trim()); } catch (Exception e) { log.debug("date_between: cannot parse start '{}', using default: {}", parts[0].trim(), e.getMessage()); }
-            if (parts.length > 1) try { end = LocalDate.parse(parts[1].trim()); } catch (Exception e) { log.debug("date_between: cannot parse end '{}', using default: {}", parts[1].trim(), e.getMessage()); }
+            try { start = LocalDate.parse(parts[0].trim()); } catch (Exception e) { log.warn("date_between: cannot parse start '{}', using default: {}", parts[0].trim(), e.getMessage()); }
+            if (parts.length > 1) try { end = LocalDate.parse(parts[1].trim()); } catch (Exception e) { log.warn("date_between: cannot parse end '{}', using default: {}", parts[1].trim(), e.getMessage()); }
         }
         long range = end.toEpochDay() - start.toEpochDay();
         if (range <= 0) return start.format(DATE_FMT);

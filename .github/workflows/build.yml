@@ -27,6 +27,15 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Lint — no hot-path logging in generators
+        working-directory: jmeter-plugin/src/main/java/com/mockjutsu/jmeter/generators
+        run: |
+          if grep -rn 'log\.debug\|log\.info' .; then
+            echo "ERROR: log.debug / log.info found in generators/. Hot-path logging degrades throughput 10–50×. Use log.warn only on exception paths."
+            exit 1
+          fi
+          echo "OK: no hot-path logging found in generators/"
+
       - name: Build & test
         working-directory: jmeter-plugin
         run: mvn -B test
