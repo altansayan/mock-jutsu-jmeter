@@ -11,7 +11,7 @@
   <packaging>jar</packaging>
 
   <name>mock-jutsu JMeter Function Plugin</name>
-  <description>JMeter custom functions — 390 mock data types via ${__mockjutsu_*(type|locale|varName|mask)}</description>
+  <description>JMeter custom functions — 340 mock data types via ${__mockjutsu_*(type|locale|varName|mask)}</description>
   <url>https://github.com/altansayan/mock-jutsu-jmeter</url>
 
   <licenses>

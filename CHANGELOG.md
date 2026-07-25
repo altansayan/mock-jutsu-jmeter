@@ -54,7 +54,7 @@ under 1.0.1. 1.0.0 is deprecated and should not be used.
 ## [1.0.0] - 2026-06-01
 
 ### Initial Release
-- 390+ format-valid mock data types via JMeter custom functions
+- 340 format-valid mock data types via JMeter custom functions
 - Syntax: `${__mockjutsu_*(type|locale|varName|mask)}`
 - 6 locales: TR, UK, US, DE, FR, RU
 - Pipe-separated options: `${__mockjutsu_financial(cardnum:visa|TR|myVar|mask)}`

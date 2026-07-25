@@ -5,7 +5,9 @@ package com.mockjutsu.jmeter;
  * Single type  → ${__mockjutsu(tckn,,)}              returns the generated value.
  * Multi types  → ${__mockjutsu(tckn,iban,cardnum,uuid,,)} returns a JSON object.
  *   Pass types as separate comma-separated JMeter params; last two are locale and varName.
- *   If varName is set, each type is also stored as varName_tckn, varName_iban, etc.
+ *   If varName is set, the full result (single value or JSON) is stored in that JMeter variable.
+ *   Note: multi-type mode does NOT create per-type variables (varName_tckn, etc.) —
+ *   the entire JSON is stored under the single varName.
  */
 public final class MockJutsuFunction extends MockJutsuBaseFunction {
 
@@ -14,7 +16,9 @@ public final class MockJutsuFunction extends MockJutsuBaseFunction {
 
     @Override
     protected String typeDescription() {
-        return "type — any type — tckn | iban | cardnum | uuid | email | ... (all ~251 types supported); " +
-               "for multi-type: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — types as separate params, last two = locale, varName. ~300 types supported including IntlIDs (br_cpf, in_aadhaar, kr_rrn, ...";
+        return "type — any of 340 types — tckn | iban | cardnum | uuid | email | ... ; " +
+               "for multi-type: ${__mockjutsu(tckn,iban,cardnum,uuid,,)} — types as separate params, " +
+               "last two = locale, varName (stores full result in JMeter variable). " +
+               "Includes IntlIDs (br_cpf, in_aadhaar, kr_rrn, ...) and category functions.";
     }
 }
