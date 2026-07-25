@@ -2,6 +2,18 @@
 
 All notable changes to Mock Jutsu JMeter Plugin are documented here.
 
+## [Unreleased]
+
+### Added
+- `PerfMeasurement` — per-type performance regression guard covering all 429
+  type+qualifier combinations through the real JMeter function interface
+  (`fn.setParameters(params); fn.execute(null, null)`), exactly as a user
+  would call `${__mockjutsu_financial(cardnum:visa|TR)}`. Each type has a
+  calibrated threshold (25–100× observed local-JVM latency); the test fails
+  CI on first violation. Baseline measurements: `oidc_token_set` 0.93 ms,
+  `jwks` 0.33 ms, `ubl_invoice` 0.25 ms, `eth/btc/sol_wallet` ~0.14 ms,
+  all other types < 0.05 ms.
+
 ## [1.0.1] - 2026-07-22
 
 **Not backward compatible with 1.0.0.** The previous release's algorithms were
