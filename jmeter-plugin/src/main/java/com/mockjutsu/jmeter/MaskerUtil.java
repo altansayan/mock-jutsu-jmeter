@@ -14,6 +14,16 @@ public final class MaskerUtil {
 
     private MaskerUtil() {}
 
+    // ── Compiled patterns (static finals — compiled once, reused on every mask() call) ──
+    private static final Pattern PAT_SGK        = Pattern.compile("(\\d{2}-)(\\d+)(-\\d+\\.\\d+-\\d+)");
+    private static final Pattern PAT_BIRTHDATE  = Pattern.compile("(\\d{4})([-/])(\\d{2})([-/])(\\d{2})");
+    private static final Pattern PAT_COORD      = Pattern.compile("(\\d+\\.\\d{2})\\d+");
+    private static final Pattern PAT_BALANCE    = Pattern.compile("(-?)(\\d+)(\\.\\d+)?");
+    private static final Pattern PAT_KR_RRN     = Pattern.compile("(\\d{6})-(\\d)(\\d+)");
+    private static final Pattern PAT_DATE_DASH6 = Pattern.compile("(\\d{6})-(.+)");
+    private static final Pattern PAT_DATE_DASH8 = Pattern.compile("(\\d{8})-(.+)");
+    private static final Pattern PAT_MRZ        = Pattern.compile("[A-Z0-9]{4,}");
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static String digitsOnly(String s) {
@@ -92,7 +102,7 @@ public final class MaskerUtil {
 
     private static String maskSgk(String v) {
         // 34-0012345-1.01-02 → 34-*******-1.01-02
-        Matcher m = Pattern.compile("(\\d{2}-)(\\d+)(-\\d+\\.\\d+-\\d+)").matcher(v);
+        Matcher m = PAT_SGK.matcher(v);
         if (m.find()) return m.group(1) + "*".repeat(m.group(2).length()) + m.group(3);
         return v;
     }
@@ -139,7 +149,7 @@ public final class MaskerUtil {
     }
 
     private static String maskBirthdate(String v) {
-        Matcher m = Pattern.compile("(\\d{4})([-/])(\\d{2})([-/])(\\d{2})").matcher(v);
+        Matcher m = PAT_BIRTHDATE.matcher(v);
         if (m.find()) return m.group(1) + m.group(2) + "**" + m.group(4) + "**";
         return v.length() >= 4 ? v.substring(0, 4) + "-**-**" : "****-**-**";
     }
@@ -207,7 +217,7 @@ public final class MaskerUtil {
     }
 
     private static String maskCoord(String v) {
-        Matcher m = Pattern.compile("(\\d+\\.\\d{2})\\d+").matcher(v);
+        Matcher m = PAT_COORD.matcher(v);
         return m.find() ? v.substring(0, m.start()) + m.group(1) + "*****" : v;
     }
 
@@ -218,7 +228,7 @@ public final class MaskerUtil {
     }
 
     private static String maskBalance(String v) {
-        Matcher m = Pattern.compile("(-?)(\\d+)(\\.\\d+)?").matcher(v.strip());
+        Matcher m = PAT_BALANCE.matcher(v.strip());
         if (!m.find()) return v;
         String sign    = m.group(1) != null ? m.group(1) : "";
         String intpart = m.group(2);
@@ -242,20 +252,20 @@ public final class MaskerUtil {
     }
 
     private static String maskKrRrn(String v) {
-        Matcher m = Pattern.compile("(\\d{6})-(\\d)(\\d+)").matcher(v);
+        Matcher m = PAT_KR_RRN.matcher(v);
         if (m.find()) return m.group(1) + "-" + m.group(2) + "*".repeat(m.group(3).length());
         return maskAlphanum(v, 6, 1);
     }
 
     private static String maskDateDash6(String v) {
         // birthdate(6) + -****  (DK CPR, FI HETU)
-        Matcher m = Pattern.compile("(\\d{6})-(.+)").matcher(v);
+        Matcher m = PAT_DATE_DASH6.matcher(v);
         return m.find() ? m.group(1) + "-****" : maskAlphanum(v, 6, 0);
     }
 
     private static String maskDateDash8(String v) {
         // birthdate(8) + -****  (SE personnummer)
-        Matcher m = Pattern.compile("(\\d{8})-(.+)").matcher(v);
+        Matcher m = PAT_DATE_DASH8.matcher(v);
         return m.find() ? m.group(1) + "-****" : maskAlphanum(v, 8, 0);
     }
 
@@ -309,7 +319,7 @@ public final class MaskerUtil {
             case "passport", "license"      -> maskPassport(value);
             case "mrz_td3", "mrz_td1"       -> {
                 // Mask long alphanumeric runs (filler '<' chars preserved)
-                Matcher mrz = Pattern.compile("[A-Z0-9]{4,}").matcher(value);
+                Matcher mrz = PAT_MRZ.matcher(value);
                 yield mrz.replaceAll(mr -> "*".repeat(mr.group().length()));
             }
             // Demographics

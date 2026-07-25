@@ -1,5 +1,6 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.security.SecureRandom;
 import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ public final class FinancialMarketsGen {
     private FinancialMarketsGen() {}
 
     private static final Logger log = LoggerFactory.getLogger(FinancialMarketsGen.class);
+    private static final SecureRandom SEC = new SecureRandom();
 
     private static final char[]   ALPHA_NUM        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
@@ -331,7 +333,7 @@ public final class FinancialMarketsGen {
         String payloadB64 = base64UrlNoPad(payloadJson);
 
         byte[] key = new byte[32];
-        new java.security.SecureRandom().nextBytes(key);
+        SEC.nextBytes(key);
         byte[] sig;
         try {
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");

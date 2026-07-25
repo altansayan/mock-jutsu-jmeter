@@ -21,6 +21,9 @@ public final class ValidatorUtil {
 
     private static final Logger log = LoggerFactory.getLogger(ValidatorUtil.class);
 
+    // Compiled once — reused on every validate() call
+    private static final Pattern PAT_SSN = Pattern.compile("(\\d{3})-(\\d{2})-(\\d{4})");
+
     // ══════════════════════════════════════════════════════════════════════════
     // ALGORITHM IMPLEMENTATIONS
     // ══════════════════════════════════════════════════════════════════════════
@@ -128,7 +131,7 @@ public final class ValidatorUtil {
      * Format: AAA-GG-SSSS; area 001-899 excl. 000 and 666; group 01-99; serial 0001-9999.
      */
     public static boolean ssnValid(String ssnStr) {
-        var m = Pattern.compile("(\\d{3})-(\\d{2})-(\\d{4})").matcher(ssnStr.strip());
+        var m = PAT_SSN.matcher(ssnStr.strip());
         if (!m.matches()) return false;
         int area   = Integer.parseInt(m.group(1));
         int group  = Integer.parseInt(m.group(2));
