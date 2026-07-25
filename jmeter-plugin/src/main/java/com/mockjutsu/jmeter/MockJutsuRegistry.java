@@ -2,6 +2,8 @@ package com.mockjutsu.jmeter;
 
 import com.mockjutsu.jmeter.generators.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -256,63 +258,74 @@ public final class MockJutsuRegistry {
         "eg_tn"
     );
 
-    // ── Dispatch ─────────────────────────────────────────────────────────────
+    // ── O(1) Dispatch Map ────────────────────────────────────────────────────
+
+    @FunctionalInterface
+    private interface GeneratorFn {
+        String call(String type, String locale, String qualifier);
+    }
+
+    private static final Map<String, GeneratorFn> DISPATCH;
+
+    static {
+        HashMap<String, GeneratorFn> m = new HashMap<>(512);
+        IDENTITY_TYPES    .forEach(t -> m.put(t, IdentityGen::generate));
+        FINANCIAL_TYPES   .forEach(t -> m.put(t, FinancialGen::generate));
+        COMM_TYPES        .forEach(t -> m.put(t, (tp, lc, q) -> CommunicationGen.generate(tp, lc)));
+        META_TYPES        .forEach(t -> m.put(t, MetaGen::generate));
+        BANKING_TYPES     .forEach(t -> m.put(t, (tp, lc, q) -> BankingGen.generate(tp, lc)));
+        CORPORATE_TYPES   .forEach(t -> m.put(t, (tp, lc, q) -> CorporateGen.generate(tp, lc)));
+        HEALTH_TYPES      .forEach(t -> m.put(t, (tp, lc, q) -> HealthGen.generate(tp, lc)));
+        COMMERCE_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> CommerceGen.generate(tp, lc)));
+        IOT_TYPES         .forEach(t -> m.put(t, (tp, lc, q) -> IoTGen.generate(tp, lc)));
+        BARCODE_TYPES     .forEach(t -> m.put(t, (tp, lc, q) -> BarcodeGen.generate(tp, lc)));
+        TELECOM_TYPES     .forEach(t -> m.put(t, (tp, lc, q) -> TelecomGen.generate(tp, lc)));
+        SECURITIES_TYPES  .forEach(t -> m.put(t, FinancialMarketsGen::generate));
+        CRYPTO_TYPES      .forEach(t -> m.put(t, CryptoGen::generate));
+        ECOMMERCE_TYPES   .forEach(t -> m.put(t, EcommerceGen::generate));
+        LOCATION_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> LocationGen.generate(tp, lc)));
+        SOCIAL_TYPES      .forEach(t -> m.put(t, (tp, lc, q) -> SocialGen.generate(tp, lc)));
+        HARDWARE_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> HardwareGen.generate(tp, lc)));
+        CARDPHYSICS_TYPES .forEach(t -> m.put(t, (tp, lc, q) -> CardPhysicsGen.generate(tp, lc)));
+        CYBERSEC_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> SecurityGen.generate(tp, lc)));
+        AVIATION_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> AviationGen.generate(tp, lc)));
+        FIDO2_TYPES       .forEach(t -> m.put(t, (tp, lc, q) -> Fido2Gen.generate(tp, lc)));
+        WALLET_TYPES      .forEach(t -> m.put(t, (tp, lc, q) -> WalletGen.generate(tp, lc)));
+        AI_VECTOR_TYPES   .forEach(t -> m.put(t, AiVectorGen::generate));
+        OIDC_TYPES        .forEach(t -> m.put(t, (tp, lc, q) -> OidcGen.generate(tp, lc)));
+        BANK_STATEMENT_TYPES.forEach(t -> m.put(t, (tp, lc, q) -> BankStatementGen.generate(tp, lc)));
+        EDI_TYPES         .forEach(t -> m.put(t, (tp, lc, q) -> EdiGen.generate(tp, lc)));
+        EVENT_SOURCING_TYPES.forEach(t -> m.put(t, (tp, lc, q) -> EventSourcingGen.generate(tp, lc)));
+        TELEMETRY_TYPES   .forEach(t -> m.put(t, (tp, lc, q) -> TelemetryGen.generate(tp, lc)));
+        CRYPTO_FUZZ_TYPES .forEach(t -> m.put(t, (tp, lc, q) -> CryptoFuzzGen.generate(tp, lc)));
+        MRZ_TYPES         .forEach(t -> m.put(t, (tp, lc, q) -> MrzGen.generate(tp, lc)));
+        OHLCV_TYPES       .forEach(t -> m.put(t, (tp, lc, q) -> OhlcvGen.generate(tp, lc)));
+        NMEA_TYPES        .forEach(t -> m.put(t, (tp, lc, q) -> NmeaGen.generate(tp, lc)));
+        PROMETHEUS_TYPES  .forEach(t -> m.put(t, (tp, lc, q) -> PrometheusGen.generate(tp, lc)));
+        GAMEDEV_TYPES     .forEach(t -> m.put(t, (tp, lc, q) -> GameDevGen.generate(tp, lc)));
+        UBL_TYPES         .forEach(t -> m.put(t, (tp, lc, q) -> UblGen.generate(tp, lc)));
+        AUTOMOTIVE_TYPES  .forEach(t -> m.put(t, (tp, lc, q) -> AutomotiveGen.generate(tp, lc)));
+        TLE_TYPES         .forEach(t -> m.put(t, (tp, lc, q) -> TleGen.generate(tp, lc)));
+        PAYMENTS_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> PaymentsGen.generate(tp, lc)));
+        REVERSE_REGEX_TYPES.forEach(t -> m.put(t, ReverseRegexGen::generate));
+        INTL_IDS_TYPES    .forEach(t -> m.put(t, (tp, lc, q) -> IntlIdsGen.generate(tp, lc)));
+        COMPLIANCE_TYPES  .forEach(t -> m.put(t, (tp, lc, q) -> ComplianceGen.generate(tp, lc)));
+        FINANCIAL_EXT_TYPES.forEach(t -> m.put(t, (tp, lc, q) -> FinancialExtGen.generate(tp, lc)));
+        DATETIME_TYPES    .forEach(t -> m.put(t, DateTimeGen::generate));
+        // special case: cardowner = uppercase fullname (qualifier = gender)
+        m.put("cardowner", (tp, lc, q) -> IdentityGen.generate("fullname", lc, q).toUpperCase());
+        DISPATCH = m;
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
 
     public static String generate(String type, String locale) {
         return generate(type, locale, "");
     }
 
     public static String generate(String type, String locale, String qualifier) {
-        if (type == null || type.isEmpty())    return "ERROR: Missing DataType";
-
-        // special case: cardowner = uppercase fullname (qualifier = gender)
-        if ("cardowner".equals(type))
-            return IdentityGen.generate("fullname", locale, qualifier).toUpperCase();
-
-        if (IDENTITY_TYPES.contains(type))     return IdentityGen.generate(type, locale, qualifier);
-        if (FINANCIAL_TYPES.contains(type))    return FinancialGen.generate(type, locale, qualifier);
-        if (COMM_TYPES.contains(type))         return CommunicationGen.generate(type, locale);
-        if (META_TYPES.contains(type))         return MetaGen.generate(type, locale, qualifier);
-        if (BANKING_TYPES.contains(type))      return BankingGen.generate(type, locale);
-        if (CORPORATE_TYPES.contains(type))    return CorporateGen.generate(type, locale);
-        if (HEALTH_TYPES.contains(type))       return HealthGen.generate(type, locale);
-        if (COMMERCE_TYPES.contains(type))     return CommerceGen.generate(type, locale);
-        if (IOT_TYPES.contains(type))          return IoTGen.generate(type, locale);
-        if (BARCODE_TYPES.contains(type))      return BarcodeGen.generate(type, locale);
-        if (TELECOM_TYPES.contains(type))      return TelecomGen.generate(type, locale);
-        if (SECURITIES_TYPES.contains(type))   return FinancialMarketsGen.generate(type, locale, qualifier);
-        if (CRYPTO_TYPES.contains(type))       return CryptoGen.generate(type, locale, qualifier);
-        if (ECOMMERCE_TYPES.contains(type))    return EcommerceGen.generate(type, locale, qualifier);
-        if (LOCATION_TYPES.contains(type))     return LocationGen.generate(type, locale);
-        if (SOCIAL_TYPES.contains(type))       return SocialGen.generate(type, locale);
-        if (HARDWARE_TYPES.contains(type))     return HardwareGen.generate(type, locale);
-        if (CARDPHYSICS_TYPES.contains(type))  return CardPhysicsGen.generate(type, locale);
-        if (CYBERSEC_TYPES.contains(type))     return SecurityGen.generate(type, locale);
-        if (AVIATION_TYPES.contains(type))     return AviationGen.generate(type, locale);
-        if (FIDO2_TYPES.contains(type))        return Fido2Gen.generate(type, locale);
-        if (WALLET_TYPES.contains(type))       return WalletGen.generate(type, locale);
-        if (AI_VECTOR_TYPES.contains(type))    return AiVectorGen.generate(type, locale, qualifier);
-        if (OIDC_TYPES.contains(type))         return OidcGen.generate(type, locale);
-        if (BANK_STATEMENT_TYPES.contains(type)) return BankStatementGen.generate(type, locale);
-        if (EDI_TYPES.contains(type))          return EdiGen.generate(type, locale);
-        if (EVENT_SOURCING_TYPES.contains(type)) return EventSourcingGen.generate(type, locale);
-        if (TELEMETRY_TYPES.contains(type))    return TelemetryGen.generate(type, locale);
-        if (CRYPTO_FUZZ_TYPES.contains(type))  return CryptoFuzzGen.generate(type, locale);
-        if (MRZ_TYPES.contains(type))          return MrzGen.generate(type, locale);
-        if (OHLCV_TYPES.contains(type))        return OhlcvGen.generate(type, locale);
-        if (NMEA_TYPES.contains(type))         return NmeaGen.generate(type, locale);
-        if (PROMETHEUS_TYPES.contains(type))   return PrometheusGen.generate(type, locale);
-        if (GAMEDEV_TYPES.contains(type))      return GameDevGen.generate(type, locale);
-        if (UBL_TYPES.contains(type))          return UblGen.generate(type, locale);
-        if (AUTOMOTIVE_TYPES.contains(type))   return AutomotiveGen.generate(type, locale);
-        if (TLE_TYPES.contains(type))          return TleGen.generate(type, locale);
-        if (PAYMENTS_TYPES.contains(type))     return PaymentsGen.generate(type, locale);
-        if (REVERSE_REGEX_TYPES.contains(type)) return ReverseRegexGen.generate(type, locale, qualifier);
-        if (INTL_IDS_TYPES.contains(type))    return IntlIdsGen.generate(type, locale);
-        if (COMPLIANCE_TYPES.contains(type))   return ComplianceGen.generate(type, locale);
-        if (FINANCIAL_EXT_TYPES.contains(type)) return FinancialExtGen.generate(type, locale);
-        if (DATETIME_TYPES.contains(type))     return DateTimeGen.generate(type, locale, qualifier);
-
-        return "ERROR: Unknown DataType '" + type + "'";
+        if (type == null || type.isEmpty()) return "ERROR: Missing DataType";
+        GeneratorFn fn = DISPATCH.get(type);
+        return fn != null ? fn.call(type, locale, qualifier) : "ERROR: Unknown DataType '" + type + "'";
     }
 }
