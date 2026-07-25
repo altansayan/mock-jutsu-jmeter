@@ -141,7 +141,21 @@ public abstract class MockJutsuBaseFunction extends AbstractFunction {
 
     private static String toJsonValue(String val) {
         if (val.startsWith("{") || val.startsWith("[")) return val;
-        return "\"" + val.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        StringBuilder sb = new StringBuilder(val.length() + 16);
+        sb.append('"');
+        for (int i = 0; i < val.length(); i++) {
+            char c = val.charAt(i);
+            switch (c) {
+                case '"'  -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default   -> { if (c < 0x20) sb.append(String.format("\\u%04x", (int) c)); else sb.append(c); }
+            }
+        }
+        sb.append('"');
+        return sb.toString();
     }
 
     @Override
