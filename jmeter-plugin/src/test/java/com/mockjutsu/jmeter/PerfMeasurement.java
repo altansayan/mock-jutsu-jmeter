@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Performans regresyon guard — 429 tip+qualifier kombinasyonunu gerçek
- * JMeter function interface'inden geçirerek avg ms/call ölçer.
+ * JMeter function interface'inden geçirerek avg s/call ölçer.
  *
  * Her tip için per-type eşik tanımlıdır; eşik aşılırsa test FAIL eder.
  * Eşikler CI VM gecikme payıyla belirlenmiştir (ölçülen × ~100x headroom).
@@ -34,13 +34,13 @@ class PerfMeasurement {
 
             long ns = System.nanoTime();
             invokeN(row, calls);
-            double avgMs = (System.nanoTime() - ns) / 1_000_000.0 / calls;
+            double avgS = (System.nanoTime() - ns) / 1_000_000_000.0 / calls;
 
             results.add(new String[]{
                 typeSpec,
                 (String) row[2],
                 ((Class<?>) row[0]).getSimpleName(),
-                String.format("%.4f", avgMs),
+                String.format("%.6f", avgS),
                 String.valueOf(calls)
             });
         }
@@ -50,11 +50,11 @@ class PerfMeasurement {
 
         // Tabloyu yazdır
         System.out.println("\n=== MOCK JUTSU PERF MEASUREMENT RESULTS ===");
-        System.out.printf("%-52s %-6s %-42s %10s %6s%n",
-            "typeSpec", "locale", "function", "avg_ms", "calls");
-        System.out.println("-".repeat(125));
+        System.out.printf("%-52s %-6s %-42s %12s %6s%n",
+            "typeSpec", "locale", "function", "avg_s", "calls");
+        System.out.println("-".repeat(127));
         for (String[] r : results) {
-            System.out.printf("%-52s %-6s %-42s %10s %6s%n",
+            System.out.printf("%-52s %-6s %-42s %12s %6s%n",
                 r[0], r[1], r[2], r[3], r[4]);
         }
         System.out.println("=== TOTAL CASES: " + results.size() + " ===\n");
@@ -62,10 +62,10 @@ class PerfMeasurement {
         // Eşik kontrolü — ihlal varsa test FAIL
         List<String> violations = new ArrayList<>();
         for (String[] r : results) {
-            double ms = Double.parseDouble(r[3]);
-            double threshold = thresholdMs(r[0]);
-            if (ms > threshold) {
-                String msg = String.format("[SLOW] %-52s avg=%.4fms threshold=%.1fms", r[0], ms, threshold);
+            double s = Double.parseDouble(r[3]);
+            double threshold = thresholdS(r[0]);
+            if (s > threshold) {
+                String msg = String.format("[SLOW] %-52s avg=%.6fs threshold=%.3fs", r[0], s, threshold);
                 System.out.println(msg);
                 violations.add(msg);
             }
@@ -78,25 +78,25 @@ class PerfMeasurement {
         System.out.println("[OK] All " + results.size() + " cases within per-type thresholds.");
     }
 
-    // ── Per-type thresholds (CI VM headroom: ~100x observed on local JVM) ──────
-    // Observed max: oidc_token_set=0.93ms, jwks=0.33ms, others<0.25ms
-    private static double thresholdMs(String t) {
-        if (t.startsWith("oidc_token_set"))  return 100.0;  // observed 0.93ms
-        if (t.startsWith("jwks"))            return  50.0;  // observed 0.33ms
-        if (t.startsWith("ubl_invoice"))     return  30.0;  // observed 0.25ms
+    // ── Per-type thresholds in seconds (CI VM headroom: ~100x observed on local JVM) ──
+    // Observed max: oidc_token_set=0.000927s, jwks=0.000326s, others<0.00025s
+    private static double thresholdS(String t) {
+        if (t.startsWith("oidc_token_set"))  return 0.100;  // observed 0.000927s
+        if (t.startsWith("jwks"))            return 0.050;  // observed 0.000326s
+        if (t.startsWith("ubl_invoice"))     return 0.030;  // observed 0.000248s
         if (t.startsWith("eth_wallet") || t.startsWith("btc_wallet")
-                                         || t.startsWith("sol_wallet")) return 25.0;
-        if (t.startsWith("x509_cert"))       return  20.0;
-        if (t.startsWith("webauthn")    || t.startsWith("fido2"))      return  15.0;
-        if (t.startsWith("mt940")       || t.startsWith("camt053"))    return  15.0;
-        if (t.startsWith("mnemonic"))   return  10.0;
-        if (t.startsWith("oidc_token")) return  10.0;  // single token (not token_set)
-        if (t.startsWith("swift_mt103") || t.startsWith("pain001"))    return  10.0;
-        if (t.startsWith("hl7")         || t.startsWith("fhir"))       return  10.0;
-        if (t.startsWith("jwt_attack")  || t.startsWith("asn1_fuzz")) return  10.0;
+                                         || t.startsWith("sol_wallet")) return 0.025;
+        if (t.startsWith("x509_cert"))       return 0.020;
+        if (t.startsWith("webauthn")    || t.startsWith("fido2"))      return 0.015;
+        if (t.startsWith("mt940")       || t.startsWith("camt053"))    return 0.015;
+        if (t.startsWith("mnemonic"))        return 0.010;
+        if (t.startsWith("oidc_token"))      return 0.010;  // single token (not token_set)
+        if (t.startsWith("swift_mt103") || t.startsWith("pain001"))    return 0.010;
+        if (t.startsWith("hl7")         || t.startsWith("fhir"))       return 0.010;
+        if (t.startsWith("jwt_attack")  || t.startsWith("asn1_fuzz")) return 0.010;
         if (t.startsWith("ai_embedding") || t.startsWith("ai_vector")
-                                    || t.startsWith("ai_sparse_vector")) return   5.0;
-        return 5.0;  // tüm diğer tipler
+                                    || t.startsWith("ai_sparse_vector")) return 0.005;
+        return 0.005;  // tüm diğer tipler
     }
 
     private static boolean isSlow(String t) {
