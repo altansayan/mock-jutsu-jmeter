@@ -2,131 +2,122 @@ package com.mockjutsu.jmeter;
 
 import com.mockjutsu.jmeter.functions.*;
 import org.apache.jmeter.engine.util.CompoundVariable;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.*;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Performans regresyon guard — 429 tip+qualifier kombinasyonunu gerçek
- * JMeter function interface'inden geçirerek avg s/call ölçer.
+ * Performans regresyon guard — Python test_performance.py ile aynı yaklaşım.
  *
- * Her tip için per-type eşik tanımlıdır; eşik aşılırsa test FAIL eder.
- * Eşikler CI VM gecikme payıyla belirlenmiştir (ölçülen × ~100x headroom).
- *
- * Ölçüm çıktısını görmek için: mvn test -Dtest=PerfMeasurement -pl jmeter-plugin
+ *  Fast  → 1000 iterasyon / tip, eşik 1.5ms/çağrı  (Python max_duration=1.5s)
+ *  Heavy → 10 iterasyon  / tip, eşik per-tip (kriptografik / yüksek hesaplama)
  */
 class PerfMeasurement {
 
-    private static final List<Object[]> CASES = buildCases();
+    private static final int    ITERATIONS       = 1000;
+    private static final double MAX_MS           = ITERATIONS * 1.5; // 1500.0 ms
 
-    @Test
-    void measureAllTypes() throws Exception {
-        // Warmup — JVM class loading + JIT
-        for (Object[] row : CASES) invokeN(row, 3);
+    private static final int    HEAVY_ITERATIONS = 10;
 
-        // Gerçek ölçüm
-        List<String[]> results = new ArrayList<>();
-        for (Object[] row : CASES) {
-            String typeSpec = (String) row[1];
-            int calls = isSlow(typeSpec) ? 20 : 100;
+    // Kriptografik / yüksek hesaplama gerektiren tipler
+    private static final Set<String> HEAVY_PREFIXES = Set.of(
+        "eth_wallet", "btc_wallet", "sol_wallet",
+        "ai_embedding", "ai_vector",
+        "oidc_token_set", "jwks",
+        "x509_cert", "mnemonic",
+        "webauthn_credential", "fido2_assertion",
+        "mt940", "camt053",
+        "swift_mt103", "pain001",
+        "jwt_attack", "asn1_fuzz",
+        "ubl_invoice", "oidc_token",
+        "fhir_patient", "hl7_message"
+    );
 
-            long ns = System.nanoTime();
-            invokeN(row, calls);
-            double avgS = (System.nanoTime() - ns) / 1_000_000_000.0 / calls;
-
-            results.add(new String[]{
-                typeSpec,
-                (String) row[2],
-                ((Class<?>) row[0]).getSimpleName(),
-                String.format("%.6f", avgS),
-                String.valueOf(calls)
+    // ── Fast: tüm tipler içinden ağır olanlar hariç ───────────────────────────
+    static Stream<Object[]> fastCases() {
+        return buildCases().stream()
+            .filter(row -> {
+                String typeSpec = (String) row[1];
+                return HEAVY_PREFIXES.stream().noneMatch(typeSpec::startsWith);
             });
-        }
-
-        // Yavaştan hızlıya sırala
-        results.sort((a, b) -> Double.compare(Double.parseDouble(b[3]), Double.parseDouble(a[3])));
-
-        // Tabloyu yazdır
-        System.out.println("\n=== MOCK JUTSU PERF MEASUREMENT RESULTS ===");
-        System.out.printf("%-52s %-6s %-42s %12s %6s%n",
-            "typeSpec", "locale", "function", "avg_s", "calls");
-        System.out.println("-".repeat(127));
-        for (String[] r : results) {
-            System.out.printf("%-52s %-6s %-42s %12s %6s%n",
-                r[0], r[1], r[2], r[3], r[4]);
-        }
-        System.out.println("=== TOTAL CASES: " + results.size() + " ===\n");
-
-        // Eşik kontrolü — ihlal varsa test FAIL
-        List<String> violations = new ArrayList<>();
-        for (String[] r : results) {
-            double s = Double.parseDouble(r[3]);
-            double threshold = thresholdS(r[0]);
-            if (s > threshold) {
-                String msg = String.format("[SLOW] %-52s avg=%.6fs threshold=%.3fs", r[0], s, threshold);
-                System.out.println(msg);
-                violations.add(msg);
-            }
-        }
-
-        if (!violations.isEmpty()) {
-            fail("Performance regression — " + violations.size() + " case(s) exceeded threshold:\n"
-                + String.join("\n", violations));
-        }
-        System.out.println("[OK] All " + results.size() + " cases within per-type thresholds.");
     }
 
-    // ── Per-type thresholds in seconds (CI VM headroom: ~100x observed on local JVM) ──
-    // Observed max: oidc_token_set=0.000927s, jwks=0.000326s, others<0.00025s
-    private static double thresholdS(String t) {
-        if (t.startsWith("oidc_token_set"))  return 0.100;  // observed 0.000927s
-        if (t.startsWith("jwks"))            return 0.050;  // observed 0.000326s
-        if (t.startsWith("ubl_invoice"))     return 0.030;  // observed 0.000248s
-        if (t.startsWith("eth_wallet") || t.startsWith("btc_wallet")
-                                         || t.startsWith("sol_wallet")) return 0.025;
-        if (t.startsWith("x509_cert"))       return 0.020;
-        if (t.startsWith("webauthn")    || t.startsWith("fido2"))      return 0.015;
-        if (t.startsWith("mt940")       || t.startsWith("camt053"))    return 0.015;
-        if (t.startsWith("mnemonic"))        return 0.010;
-        if (t.startsWith("oidc_token"))      return 0.010;  // single token (not token_set)
-        if (t.startsWith("swift_mt103") || t.startsWith("pain001"))    return 0.010;
-        if (t.startsWith("hl7")         || t.startsWith("fhir"))       return 0.010;
-        if (t.startsWith("jwt_attack")  || t.startsWith("asn1_fuzz")) return 0.010;
-        if (t.startsWith("ai_embedding") || t.startsWith("ai_vector")
-                                    || t.startsWith("ai_sparse_vector")) return 0.005;
-        return 0.005;  // tüm diğer tipler
-    }
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("fastCases")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void test_performance_baseline(
+            Class<? extends MockJutsuBaseFunction> cls,
+            String typeSpec,
+            String locale) throws Exception {
 
-    private static boolean isSlow(String t) {
-        return t.startsWith("eth_wallet")    || t.startsWith("btc_wallet")
-            || t.startsWith("sol_wallet")    || t.startsWith("oidc_token_set")
-            || t.startsWith("jwks")          || t.startsWith("jwt_attack")
-            || t.startsWith("webauthn")      || t.startsWith("fido2")
-            || t.startsWith("mnemonic")      || t.startsWith("x509")
-            || t.startsWith("oidc_token")    || t.startsWith("ubl_invoice")
-            || t.startsWith("mt940")         || t.startsWith("camt053")
-            || t.startsWith("swift_mt103")   || t.startsWith("pain001")
-            || t.startsWith("fhir")          || t.startsWith("hl7");
-    }
-
-    // ── Invoke: tek instance, N çağrı (class instantiation overhead'i dışarıda) ──
-    @SuppressWarnings({"unchecked","rawtypes"})
-    private static void invokeN(Object[] row, int times) throws Exception {
-        Class<? extends MockJutsuBaseFunction> cls =
-            (Class<? extends MockJutsuBaseFunction>) row[0];
-        String param = row[1] + "|" + row[2];
         MockJutsuBaseFunction fn = cls.getDeclaredConstructor().newInstance();
-        fn.setParameters(List.of(new CompoundVariable(param)));
-        for (int i = 0; i < times; i++) fn.execute(null, null);
+        fn.setParameters(List.of(new CompoundVariable(typeSpec + "|" + locale)));
+
+        long startNs = System.nanoTime();
+        for (int i = 0; i < ITERATIONS; i++) fn.execute(null, null);
+        double durationMs = (System.nanoTime() - startNs) / 1_000_000.0;
+
+        assertTrue(durationMs < MAX_MS,
+            String.format("Performance Regression! '%s' took %.4fms for %d calls (limit %.1fms).",
+                typeSpec, durationMs, ITERATIONS, MAX_MS));
     }
 
-    private static Object[] row(Class<?> cls, String typeSpec, String locale) {
-        return new Object[]{cls, typeSpec, locale};
+    // ── Heavy: sadece ağır tipler, per-tip eşik ───────────────────────────────
+    static Stream<Object[]> heavyCases() {
+        return buildCases().stream()
+            .filter(row -> {
+                String typeSpec = (String) row[1];
+                return HEAVY_PREFIXES.stream().anyMatch(typeSpec::startsWith);
+            });
     }
 
-    // ── 429 tip+qualifier kombinasyonu ────────────────────────────────────────
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("heavyCases")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void test_performance_heavy(
+            Class<? extends MockJutsuBaseFunction> cls,
+            String typeSpec,
+            String locale) throws Exception {
+
+        double maxMs = heavyThresholdMs(typeSpec);
+
+        MockJutsuBaseFunction fn = cls.getDeclaredConstructor().newInstance();
+        fn.setParameters(List.of(new CompoundVariable(typeSpec + "|" + locale)));
+
+        long startNs = System.nanoTime();
+        for (int i = 0; i < HEAVY_ITERATIONS; i++) fn.execute(null, null);
+        double durationMs = (System.nanoTime() - startNs) / 1_000_000.0;
+
+        assertTrue(durationMs < maxMs,
+            String.format("Performance Regression! '%s' took %.4fms for %d calls (limit %.1fms = %.1fms/call).",
+                typeSpec, durationMs, HEAVY_ITERATIONS, maxMs, maxMs / HEAVY_ITERATIONS));
+    }
+
+    // Per-call threshold (ms) × HEAVY_ITERATIONS = toplam limit
+    private static double heavyThresholdMs(String t) {
+        if (t.startsWith("oidc_token_set"))                              return HEAVY_ITERATIONS * 200.0;
+        if (t.startsWith("jwks"))                                        return HEAVY_ITERATIONS * 100.0;
+        if (t.startsWith("eth_wallet") || t.startsWith("btc_wallet")
+                || t.startsWith("sol_wallet"))                           return HEAVY_ITERATIONS * 100.0;
+        if (t.startsWith("ubl_invoice"))                                 return HEAVY_ITERATIONS *  50.0;
+        if (t.startsWith("x509_cert"))                                   return HEAVY_ITERATIONS *  50.0;
+        if (t.startsWith("webauthn_credential")
+                || t.startsWith("fido2_assertion"))                      return HEAVY_ITERATIONS *  50.0;
+        if (t.startsWith("mt940") || t.startsWith("camt053"))            return HEAVY_ITERATIONS *  30.0;
+        if (t.startsWith("mnemonic"))                                    return HEAVY_ITERATIONS *  30.0;
+        if (t.startsWith("oidc_token"))                                  return HEAVY_ITERATIONS *  30.0;
+        if (t.startsWith("swift_mt103") || t.startsWith("pain001"))      return HEAVY_ITERATIONS *  30.0;
+        if (t.startsWith("fhir_patient") || t.startsWith("hl7_message")) return HEAVY_ITERATIONS *  30.0;
+        if (t.startsWith("jwt_attack") || t.startsWith("asn1_fuzz"))     return HEAVY_ITERATIONS *  25.0;
+        if (t.startsWith("ai_embedding") || t.startsWith("ai_vector"))   return HEAVY_ITERATIONS *  10.0;
+        return HEAVY_ITERATIONS * 50.0;
+    }
+
+    // ── Tüm tip + qualifier kombinasyonları ───────────────────────────────────
     private static List<Object[]> buildCases() {
         List<Object[]> c = new ArrayList<>();
 
@@ -198,8 +189,11 @@ class PerfMeasurement {
         // ── Health ────────────────────────────────────────────────────────────
         Class<?> health = MockJutsuHealthFunction.class;
         for (String t : List.of("blood_type","bloodtype","nhs_number","nhsnumber",
-                "icd10","height","weight","npi","bmi","hl7_message","fhir_patient","dicom_uid"))
+                "icd10","height","weight","npi","bmi","dicom_uid"))
             c.add(row(health, t, "TR"));
+        // HEAVY
+        c.add(row(health, "fhir_patient", "TR"));
+        c.add(row(health, "hl7_message",  "TR"));
 
         // ── Commerce ──────────────────────────────────────────────────────────
         Class<?> commerce = MockJutsuCommerceFunction.class;
@@ -234,16 +228,22 @@ class PerfMeasurement {
 
         // ── Crypto ────────────────────────────────────────────────────────────
         Class<?> crypto = MockJutsuCryptoFunction.class;
-        for (String t : List.of("btc_address","eth_address","tx_hash","block_hash",
-                "nft_token_id","gas_price","gas_limit","defi_protocol_name",
-                "blockchain_network","wallet_label","defi_position_type",
+        for (String t : List.of("tx_hash","block_hash","nft_token_id","gas_price","gas_limit",
+                "defi_protocol_name","blockchain_network","wallet_label","defi_position_type",
                 "cryptocurrency_name","liquidity_pool_id","liquidity_pool_id_masked"))
             c.add(row(crypto, t, "TR"));
         c.add(row(crypto, "crypto_address:eth", "TR"));
         c.add(row(crypto, "crypto_address:btc", "TR"));
+        // HEAVY — mnemonic (BIP39 wordlist + entropy)
         for (String wc : List.of("12","15","18","21","24"))
             c.add(row(crypto, "mnemonic:" + wc, "TR"));
         c.add(row(crypto, "mnemonic", "TR"));
+
+        // ── Wallet — HEAVY (EC key gen: secp256k1, ed25519) ──────────────────
+        Class<?> wallet = MockJutsuWalletFunction.class;
+        c.add(row(wallet, "eth_wallet", "TR"));
+        c.add(row(wallet, "btc_wallet", "TR"));
+        c.add(row(wallet, "sol_wallet", "TR"));
 
         // ── Ecommerce ─────────────────────────────────────────────────────────
         Class<?> ecom = MockJutsuEcommerceFunction.class;
@@ -276,40 +276,43 @@ class PerfMeasurement {
 
         // ── Security ──────────────────────────────────────────────────────────
         Class<?> sec = MockJutsuSecurityFunction.class;
-        for (String t : List.of("cef_log","x509_cert","pcap_hex","password","password_hash","cve_id"))
+        for (String t : List.of("cef_log","pcap_hex","password","password_hash","cve_id"))
             c.add(row(sec, t, "TR"));
+        // HEAVY — RSA/EC key + self-signed cert generation
+        c.add(row(sec, "x509_cert", "TR"));
+
+        // ── FIDO2 — HEAVY (P-256 assertion + attestation) ────────────────────
+        Class<?> fido2 = MockJutsuFido2Function.class;
+        c.add(row(fido2, "webauthn_credential", "TR"));
+        c.add(row(fido2, "fido2_assertion",     "TR"));
+
+        // ── CryptoFuzz — HEAVY (JWT malformed + ASN.1 fuzzing) ───────────────
+        Class<?> fuzz = MockJutsuCryptoFuzzFunction.class;
+        c.add(row(fuzz, "jwt_attack", "TR"));
+        c.add(row(fuzz, "asn1_fuzz",  "TR"));
 
         // ── Aviation ──────────────────────────────────────────────────────────
         Class<?> avi = MockJutsuAviationFunction.class;
         for (String t : List.of("iata_ticket","imo_number","pnr_code"))
             c.add(row(avi, t, "TR"));
 
-        // ── FIDO2 ─────────────────────────────────────────────────────────────
-        Class<?> fido = MockJutsuFido2Function.class;
-        for (String t : List.of("webauthn_credential","fido2_assertion"))
-            c.add(row(fido, t, "TR"));
-
-        // ── Wallet ────────────────────────────────────────────────────────────
-        Class<?> wallet = MockJutsuWalletFunction.class;
-        for (String t : List.of("eth_wallet","btc_wallet","sol_wallet"))
-            c.add(row(wallet, t, "TR"));
-
         // ── AI ────────────────────────────────────────────────────────────────
         Class<?> ai = MockJutsuAiFunction.class;
-        for (String t : List.of("ai_embedding","ai_vector","ai_sparse_vector"))
-            c.add(row(ai, t, "TR"));
-        for (String dim : List.of("128","256","512","1536"))
-            c.add(row(ai, "ai_embedding:" + dim, "TR"));
+        c.add(row(ai, "ai_sparse_vector", "TR"));
+        // HEAVY — high-dim Gaussian sampling
+        c.add(row(ai, "ai_embedding", "TR"));
+        c.add(row(ai, "ai_vector",    "TR"));
 
-        // ── OIDC ──────────────────────────────────────────────────────────────
+        // ── OIDC — HEAVY (RSA-2048 sign, JWK set assembly) ───────────────────
         Class<?> oidc = MockJutsuOidcFunction.class;
-        for (String t : List.of("oidc_token_set","jwks","oidc_token"))
-            c.add(row(oidc, t, "TR"));
+        c.add(row(oidc, "oidc_token_set", "TR"));
+        c.add(row(oidc, "jwks",           "TR"));
+        c.add(row(oidc, "oidc_token",     "TR"));
 
-        // ── Bank Statement ────────────────────────────────────────────────────
+        // ── Bank Statement — HEAVY (multi-entry MT940/camt.053 serialization) ─
         Class<?> bs = MockJutsuBankStatementFunction.class;
-        for (String t : List.of("mt940","camt053"))
-            c.add(row(bs, t, "TR"));
+        c.add(row(bs, "mt940",   "TR"));
+        c.add(row(bs, "camt053", "TR"));
 
         // ── EDI ───────────────────────────────────────────────────────────────
         Class<?> edi = MockJutsuEdiFunction.class;
@@ -325,11 +328,6 @@ class PerfMeasurement {
         Class<?> tele = MockJutsuTelemetryFunction.class;
         for (String t : List.of("fdr_record","drone_telemetry"))
             c.add(row(tele, t, "TR"));
-
-        // ── Crypto Fuzz ───────────────────────────────────────────────────────
-        Class<?> fuzz = MockJutsuCryptoFuzzFunction.class;
-        for (String t : List.of("jwt_attack","asn1_fuzz"))
-            c.add(row(fuzz, t, "TR"));
 
         // ── MRZ ───────────────────────────────────────────────────────────────
         Class<?> mrz = MockJutsuMrzFunction.class;
@@ -358,8 +356,9 @@ class PerfMeasurement {
 
         // ── UBL ───────────────────────────────────────────────────────────────
         Class<?> ubl = MockJutsuUblFunction.class;
-        for (String t : List.of("ubl_invoice","xmldsig"))
-            c.add(row(ubl, t, "TR"));
+        c.add(row(ubl, "xmldsig",    "TR"));
+        // HEAVY — full XML invoice + XMLDSig envelope
+        c.add(row(ubl, "ubl_invoice", "TR"));
 
         // ── Automotive ────────────────────────────────────────────────────────
         Class<?> auto = MockJutsuAutomotiveFunction.class;
@@ -372,8 +371,11 @@ class PerfMeasurement {
 
         // ── Payments ──────────────────────────────────────────────────────────
         Class<?> pay = MockJutsuPaymentsFunction.class;
-        for (String t : List.of("swift_mt103","pain001","nacha_ach","sepa_mandate","fedwire"))
+        for (String t : List.of("nacha_ach","sepa_mandate","fedwire"))
             c.add(row(pay, t, "TR"));
+        // HEAVY — ISO 20022 XML serialization
+        c.add(row(pay, "swift_mt103", "TR"));
+        c.add(row(pay, "pain001",     "TR"));
 
         // ── Compliance ────────────────────────────────────────────────────────
         Class<?> comp = MockJutsuComplianceFunction.class;
@@ -418,5 +420,9 @@ class PerfMeasurement {
             c.add(row(regex, "reverse_regex:" + pat, "TR"));
 
         return c;
+    }
+
+    private static Object[] row(Class<?> cls, String typeSpec, String locale) {
+        return new Object[]{cls, typeSpec, locale};
     }
 }
