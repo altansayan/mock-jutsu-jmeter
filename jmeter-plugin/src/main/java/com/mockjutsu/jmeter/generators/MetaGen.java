@@ -8,12 +8,15 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Meta / infrastructure types — mirrors meta.py. */
 public final class MetaGen {
 
     private MetaGen() {}
 
+    private static final Logger log = LoggerFactory.getLogger(MetaGen.class);
     private static final SecureRandom SEC = new SecureRandom();
 
     private static final String[] BROWSER_NAMES    = {"Chrome","Firefox","Safari","Edge","Opera"};
@@ -295,7 +298,8 @@ public final class MetaGen {
             byte[] sig = mac.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(sig);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            log.warn("signature generation failed: {}", e.getMessage(), e);
+            return "ERROR: signature generation failed: " + e.getMessage();
         }
     }
 

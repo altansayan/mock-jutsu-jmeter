@@ -3,6 +3,8 @@ package com.mockjutsu.jmeter.generators;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Full EC-derived wallets — mirrors wallet.py exactly.
@@ -11,6 +13,7 @@ import java.util.Arrays;
  */
 public final class WalletGen {
     private WalletGen() {}
+    private static final Logger log = LoggerFactory.getLogger(WalletGen.class);
     private static final SecureRandom SEC = new SecureRandom();
 
     public static String generate(String type, String locale) {
@@ -37,6 +40,7 @@ public final class WalletGen {
                    "\",\"public_key\":\"04" + bytesToHex(pubkeyBytes) +
                    "\",\"address\":\"" + address + "\"}";
         } catch (Exception e) {
+            log.warn("eth_wallet generation failed: {}", e.getMessage(), e);
             return "ERROR: eth_wallet generation failed: " + e.getMessage();
         }
     }
@@ -58,6 +62,7 @@ public final class WalletGen {
                    "\",\"public_key\":\"" + bytesToHex(compressed) +
                    "\",\"address\":\"" + address + "\"}";
         } catch (Exception e) {
+            log.warn("btc_wallet generation failed: {}", e.getMessage(), e);
             return "ERROR: btc_wallet generation failed: " + e.getMessage();
         }
     }
@@ -74,6 +79,7 @@ public final class WalletGen {
                    "\",\"address\":\"" + address +
                    "\",\"keypair\":\"" + keypair + "\"}";
         } catch (Exception e) {
+            log.warn("sol_wallet generation failed: {}", e.getMessage(), e);
             return "ERROR: sol_wallet generation failed: " + e.getMessage();
         }
     }

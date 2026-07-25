@@ -4,11 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Date/time data generator. Mirrors datetime_gen.py. */
 public final class DateTimeGen {
 
     private DateTimeGen() {}
+
+    private static final Logger log = LoggerFactory.getLogger(DateTimeGen.class);
 
     private static final DateTimeFormatter DATE_FMT     = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -46,8 +50,8 @@ public final class DateTimeGen {
         LocalDate end   = LocalDate.now();
         if (!qualifier.isEmpty() && qualifier.contains("|")) {
             String[] parts = qualifier.split("\\|", 2);
-            try { start = LocalDate.parse(parts[0].trim()); } catch (Exception ignored) {}
-            if (parts.length > 1) try { end = LocalDate.parse(parts[1].trim()); } catch (Exception ignored) {}
+            try { start = LocalDate.parse(parts[0].trim()); } catch (Exception e) { log.debug("date_between: cannot parse start '{}', using default: {}", parts[0].trim(), e.getMessage()); }
+            if (parts.length > 1) try { end = LocalDate.parse(parts[1].trim()); } catch (Exception e) { log.debug("date_between: cannot parse end '{}', using default: {}", parts[1].trim(), e.getMessage()); }
         }
         long range = end.toEpochDay() - start.toEpochDay();
         if (range <= 0) return start.format(DATE_FMT);

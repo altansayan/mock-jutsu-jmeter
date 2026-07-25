@@ -3,6 +3,8 @@ package com.mockjutsu.jmeter.generators;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ReverseRegex — parses a regex pattern into an AST and generates a random
@@ -16,6 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class ReverseRegexGen {
     private ReverseRegexGen() {}
 
+    private static final Logger log = LoggerFactory.getLogger(ReverseRegexGen.class);
     private static final int MAX_UNBOUNDED = 8;
 
     private static final char[] PRINTABLE = chars(33, 126);          // visible ASCII, no space
@@ -55,7 +58,8 @@ public final class ReverseRegexGen {
             Node ast = new Parser(pattern).parseAlternation();
             return ast.generate(rng);
         } catch (Exception e) {
-            return "ERROR: Invalid pattern '" + pattern + "'";
+            log.warn("reverse_regex generation failed for pattern '{}': {}", pattern, e.getMessage(), e);
+            return "ERROR: Invalid pattern '" + pattern + "': " + e.getMessage();
         }
     }
 

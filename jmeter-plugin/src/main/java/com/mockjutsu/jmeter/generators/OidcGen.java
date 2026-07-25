@@ -6,10 +6,13 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** OIDC / JWT cryptographic signature kit — real ES256 (P-256) + HS256. Mirrors oidc.py. */
 public final class OidcGen {
     private OidcGen() {}
+    private static final Logger log = LoggerFactory.getLogger(OidcGen.class);
     private static final SecureRandom SEC = new SecureRandom();
 
     public static String generate(String type, String locale) {
@@ -22,6 +25,7 @@ public final class OidcGen {
                 default -> "ERROR: Unknown OIDC type '" + type + "'";
             };
         } catch (Exception e) {
+            log.warn("OIDC generation failed: {}", e.getMessage(), e);
             return "ERROR: OIDC generation failed: " + e.getMessage();
         }
     }

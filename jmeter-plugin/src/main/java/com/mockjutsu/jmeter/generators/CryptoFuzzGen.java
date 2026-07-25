@@ -5,10 +5,14 @@ import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** CryptoFuzz — JWT attack patterns, ASN.1 fuzz payloads. Mirrors crypto_fuzz.py. */
 public final class CryptoFuzzGen {
     private CryptoFuzzGen() {}
+
+    private static final Logger log = LoggerFactory.getLogger(CryptoFuzzGen.class);
 
     private static final byte[] SECRET_KEY = "mock-jutsu-default-secret-key-2025".getBytes(StandardCharsets.UTF_8);
     private static final byte[] FAKE_PUBLIC_KEY =
@@ -60,6 +64,7 @@ public final class CryptoFuzzGen {
             };
             return "{\"token\": \"" + token + "\", \"attack_type\": \"" + attackType + "\", \"description\": \"" + jsonEscape(description) + "\"}";
         } catch (Exception e) {
+            log.warn("jwt_attack generation failed: {}", e.getMessage(), e);
             return "ERROR: jwt_attack generation failed: " + e.getMessage();
         }
     }

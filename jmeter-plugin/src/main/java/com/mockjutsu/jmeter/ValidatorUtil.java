@@ -4,6 +4,8 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Regulation-compliant input validators — mirrors algorithms.py + validators.py.
@@ -16,6 +18,8 @@ import java.util.regex.Pattern;
 public final class ValidatorUtil {
 
     private ValidatorUtil() {}
+
+    private static final Logger log = LoggerFactory.getLogger(ValidatorUtil.class);
 
     // ══════════════════════════════════════════════════════════════════════════
     // ALGORITHM IMPLEMENTATIONS
@@ -200,6 +204,7 @@ public final class ValidatorUtil {
         try {
             return fn.apply(value);
         } catch (Exception e) {
+            log.warn("validate({}, ...) threw unexpected exception: {}", type, e.getMessage(), e);
             return false;
         }
     }

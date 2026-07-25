@@ -2,11 +2,14 @@ package com.mockjutsu.jmeter.generators;
 
 import java.security.SecureRandom;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Crypto — BTC/ETH addresses, tx hash, mnemonic. Mirrors crypto.py. */
 public final class CryptoGen {
     private CryptoGen() {}
 
+    private static final Logger log = LoggerFactory.getLogger(CryptoGen.class);
     private static final SecureRandom SEC = new SecureRandom();
 
     private static final String[] DEFI_PROTOCOLS  = {
@@ -91,7 +94,8 @@ public final class CryptoGen {
             System.arraycopy(pubkeyHash, 0, versioned, 1, 20);
             return EcCrypto.base58Check(versioned);
         } catch (Exception e) {
-            throw new IllegalStateException("btc_address generation failed", e);
+            log.warn("btc_address generation failed: {}", e.getMessage(), e);
+            return "ERROR: btc_address generation failed: " + e.getMessage();
         }
     }
 
@@ -129,6 +133,7 @@ public final class CryptoGen {
             }
             return sb.toString();
         } catch (Exception e) {
+            log.warn("mnemonic generation failed: {}", e.getMessage(), e);
             return "ERROR: mnemonic generation failed: " + e.getMessage();
         }
     }

@@ -8,3 +8,4 @@ target/
 *.jtl
 jmeter*.log
 jmeter.log
+java_types.txt

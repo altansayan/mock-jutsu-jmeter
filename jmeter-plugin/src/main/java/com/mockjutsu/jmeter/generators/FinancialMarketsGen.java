@@ -1,11 +1,15 @@
 package com.mockjutsu.jmeter.generators;
 
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Capital markets — ISIN, CUSIP, SEDOL, LEI, FIX, PSD2. Mirrors financial_markets.py. */
 public final class FinancialMarketsGen {
 
     private FinancialMarketsGen() {}
+
+    private static final Logger log = LoggerFactory.getLogger(FinancialMarketsGen.class);
 
     private static final char[]   ALPHA_NUM        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
@@ -334,7 +338,8 @@ public final class FinancialMarketsGen {
             mac.init(new javax.crypto.spec.SecretKeySpec(key, "HmacSHA256"));
             sig = mac.doFinal((headerB64 + "." + payloadB64).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {
-            sig = new byte[32];
+            log.warn("open_banking_consent signature failed: {}", e.getMessage(), e);
+            return "ERROR: open_banking_consent signature failed: " + e.getMessage();
         }
         String sigB64 = base64UrlNoPad(sig);
         return headerB64 + "." + payloadB64 + "." + sigB64;

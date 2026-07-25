@@ -3,10 +3,13 @@ package com.mockjutsu.jmeter.generators;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** FIDO2/WebAuthn — credential and assertion. Mirrors fido2.py (minimal CBOR encoder). */
 public final class Fido2Gen {
     private Fido2Gen() {}
+    private static final Logger log = LoggerFactory.getLogger(Fido2Gen.class);
     private static final SecureRandom SEC = new SecureRandom();
 
     private static final String[] RP_IDS = {
@@ -55,6 +58,7 @@ public final class Fido2Gen {
                 "\"response\":{\"clientDataJSON\":\"" + b64url(cdjBytes) + "\",\"attestationObject\":\"" + b64url(attObj) + "\"}," +
                 "\"clientExtensionResults\":{}}";
         } catch (Exception e) {
+            log.warn("webauthn_credential generation failed: {}", e.getMessage(), e);
             return "ERROR: webauthn_credential generation failed: " + e.getMessage();
         }
     }
@@ -83,6 +87,7 @@ public final class Fido2Gen {
                 "\",\"signature\":\"" + b64url(sig) + "\",\"userHandle\":\"" + b64url(userId) + "\"}," +
                 "\"clientExtensionResults\":{}}";
         } catch (Exception e) {
+            log.warn("fido2_assertion generation failed: {}", e.getMessage(), e);
             return "ERROR: fido2_assertion generation failed: " + e.getMessage();
         }
     }
