@@ -428,4 +428,34 @@ class MockJutsuRegistryTest {
         }
         return sum % 10 == 0;
     }
+
+    // ── Performance regression smoke tests ───────────────────────────────────
+    // Thresholds are intentionally loose (CI VMs are noisy).
+    // Goal: catch catastrophic regressions (e.g. Pattern.compile re-added to hot path,
+    // new SecureRandom per call, accidental blocking I/O) — not micro-optimize.
+
+    @Test void perf_fast_types_under_2s_for_1000_calls() {
+        String[] types = {"tckn", "ssn", "uuid", "iban", "cardnum", "routing_number",
+                          "tckn_masked", "account_number_masked", "policy_number", "consent_id"};
+        for (String type : types) {
+            long start = System.nanoTime();
+            for (int i = 0; i < 1000; i++) MockJutsuRegistry.generate(type, "TR");
+            long ms = (System.nanoTime() - start) / 1_000_000;
+            assertTrue(ms < 2000,
+                "PERF REGRESSION: 1000x '" + type + "' took " + ms + "ms (threshold: 2000ms). " +
+                "Likely cause: Pattern.compile or SecureRandom added to hot path.");
+        }
+    }
+
+    @Test void perf_crypto_types_under_10s_for_50_calls() {
+        String[] types = {"eth_wallet", "btc_wallet", "sol_wallet", "oidc_token_set", "jwks", "oidc_token"};
+        for (String type : types) {
+            long start = System.nanoTime();
+            for (int i = 0; i < 50; i++) MockJutsuRegistry.generate(type, "TR");
+            long ms = (System.nanoTime() - start) / 1_000_000;
+            assertTrue(ms < 10000,
+                "PERF REGRESSION: 50x '" + type + "' took " + ms + "ms (threshold: 10000ms). " +
+                "Likely cause: BigInteger EC point multiplication re-introduced.");
+        }
+    }
 }
