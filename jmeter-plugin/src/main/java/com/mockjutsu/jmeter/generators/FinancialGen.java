@@ -1,6 +1,6 @@
 package com.mockjutsu.jmeter.generators;
 
-import java.security.SecureRandom;
+import com.mockjutsu.jmeter.Randoms;
 import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -9,7 +9,6 @@ public final class FinancialGen {
 
     private FinancialGen() {}
 
-    private static final SecureRandom SEC = new SecureRandom();
 
     // ── Card networks & BINs ──────────────────────────────────────────────────
 
@@ -336,7 +335,7 @@ public final class FinancialGen {
 
     private static String cavv() {
         byte[] bytes = new byte[20];
-        SEC.nextBytes(bytes);
+        Randoms.SECURE.nextBytes(bytes);
         return Base64.getEncoder().encodeToString(bytes).substring(0, 28);
     }
 

@@ -1,13 +1,12 @@
 package com.mockjutsu.jmeter.generators;
 
+import com.mockjutsu.jmeter.Randoms;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Security — CEF log, X.509 fields, pcap hex dump, password/hash, CVE ID. Mirrors security.py. */
 public final class SecurityGen {
     private SecurityGen() {}
-    private static final SecureRandom SEC = new SecureRandom();
 
     private static final String PWD_SPECIAL = "!@#$%^&*()-_=+[]{}|;:,.<>?";
     private static final String BCRYPT_ALPHABET = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -157,7 +156,7 @@ public final class SecurityGen {
         String issuer = CA_ISSUERS[rng.nextInt(CA_ISSUERS.length)];
 
         byte[] serialBytes = new byte[16];
-        SEC.nextBytes(serialBytes);
+        Randoms.SECURE.nextBytes(serialBytes);
         String serial = bytesToHexLower(serialBytes);
 
         java.time.ZonedDateTime now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC);
@@ -166,7 +165,7 @@ public final class SecurityGen {
         java.time.ZonedDateTime notAfter = notBefore.plusDays(validityDays[rng.nextInt(validityDays.length)]);
 
         byte[] fpBytes = new byte[32];
-        SEC.nextBytes(fpBytes);
+        Randoms.SECURE.nextBytes(fpBytes);
         StringBuilder fingerprint = new StringBuilder();
         for (int i = 0; i < fpBytes.length; i++) {
             if (i > 0) fingerprint.append(':');

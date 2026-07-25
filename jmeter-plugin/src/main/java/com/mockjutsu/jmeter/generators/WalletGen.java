@@ -1,7 +1,7 @@
 package com.mockjutsu.jmeter.generators;
 
+import com.mockjutsu.jmeter.Randoms;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 public final class WalletGen {
     private WalletGen() {}
     private static final Logger log = LoggerFactory.getLogger(WalletGen.class);
-    private static final SecureRandom SEC = new SecureRandom();
 
     public static String generate(String type, String locale) {
         return switch (type) {
@@ -28,7 +27,7 @@ public final class WalletGen {
     private static String ethWallet() {
         try {
             byte[] privKey = new byte[32];
-            SEC.nextBytes(privKey);
+            Randoms.SECURE.nextBytes(privKey);
             BigInteger k = new BigInteger(1, privKey).mod(EcCrypto.SECP_N);
             if (k.equals(BigInteger.ZERO)) k = BigInteger.ONE;
             EcCrypto.Point p = EcCrypto.secpMultiplyBase(k);
@@ -48,7 +47,7 @@ public final class WalletGen {
     private static String btcWallet() {
         try {
             byte[] privKey = new byte[32];
-            SEC.nextBytes(privKey);
+            Randoms.SECURE.nextBytes(privKey);
             BigInteger k = new BigInteger(1, privKey).mod(EcCrypto.SECP_N);
             if (k.equals(BigInteger.ZERO)) k = BigInteger.ONE;
             EcCrypto.Point p = EcCrypto.secpMultiplyBase(k);
@@ -70,7 +69,7 @@ public final class WalletGen {
     private static String solWallet() {
         try {
             byte[] privKey = new byte[32];
-            SEC.nextBytes(privKey);
+            Randoms.SECURE.nextBytes(privKey);
             byte[] pubKey = EcCrypto.ed25519PublicKey(privKey);
             String address = EcCrypto.base58Encode(pubKey);
             String keypair = EcCrypto.base58Encode(concat(privKey, pubKey));

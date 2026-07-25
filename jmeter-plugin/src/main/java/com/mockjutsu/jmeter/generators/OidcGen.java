@@ -1,8 +1,8 @@
 package com.mockjutsu.jmeter.generators;
 
+import com.mockjutsu.jmeter.Randoms;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 public final class OidcGen {
     private OidcGen() {}
     private static final Logger log = LoggerFactory.getLogger(OidcGen.class);
-    private static final SecureRandom SEC = new SecureRandom();
 
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
@@ -40,7 +39,7 @@ public final class OidcGen {
 
     private static String tokenSet(ThreadLocalRandom rng) throws Exception {
         BigInteger nMinus1 = EcCrypto.P256_N.subtract(BigInteger.ONE);
-        BigInteger privkey = new BigInteger(EcCrypto.P256_N.bitLength(), SEC).mod(nMinus1).add(BigInteger.ONE);
+        BigInteger privkey = new BigInteger(EcCrypto.P256_N.bitLength(), Randoms.SECURE).mod(nMinus1).add(BigInteger.ONE);
         EcCrypto.Point pub = EcCrypto.p256MultiplyBase(privkey);
         String kid = UUID.randomUUID().toString().substring(0, 8);
 
@@ -54,7 +53,7 @@ public final class OidcGen {
         String payload = b64u(claims.getBytes(StandardCharsets.UTF_8));
         byte[] signing = (header + "." + payload).getBytes(StandardCharsets.UTF_8);
         byte[] msgHash = EcCrypto.sha256(signing);
-        byte[] sig = EcCrypto.ecdsaSignP256(privkey, msgHash, SEC);
+        byte[] sig = EcCrypto.ecdsaSignP256(privkey, msgHash, Randoms.SECURE);
         String token = header + "." + payload + "." + b64u(sig);
 
         return "{\"token\":\"" + token + "\",\"jwks\":{\"keys\":[" + jwk + "]},\"kid\":\"" + kid +
@@ -63,7 +62,7 @@ public final class OidcGen {
 
     private static String jwks() throws Exception {
         BigInteger nMinus1 = EcCrypto.P256_N.subtract(BigInteger.ONE);
-        BigInteger privkey = new BigInteger(EcCrypto.P256_N.bitLength(), SEC).mod(nMinus1).add(BigInteger.ONE);
+        BigInteger privkey = new BigInteger(EcCrypto.P256_N.bitLength(), Randoms.SECURE).mod(nMinus1).add(BigInteger.ONE);
         EcCrypto.Point pub = EcCrypto.p256MultiplyBase(privkey);
         String kid = UUID.randomUUID().toString().substring(0, 8);
         String xB64 = b64uBigInt(pub.x());
@@ -74,7 +73,7 @@ public final class OidcGen {
 
     private static String oidcToken(ThreadLocalRandom rng) throws Exception {
         byte[] secret = new byte[32];
-        SEC.nextBytes(secret);
+        Randoms.SECURE.nextBytes(secret);
         String claims = oidcClaimsJson(rng);
         String header = b64u("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
         String payload = b64u(claims.getBytes(StandardCharsets.UTF_8));

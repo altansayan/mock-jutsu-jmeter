@@ -1,7 +1,7 @@
 package com.mockjutsu.jmeter.generators;
 
+import com.mockjutsu.jmeter.Randoms;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 public final class Fido2Gen {
     private Fido2Gen() {}
     private static final Logger log = LoggerFactory.getLogger(Fido2Gen.class);
-    private static final SecureRandom SEC = new SecureRandom();
 
     private static final String[] RP_IDS = {
         "example.com", "login.acme.io", "auth.mockjutsu.dev", "accounts.test.org", "secure.app.localhost"
@@ -33,11 +32,11 @@ public final class Fido2Gen {
 
     private static String webauthnCredential() {
         try {
-            String rpId = RP_IDS[SEC.nextInt(RP_IDS.length)];
+            String rpId = RP_IDS[Randoms.SECURE.nextInt(RP_IDS.length)];
             String origin = ORIGINS.get(rpId);
             byte[] credId = randomBytes(32);
             byte[] challenge = randomBytes(32);
-            int counter = SEC.nextInt(1000);
+            int counter = Randoms.SECURE.nextInt(1000);
             byte[] x = randomBytes(32);
             byte[] y = randomBytes(32);
 
@@ -65,11 +64,11 @@ public final class Fido2Gen {
 
     private static String fido2Assertion() {
         try {
-            String rpId = RP_IDS[SEC.nextInt(RP_IDS.length)];
+            String rpId = RP_IDS[Randoms.SECURE.nextInt(RP_IDS.length)];
             String origin = ORIGINS.get(rpId);
             byte[] credId = randomBytes(32);
             byte[] challenge = randomBytes(32);
-            int counter = SEC.nextInt(99999) + 1;
+            int counter = Randoms.SECURE.nextInt(99999) + 1;
             byte[] userId = randomBytes(16);
 
             String clientDataJson = "{\"type\":\"webauthn.get\",\"challenge\":\"" + b64url(challenge) +
@@ -153,7 +152,7 @@ public final class Fido2Gen {
 
     private static byte[] randomBytes(int n) {
         byte[] b = new byte[n];
-        SEC.nextBytes(b);
+        Randoms.SECURE.nextBytes(b);
         return b;
     }
 

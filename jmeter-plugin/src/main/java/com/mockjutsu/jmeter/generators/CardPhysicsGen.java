@@ -1,13 +1,12 @@
 package com.mockjutsu.jmeter.generators;
 
-import java.security.SecureRandom;
+import com.mockjutsu.jmeter.Randoms;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** CardPhysics — ISO 8583 bitmap, EMV ARQC/ATC/IAD, ATM session, POS receipt. Mirrors cardphysics.py. */
 public final class CardPhysicsGen {
     private CardPhysicsGen() {}
 
-    private static final SecureRandom SEC = new SecureRandom();
 
     // Pre-computed ISO 8583 bitmaps (verified bit positions)
     private static final String BITMAP_AUTH_REQ  = makeBitmap(2,3,4,7,11,12,13,14,18,22,25,37,41,42,49);
@@ -57,7 +56,7 @@ public final class CardPhysicsGen {
 
     static String emvArqc() {
         byte[] b = new byte[8];
-        SEC.nextBytes(b);
+        Randoms.SECURE.nextBytes(b);
         StringBuilder sb = new StringBuilder(16);
         for (byte v : b) sb.append(String.format("%02X", v));
         return sb.toString();

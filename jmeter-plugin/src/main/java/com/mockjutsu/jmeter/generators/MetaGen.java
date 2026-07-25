@@ -1,6 +1,6 @@
 package com.mockjutsu.jmeter.generators;
 
-import java.security.SecureRandom;
+import com.mockjutsu.jmeter.Randoms;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -17,7 +17,6 @@ public final class MetaGen {
     private MetaGen() {}
 
     private static final Logger log = LoggerFactory.getLogger(MetaGen.class);
-    private static final SecureRandom SEC = new SecureRandom();
 
     private static final String[] BROWSER_NAMES    = {"Chrome","Firefox","Safari","Edge","Opera"};
     private static final String[] BROWSER_ENGINES  = {"Blink","Gecko","WebKit","Blink","Blink"};
@@ -208,7 +207,7 @@ public final class MetaGen {
             "{\"sub\":\"%s\",\"iss\":\"https://auth.mockjutsu.dev\",\"aud\":\"mockjutsu-api\",\"iat\":%d,\"exp\":%d}",
             sub, iat, exp));
         byte[] sig = new byte[32];
-        SEC.nextBytes(sig);
+        Randoms.SECURE.nextBytes(sig);
         String signature = Base64.getUrlEncoder().withoutPadding().encodeToString(sig);
         return header + "." + payload + "." + signature;
     }
@@ -223,12 +222,12 @@ public final class MetaGen {
         String algo = algorithm.toLowerCase();
         // CRC variants — fixed output widths, no random bytes needed
         if ("crc32".equals(algo)) {
-            byte[] dummy = new byte[8]; SEC.nextBytes(dummy);
+            byte[] dummy = new byte[8]; Randoms.SECURE.nextBytes(dummy);
             java.util.zip.CRC32 crc = new java.util.zip.CRC32(); crc.update(dummy);
             return String.format("%08x", crc.getValue());
         }
         if ("adler32".equals(algo)) {
-            byte[] dummy = new byte[8]; SEC.nextBytes(dummy);
+            byte[] dummy = new byte[8]; Randoms.SECURE.nextBytes(dummy);
             java.util.zip.Adler32 a = new java.util.zip.Adler32(); a.update(dummy);
             return String.format("%08x", a.getValue());
         }
@@ -247,7 +246,7 @@ public final class MetaGen {
             default                           -> 32; // sha256
         };
         byte[] b = new byte[bytes];
-        SEC.nextBytes(b);
+        Randoms.SECURE.nextBytes(b);
         return HexFormat.of().formatHex(b);
     }
 

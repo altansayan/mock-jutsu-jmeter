@@ -1,6 +1,6 @@
 package com.mockjutsu.jmeter.generators;
 
-import java.security.SecureRandom;
+import com.mockjutsu.jmeter.Randoms;
 import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,6 @@ public final class CryptoGen {
     private CryptoGen() {}
 
     private static final Logger log = LoggerFactory.getLogger(CryptoGen.class);
-    private static final SecureRandom SEC = new SecureRandom();
 
     private static final String[] DEFI_PROTOCOLS  = {
         "Uniswap","Aave","Compound","Curve Finance","MakerDAO","Lido",
@@ -87,7 +86,7 @@ public final class CryptoGen {
 
     static String btcAddress(ThreadLocalRandom rng) {
         byte[] pubkeyHash = new byte[20];
-        SEC.nextBytes(pubkeyHash);
+        Randoms.SECURE.nextBytes(pubkeyHash);
         try {
             byte[] versioned = new byte[21];
             versioned[0] = 0x00;
@@ -103,7 +102,7 @@ public final class CryptoGen {
 
     static String ethAddress() {
         byte[] raw = new byte[20];
-        SEC.nextBytes(raw);
+        Randoms.SECURE.nextBytes(raw);
         return EcCrypto.eip55(raw);
     }
 
@@ -115,7 +114,7 @@ public final class CryptoGen {
                 case 15 -> 160; case 18 -> 192; case 21 -> 224; case 24 -> 256; default -> 128;
             };
             byte[] entropy = new byte[entBits / 8];
-            SEC.nextBytes(entropy);
+            Randoms.SECURE.nextBytes(entropy);
             byte[] hash = EcCrypto.sha256(entropy);
             int csLen = entBits / 32;
 
@@ -144,7 +143,7 @@ public final class CryptoGen {
 
     private static String randomSecHex(int bytes) {
         byte[] b = new byte[bytes];
-        SEC.nextBytes(b);
+        Randoms.SECURE.nextBytes(b);
         StringBuilder sb = new StringBuilder(bytes * 2);
         for (byte v : b) sb.append(String.format("%02x", v));
         return sb.toString();
