@@ -48,7 +48,8 @@ public final class MockJutsuRegistry {
         "transaction","bank_name","sepa_ref","creditor_ref",
         "account_type","transaction_type","transaction_description",
         "ifsc_code","bsb_code","check_number","micr_line",
-        "payment_reference","account_number","account_number_masked"
+        "payment_reference","account_number","account_number_masked",
+        "micr_line_masked","transaction_description_masked","check_number_masked","payment_reference_masked"
     );
 
     private static final Set<String> CORPORATE_TYPES = Set.of(
@@ -197,13 +198,16 @@ public final class MockJutsuRegistry {
     private static final Set<String> COMPLIANCE_TYPES = Set.of(
         "policy_number","claim_number","pep_status","aml_risk_rating","cdd_level",
         "sar_number","ubo_ownership_percentage","kyc_document_type","consent_id",
-        "tpp_id","onboarding_method","sanctions_hit"
+        "tpp_id","onboarding_method","sanctions_hit",
+        "policy_number_masked","claim_number_masked","sar_number_masked",
+        "ubo_ownership_percentage_masked","consent_id_masked"
     );
 
     private static final Set<String> FINANCIAL_EXT_TYPES = Set.of(
         "credit_score_model","credit_score_tier","credit_limit","credit_utilization",
         "credit_card_issuer_name","apr","loan_type","mortgage_rate","mortgage_term",
-        "premium_amount","deductible","coverage_limit","claim_status"
+        "premium_amount","deductible","coverage_limit","claim_status",
+        "credit_limit_masked","mortgage_rate_masked","premium_amount_masked"
     );
 
     private static final Set<String> DATETIME_TYPES = Set.of(

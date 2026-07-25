@@ -34,6 +34,11 @@ public final class ComplianceGen {
             case "tpp_id"                -> tppId(rng);
             case "onboarding_method"     -> pick(rng, ONBOARDING_METHODS);
             case "sanctions_hit"         -> rng.nextDouble() < 0.05 ? "True" : "False";
+            case "policy_number_masked"  -> "POL-****-*****";
+            case "claim_number_masked"   -> "CLM-****-*****";
+            case "sar_number_masked"     -> "SAR-****-******";
+            case "ubo_ownership_percentage_masked" -> "**.**";
+            case "consent_id_masked"     -> "****-****-****-****";
             default                      -> "ERROR: Unknown compliance type '" + type + "'";
         };
     }

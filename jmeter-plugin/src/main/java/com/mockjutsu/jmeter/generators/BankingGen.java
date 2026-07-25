@@ -109,6 +109,10 @@ public final class BankingGen {
             case "payment_reference"     -> paymentReference(rng);
             case "account_number"        -> accountNumber(rng);
             case "account_number_masked" -> "****" + randomDigits(rng, 4);
+            case "micr_line_masked"             -> "|*****" + randomDigits(rng, 4) + "| |*****" + randomDigits(rng, 4) + "| ****";
+            case "transaction_description_masked" -> "[MASKED TRANSACTION]";
+            case "check_number_masked"           -> "****";
+            case "payment_reference_masked"      -> "PAYREF-****-*****";
             default                      -> "ERROR: Unknown banking type '" + type + "'";
         };
     }
