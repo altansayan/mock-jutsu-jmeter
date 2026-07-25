@@ -340,9 +340,11 @@ mvn package       # produces target/mock-jutsu-jmeter-1.0.0.jar
 
 ---
 
-## Related Projects
+## Related
 
-- [mock-jutsu](https://github.com/altansayan/mock-jutsu-api) — Python SDK + REST API + CLI, 390 types, same algorithms
+- **Python / CLI / API**: [mock-jutsu-api](https://github.com/altansayan/mock-jutsu-api) - `pip install mockjutsu`
+- **Java Library**: [mock-jutsu-java](https://github.com/altansayan/mock-jutsu-java)
+- **PyPI**: [mockjutsu](https://pypi.org/project/mockjutsu/)
 
 ---
 
