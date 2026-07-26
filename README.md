@@ -348,11 +348,11 @@ All 423 types are tested under 1 000-concurrent wave load. The test plans are pu
 
 Baseline (v1.1.0, Java 25, 1 000 concurrent threads):
 
-| Type | Avg latency | p95 |
-|------|-------------|-----|
-| cardnum:visa | 155 µs | 253 µs |
-| tckn | 41 µs | 71 µs |
-| oidc_token_set | 12 ms | 35 ms |
+| Type | Avg (ms) | p95 (ms) |
+|------|----------|----------|
+| cardnum:visa | 0.155 | 0.253 |
+| tckn | 0.041 | 0.071 |
+| oidc_token_set | 12.063 | 35.115 |
 
 All fast types complete under **1.5 ms/call** — enforced by CI on every commit.
 
