@@ -340,11 +340,30 @@ mvn package       # produces target/mock-jutsu-jmeter-1.0.0.jar
 
 ---
 
+## Performance Verification
+
+All 423 types are tested under 1 000-concurrent wave load. The test plans are publicly available so anyone can reproduce the results independently:
+
+**[mock-jutsu-jmeter-testplans](https://github.com/altansayan/mock-jutsu-jmeter-testplans)** — download, run against your own JMeter installation, verify the numbers yourself.
+
+Baseline (v1.1.0, Java 25, 1 000 concurrent threads):
+
+| Type | Avg latency | p95 |
+|------|-------------|-----|
+| cardnum:visa | 155 µs | 253 µs |
+| tckn | 41 µs | 71 µs |
+| oidc_token_set | 12 ms | 35 ms |
+
+All fast types complete under **1.5 ms/call** — enforced by CI on every commit.
+
+---
+
 ## Related
 
 - **Python / CLI / API**: [mock-jutsu-api](https://github.com/altansayan/mock-jutsu-api) - `pip install mockjutsu`
 - **Java Library**: [mock-jutsu-java](https://github.com/altansayan/mock-jutsu-java)
 - **PyPI**: [mockjutsu](https://pypi.org/project/mockjutsu/)
+- **Load Test Plans**: [mock-jutsu-jmeter-testplans](https://github.com/altansayan/mock-jutsu-jmeter-testplans)
 
 ---
 
