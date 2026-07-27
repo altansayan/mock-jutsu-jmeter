@@ -340,21 +340,23 @@ mvn package       # produces target/mock-jutsu-jmeter-1.0.0.jar
 
 ---
 
-## Performance Verification
+## Performance Verification — Benchmark
 
-All 423 types are tested under 1 000-concurrent wave load. The test plans are publicly available so anyone can reproduce the results independently:
+All 423 types are tested under 1 000-concurrent wave load (per-sampler SyncTimer, all 1 000 threads fire simultaneously). The test plans are publicly available so anyone can reproduce the results independently:
 
 **[mock-jutsu-jmeter-plugin-benchmark](https://github.com/altansayan/mock-jutsu-jmeter-plugin-benchmark)** — download, run against your own JMeter installation, verify the numbers yourself.
 
-Baseline (v1.1.0, Java 25, 1 000 concurrent threads):
+Baseline (v1.1.0, Java 25, 1 000 concurrent threads, setUp warmup applied):
 
-| Type | Avg (ms) | p95 (ms) |
-|------|----------|----------|
-| cardnum:visa | 0.155 | 0.253 |
-| tckn | 0.041 | 0.071 |
-| oidc_token_set | 12.063 | 35.115 |
+| Type | Tier | Avg (ms) | p95 (ms) |
+|------|------|----------|----------|
+| `tckn` | Fast | 0.028 | 0.043 |
+| `cardnum:visa` | Fast | 0.038 | 0.059 |
+| `oidc_token_set` | Slow | 0.898 | 1.491 |
 
-All fast types complete under **1.5 ms/call** — enforced by CI on every commit.
+**347 of 423 types (82%) average under 0.05 ms.** Only 5 types exceed 0.15 ms (OIDC, AI, and Prometheus types) — these should be [pre-generated via CSV](https://github.com/altansayan/mock-jutsu-jmeter-plugin-benchmark#-pre-generating-slow-types-via-csv) for production load tests.
+
+Full latency tables (avg, p50, p95, p99) and CPU/RAM profiles are available in the [QA Analysis Report](https://github.com/altansayan/mock-jutsu-jmeter-plugin-benchmark/blob/main/reports/qa-performance-analysis-en.html).
 
 ---
 
