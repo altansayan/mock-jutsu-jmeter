@@ -363,7 +363,7 @@ All fast types complete under **1.5 ms/call** — enforced by CI on every commit
 - **Python / CLI / API**: [mock-jutsu-api](https://github.com/altansayan/mock-jutsu-api) - `pip install mockjutsu`
 - **Java Library**: [mock-jutsu-java](https://github.com/altansayan/mock-jutsu-java)
 - **PyPI**: [mockjutsu](https://pypi.org/project/mockjutsu/)
-- **Load Test Plans**: [mock-jutsu-jmeter-plugin-benchmark](https://github.com/altansayan/mock-jutsu-jmeter-plugin-benchmark)
+- **Mock Jutsu JMeter Plugin Benchmark**: [mock-jutsu-jmeter-plugin-benchmark](https://github.com/altansayan/mock-jutsu-jmeter-plugin-benchmark)
 
 ---
 
