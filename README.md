@@ -322,6 +322,43 @@ ${__mockjutsu_intl_ids(cn_ric)}     // China Resident ID
 ${__mockjutsu_intl_ids(kr_rrn)}     // South Korea RRN
 ```
 
+### Groovy / JSR223 Sampler — Direct Java API
+
+All 390 types are also callable directly from a JSR223 Sampler (Groovy) without the `${__mockjutsu_xxx}` expression syntax, using `MockJutsuRegistry` as the single entry point:
+
+```groovy
+import com.mockjutsu.jmeter.MockJutsuRegistry
+import com.mockjutsu.jmeter.MaskerUtil
+
+// Basic: type + locale
+def citizenId = MockJutsuRegistry.generate("tckn",    "TR")
+def iban      = MockJutsuRegistry.generate("iban",    "TR")
+def cardNum   = MockJutsuRegistry.generate("cardnum", "TR", "visa")  // with qualifier
+def requestId = MockJutsuRegistry.generate("uuid",    "")
+
+// Store in JMeter variables for use in downstream samplers
+vars.put("citizenId", citizenId)
+vars.put("iban",      iban)
+vars.put("cardNumber", cardNum)
+vars.put("requestId", requestId)
+
+// Build inline JSON body
+def body = """{
+  "citizenId":  "${citizenId}",
+  "iban":       "${iban}",
+  "cardNumber": "${cardNum}",
+  "requestId":  "${requestId}"
+}"""
+vars.put("requestBody", body)
+
+// Masking (PCI / GDPR)
+def maskedIban = MaskerUtil.mask("iban", iban)
+vars.put("ibanMasked", maskedIban)
+```
+
+Use the Java API when you need runtime flexibility — loops, conditionals, or dynamic type selection — that the expression syntax cannot provide.
+For all available type names, see the [HOW-TO documentation](https://altansayan.github.io/mock-jutsu-api/HOW-TO/EN/HOW-TO-MockJutsu-EN.html).
+
 ---
 
 ## Algorithm Guarantees
