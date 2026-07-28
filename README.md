@@ -4,7 +4,7 @@
 [![Java](https://img.shields.io/badge/Java-17%2B-blue)](https://adoptium.net)
 [![JMeter](https://img.shields.io/badge/JMeter-5.6%2B-red)](https://jmeter.apache.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![JMeter Plugin](https://img.shields.io/badge/JMeter%20Plugin-v1.0.1-red?logo=apache&logoColor=white)](https://jmeter-plugins.org/?search=mock-jutsu)
+[![JMeter Plugin](https://img.shields.io/badge/JMeter%20Plugin-v1.1.0-red?logo=apache&logoColor=white)](https://jmeter-plugins.org/?search=mock-jutsu)
 
 Generate **5955-tested**, format-valid mock test data directly inside JMeter test plans — no Python, no subprocess, no external dependencies.
 
@@ -41,7 +41,7 @@ Official Plugin Page: [jmeter-plugins.org/?search=mock-jutsu](https://jmeter-plu
 
 ### Method 2: Manual Installation (Function Helper Dialog)
 
-1. Download `mock-jutsu-jmeter-1.0.1.jar` from [Releases](https://github.com/altansayan/mock-jutsu-jmeter/releases)
+1. Download `mock-jutsu-jmeter-1.1.0.jar` from [Releases](https://github.com/altansayan/mock-jutsu-jmeter/releases)
 2. Copy to `$JMETER_HOME/lib/ext/`
 3. Restart JMeter
 4. Open **Options → Function Helper Dialog** — search for `mockjutsu`
