@@ -322,6 +322,7 @@ ${__mockjutsu_intl_ids(cn_ric)}     // China Resident ID
 ${__mockjutsu_intl_ids(kr_rrn)}     // South Korea RRN
 ```
 
+<a name="groovy-jsr223"></a>
 ### Groovy / JSR223 Sampler — Direct Java
 
 All 390 types are also callable directly from a JSR223 Sampler (Groovy) without the `${__mockjutsu_xxx}` expression syntax, using `MockJutsuRegistry` as the single entry point:
