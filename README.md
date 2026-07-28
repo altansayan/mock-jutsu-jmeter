@@ -364,6 +364,8 @@ For all available type names, see the [HOW-TO documentation](https://altansayan.
 
 ## Algorithm Guarantees
 
+<div align="center">
+
 All generated data passes real checksum and format validation:
 
 | Type | Algorithm |
@@ -384,6 +386,8 @@ All generated data passes real checksum and format validation:
 | ETH Address | Keccak-256 EIP-55 |
 | CUSIP | Modulo 10 weighted |
 | LEI | MOD-97 (ISO 17442) |
+
+</div>
 
 ---
 
