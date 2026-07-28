@@ -360,6 +360,32 @@ vars.put("ibanMasked", maskedIban)
 Use the Java API when you need runtime flexibility — loops, conditionals, or dynamic type selection — that the expression syntax cannot provide.
 For all available type names, see the [HOW-TO documentation](https://altansayan.github.io/mock-jutsu-api/HOW-TO/EN/HOW-TO-MockJutsu-EN.html).
 
+> **Note:** Groovy JSR223 requires Java 17 or Java 21 LTS. Java 25 is not yet supported by Groovy 3.x (`Unsupported class file major version 69`). Use BeanShell as a drop-in alternative on Java 25 — syntax is identical except semicolons are required.
+
+#### Pre-generating CSV test data
+
+```groovy
+import com.mockjutsu.jmeter.MockJutsuRegistry
+import java.io.*
+
+int N = 1000
+String D = "C:/load-test-data/"
+new File(D).mkdirs()
+
+PrintWriter pw = new PrintWriter(new OutputStreamWriter(
+    new FileOutputStream(D + "identity.csv"), "UTF-8"))
+pw.println("tckn,iban")
+for (int i = 0; i < N; i++) {
+    pw.println(MockJutsuRegistry.generate("tckn", "TR") + "," +
+               MockJutsuRegistry.generate("iban", "TR"))
+}
+pw.close()
+log.info("[mock-jutsu] identity.csv (" + N + " satır)")
+
+SampleResult.setResponseData("Done → " + D, "UTF-8")
+SampleResult.setSuccessful(true)
+```
+
 ---
 
 ## Algorithm Guarantees
