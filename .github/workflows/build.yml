@@ -92,24 +92,47 @@ jobs:
             -l results.jtl \
             -j jmeter-ci.log
 
-      - name: Check for sample failures
+      - name: Report & check results
+        if: always()
         run: |
           python3 - <<'PYEOF'
-          import csv, sys
-          failures = []
-          total = 0
+          import csv, sys, os
+
+          rows = []
           with open("results.jtl") as f:
-              reader = csv.DictReader(f)
-              for row in reader:
-                  total += 1
-                  if row.get("success", "true").lower() == "false":
-                      failures.append(row)
+              for row in csv.DictReader(f):
+                  rows.append(row)
+
+          total    = len(rows)
+          failures = [r for r in rows if r.get("success", "true").lower() == "false"]
+          passed   = total - len(failures)
+
+          # ── GitHub Step Summary ────────────────────────────────────────
+          summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if summary:
+              with open(summary, "w") as s:
+                  if failures:
+                      s.write(f"## ❌ Smoke Test — {len(failures)} / {total} failed\n\n")
+                      s.write("| Sample | Failure |\n|---|---|\n")
+                      for r in failures:
+                          s.write(f"| `{r.get('label','?')}` | {r.get('failureMessage','').strip()} |\n")
+                  else:
+                      s.write(f"## ✅ Smoke Test — all {total} samples passed\n\n")
+
+                  # Top-10 slowest
+                  slowest = sorted(rows, key=lambda r: int(r.get("elapsed", 0)), reverse=True)[:10]
+                  s.write("\n### Slowest 10 samples (ms)\n\n")
+                  s.write("| Sample | elapsed (ms) |\n|---|---|\n")
+                  for r in slowest:
+                      s.write(f"| `{r.get('label','?')}` | {r.get('elapsed','?')} |\n")
+
+          # ── Console output + exit code ─────────────────────────────────
           if failures:
-              print(f"::error::FAILED: {len(failures)}/{total} samples failed")
-              for row in failures:
-                  print(f"  x {row.get('label','?')} — {row.get('failureMessage','')}")
+              print(f"::error::FAILED: {len(failures)}/{total} samples")
+              for r in failures:
+                  print(f"  ✗ {r.get('label','?')} — {r.get('failureMessage','').strip()}")
               sys.exit(1)
-          print(f"OK: all {total} samples passed")
+          print(f"OK: {passed}/{total} passed")
           PYEOF
 
       - name: Upload JMeter results
