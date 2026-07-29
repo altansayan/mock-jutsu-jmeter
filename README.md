@@ -14,7 +14,7 @@ ${__mockjutsu_financial(iban|DE)}                   → DE89370400440532013000
 ${__mockjutsu_financial(cardnum)}                   → 4532015112830366
 ${__mockjutsu_banking(swift|TR)}                    → AKBKTRIS
 ${__mockjutsu_mrz(mrz_td3|TR)}                      → P<TUR... (2×44 chars)
-${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})}   → XKM7291
+${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})}    → XKM7291
 ${__mockjutsu_financial(cardnum:visa|TR|mask)}      → 4155 56** **** 3399  (PCI DSS masked)
 ${__mockjutsu_financial(cardnum:visa|TR|myCard)}    → stores result in ${myCard}
 ```
