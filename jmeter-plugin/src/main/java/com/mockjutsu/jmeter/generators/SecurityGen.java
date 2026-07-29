@@ -2,11 +2,14 @@ package com.mockjutsu.jmeter.generators;
 
 import com.mockjutsu.jmeter.Randoms;
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Security — CEF log, X.509 fields, pcap hex dump, password/hash, CVE ID. Mirrors security.py. */
 public final class SecurityGen {
     private SecurityGen() {}
+
+    private static final DateTimeFormatter FMT_ISO_Z = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     private static final String PWD_SPECIAL = "!@#$%^&*()-_=+[]{}|;:,.<>?";
     private static final String BCRYPT_ALPHABET = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -172,7 +175,7 @@ public final class SecurityGen {
             fingerprint.append(String.format("%02X", fpBytes[i]));
         }
 
-        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter fmt = FMT_ISO_Z;
 
         return "{\"version\":3,\"serial\":\"" + serial + "\",\"algorithm\":\"" + ALGORITHMS[rng.nextInt(ALGORITHMS.length)] +
             "\",\"key_size\":" + KEY_SIZES[rng.nextInt(KEY_SIZES.length)] + ",\"subject\":\"" + subject + "\"," +

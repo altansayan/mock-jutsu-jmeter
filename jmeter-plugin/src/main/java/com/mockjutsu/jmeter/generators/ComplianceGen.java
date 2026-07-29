@@ -10,6 +10,8 @@ public final class ComplianceGen {
 
     private ComplianceGen() {}
 
+    private static final DateTimeFormatter FMT_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+
     private static final String[] PEP_STATUSES      = {"Not PEP", "PEP", "RCA", "Former PEP", "Unknown"};
     private static final String[] AML_RATINGS        = {"Low","Medium","High","Critical"};
     private static final String[] CDD_LEVELS         = {"Standard","Enhanced","Simplified"};
@@ -44,17 +46,17 @@ public final class ComplianceGen {
     }
 
     private static String policyNumber(ThreadLocalRandom rng) {
-        String date8 = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String date8 = LocalDate.now().format(FMT_YYYYMMDD);
         return "POL-" + date8 + "-" + rng.nextInt(10000, 100000);
     }
 
     private static String claimNumber(ThreadLocalRandom rng) {
-        String date8 = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String date8 = LocalDate.now().format(FMT_YYYYMMDD);
         return "CLM-" + date8 + "-" + rng.nextInt(10000, 100000);
     }
 
     private static String sarNumber(ThreadLocalRandom rng) {
-        String date8 = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String date8 = LocalDate.now().format(FMT_YYYYMMDD);
         return "SAR-" + date8 + "-" + rng.nextInt(1000, 1000000);
     }
 

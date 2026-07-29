@@ -9,6 +9,9 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class NmeaGen {
     private NmeaGen() {}
 
+    private static final DateTimeFormatter FMT_HHmmss = DateTimeFormatter.ofPattern("HHmmss");
+    private static final DateTimeFormatter FMT_ddMMyy = DateTimeFormatter.ofPattern("ddMMyy");
+
     public static String generate(String type, String locale) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         return switch (type) {
@@ -21,7 +24,7 @@ public final class NmeaGen {
     // ── GPGGA ─────────────────────────────────────────────────────────────────
 
     private static String gpgga(ThreadLocalRandom rng) {
-        String timeStr = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("HHmmss")) + ".00";
+        String timeStr = ZonedDateTime.now(ZoneOffset.UTC).format(FMT_HHmmss) + ".00";
 
         double latDeg = rng.nextDouble(0.0, 90.0);
         char latDir = rng.nextBoolean() ? 'N' : 'S';
@@ -55,8 +58,8 @@ public final class NmeaGen {
 
     private static String gprmc(ThreadLocalRandom rng) {
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        String timeStr = now.format(DateTimeFormatter.ofPattern("HHmmss")) + ".00";
-        String dateStr = now.format(DateTimeFormatter.ofPattern("ddMMyy"));
+        String timeStr = now.format(FMT_HHmmss) + ".00";
+        String dateStr = now.format(FMT_ddMMyy);
 
         double latDeg = rng.nextDouble(0.0, 90.0);
         char latDir = rng.nextBoolean() ? 'N' : 'S';

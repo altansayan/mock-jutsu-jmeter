@@ -1,5 +1,6 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -13,6 +14,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class IoTGen {
     private IoTGen() {}
+
+    private static final DateTimeFormatter FMT_ISO_Z = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     // ISO/IEC 7816-6 IC manufacturer codes (public registry)
     private static final int[] NFC_MFR_BYTES = {0x04, 0x02, 0x05, 0x07, 0xE0, 0x15, 0x16, 0x68};
@@ -476,7 +479,7 @@ public final class IoTGen {
         int offsetSec = rng.nextInt(7 * 24 * 3600);
         String ts = java.time.Instant.now().minusSeconds(offsetSec)
             .atZone(java.time.ZoneOffset.UTC)
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+            .format(FMT_ISO_Z);
         String deviceId = randomHexLower(rng, 8) + "-" + randomHexLower(rng, 4) + "-" + randomHexLower(rng, 4);
         int rssi = rng.nextInt(-120, -29);
         double snr = Math.round(rng.nextDouble(-20.0, 10.0) * 10.0) / 10.0;

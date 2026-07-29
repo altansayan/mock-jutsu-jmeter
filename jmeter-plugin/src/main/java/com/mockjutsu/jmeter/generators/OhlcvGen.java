@@ -9,6 +9,9 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class OhlcvGen {
     private OhlcvGen() {}
 
+    private static final DateTimeFormatter FMT_ISO_Z   = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    private static final DateTimeFormatter FMT_ISO_MS  = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.");
+
     private static final String[] SYMBOLS = {
         "AAPL","MSFT","GOOGL","AMZN","NVDA","TSLA","META","NFLX",
         "BABA","BRK","JPM","GS","BAC","C","WMT","COST","XOM",
@@ -63,7 +66,7 @@ public final class OhlcvGen {
 
         double prevClose = startPrice;
         StringBuilder candlesSb = new StringBuilder("[");
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter fmt = FMT_ISO_Z;
 
         for (int i = 0; i < n; i++) {
             double o = prevClose;
@@ -114,7 +117,7 @@ public final class OhlcvGen {
         long seq = rng.nextLong(1, 1_000_000_000L);
 
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        String ts = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.")) +
+        String ts = now.format(FMT_ISO_MS) +
             String.format("%03d", now.getNano() / 1_000_000) + "Z";
 
         return String.format(java.util.Locale.US,

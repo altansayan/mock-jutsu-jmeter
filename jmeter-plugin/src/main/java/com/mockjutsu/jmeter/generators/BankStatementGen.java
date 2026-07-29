@@ -1,10 +1,16 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** SWIFT MT940 / ISO 20022 CAMT.053 bank statement generator. Mirrors bank_statement.py. */
 public final class BankStatementGen {
     private BankStatementGen() {}
+
+    private static final DateTimeFormatter FMT_YYMMDD   = DateTimeFormatter.ofPattern("yyMMdd");
+    private static final DateTimeFormatter FMT_MMDD     = DateTimeFormatter.ofPattern("MMdd");
+    private static final DateTimeFormatter FMT_ISO_DT   = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final DateTimeFormatter FMT_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private static final java.util.Map<String, String> CURRENCIES = java.util.Map.of(
         "TR","TRY","DE","EUR","FR","EUR","UK","GBP","US","USD","RU","RUB"
@@ -117,7 +123,7 @@ public final class BankStatementGen {
     // ── MT940 ─────────────────────────────────────────────────────────────────
 
     private static String mt940Date(java.time.LocalDate d) {
-        return d.format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd"));
+        return d.format(FMT_YYMMDD);
     }
 
     private static String mt940Amount(double v) {
@@ -146,7 +152,7 @@ public final class BankStatementGen {
         for (Txn t : res.txns) {
             String ind  = t.credit ? "C" : "D";
             String d    = mt940Date(t.date);
-            String mmdd = t.date.format(java.time.format.DateTimeFormatter.ofPattern("MMdd"));
+            String mmdd = t.date.format(FMT_MMDD);
             sb.append(":61:").append(d).append(mmdd).append(ind).append(mt940Amount(t.amount))
               .append(t.code).append(t.ref).append("//").append(t.ref, 0, 8).append('\n');
             sb.append(":86:").append(t.desc).append('\n');
@@ -167,8 +173,8 @@ public final class BankStatementGen {
         java.time.LocalDate today     = java.time.LocalDate.now();
         java.time.LocalDate startDate = res.txns.get(0).date;
         java.time.LocalDate endDate   = res.txns.get(res.txns.size() - 1).date;
-        String nowDt  = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-        String msgId  = "MOCK" + today.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")) + rng.nextInt(1000, 10000);
+        String nowDt  = java.time.LocalDateTime.now().format(FMT_ISO_DT);
+        String msgId  = "MOCK" + today.format(FMT_YYYYMMDD) + rng.nextInt(1000, 10000);
         String stmtId = "STMT" + rng.nextInt(10000, 100000);
 
         StringBuilder entries = new StringBuilder();

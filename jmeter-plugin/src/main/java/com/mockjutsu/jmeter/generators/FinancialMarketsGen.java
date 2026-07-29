@@ -1,6 +1,7 @@
 package com.mockjutsu.jmeter.generators;
 
 import com.mockjutsu.jmeter.Randoms;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,9 @@ public final class FinancialMarketsGen {
     private FinancialMarketsGen() {}
 
     private static final Logger log = LoggerFactory.getLogger(FinancialMarketsGen.class);
+
+    private static final DateTimeFormatter FMT_YYMMDD       = DateTimeFormatter.ofPattern("yyMMdd");
+    private static final DateTimeFormatter FMT_FIX_TS       = DateTimeFormatter.ofPattern("yyyyMMdd-HH:mm:ss.SSS").withZone(java.time.ZoneOffset.UTC);
 
     private static final char[]   ALPHA_NUM        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
@@ -258,9 +262,7 @@ public final class FinancialMarketsGen {
         String[] ordTypes = {"1","2","3"};
         String ordType = pick(rng, ordTypes);
 
-        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter
-            .ofPattern("yyyyMMdd-HH:mm:ss.SSS").withZone(java.time.ZoneOffset.UTC);
-        String ts = fmt.format(java.time.Instant.now());
+        String ts = FMT_FIX_TS.format(java.time.Instant.now());
 
         StringBuilder body = new StringBuilder();
         body.append("35=D").append(SOH);
@@ -444,7 +446,7 @@ public final class FinancialMarketsGen {
     private static String optionContract(ThreadLocalRandom rng) {
         String ticker = pick(rng, STOCK_TICKERS);
         java.time.LocalDate expiry = java.time.LocalDate.now().plusDays(rng.nextInt(7, 366));
-        String expiryStr = expiry.format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd"));
+        String expiryStr = expiry.format(FMT_YYMMDD);
         char cp = rng.nextBoolean() ? 'C' : 'P';
         int strike = rng.nextInt(500, 50001) * 100;
         return String.format("%s%s%c%08d", ticker, expiryStr, cp, strike);

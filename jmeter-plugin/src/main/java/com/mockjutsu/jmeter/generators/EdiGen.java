@@ -1,10 +1,15 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** ANSI X12 EDI 850 / UN-EDIFACT ORDERS D96A generator. Mirrors edi.py. */
 public final class EdiGen {
     private EdiGen() {}
+
+    private static final DateTimeFormatter FMT_YYMMDD   = DateTimeFormatter.ofPattern("yyMMdd");
+    private static final DateTimeFormatter FMT_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter FMT_HHmm     = DateTimeFormatter.ofPattern("HHmm");
 
     private static final String[] COMPANIES = {
         "ACME CORP", "GLOBAL TRADE INC", "APEX SOLUTIONS", "METRO SUPPLY CO",
@@ -50,9 +55,9 @@ public final class EdiGen {
         String transNum = randNumeric(rng, 4);
         String poNum    = "PO" + randNumeric(rng, 6);
 
-        String date6 = today.format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd"));
-        String date8 = today.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String time4 = now.format(java.time.format.DateTimeFormatter.ofPattern("HHmm"));
+        String date6 = today.format(FMT_YYMMDD);
+        String date8 = today.format(FMT_YYYYMMDD);
+        String time4 = now.format(FMT_HHmm);
 
         String senderId   = padRight(randAlphaNum(rng, 10), 15);
         String receiverId = padRight(randAlphaNum(rng, 10), 15);
@@ -106,8 +111,8 @@ public final class EdiGen {
         String msgRef  = randAlphaNum(rng, 8);
         String poNum   = "ORD" + randNumeric(rng, 6);
 
-        String date8 = today.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String time4 = now.format(java.time.format.DateTimeFormatter.ofPattern("HHmm"));
+        String date8 = today.format(FMT_YYYYMMDD);
+        String time4 = now.format(FMT_HHmm);
 
         String senderId   = randAlphaNum(rng, 10);
         String receiverId = randAlphaNum(rng, 10);

@@ -10,6 +10,9 @@ public final class HealthGen {
 
     private HealthGen() {}
 
+    private static final DateTimeFormatter FMT_yyyyMMddHHmmss      = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final DateTimeFormatter FMT_ISO_MS_000Z          = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.000'Z'");
+
     private static final String[] BLOOD_TYPES = {"A+","A-","B+","B-","AB+","AB-","O+","O-"};
 
     private static final String[] ICD10_CODES = {
@@ -166,7 +169,7 @@ public final class HealthGen {
     // ── HL7 v2.5 ADT^A01 message ──────────────────────────────────────────────
 
     private static String hl7Message(ThreadLocalRandom rng) {
-        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String ts = LocalDateTime.now().format(FMT_yyyyMMddHHmmss);
         String dob = rng.nextInt(1940, 2001) + String.format("%02d", rng.nextInt(1, 13)) + String.format("%02d", rng.nextInt(1, 29));
 
         String sendingApp = pick(rng, HL7_APPS);
@@ -214,7 +217,7 @@ public final class HealthGen {
         int birthDay = rng.nextInt(1, 29);
         String birthDt = birthYr + "-" + String.format("%02d", birthMo) + "-" + String.format("%02d", birthDay);
         String nowIso = java.time.Instant.now().atZone(ZoneOffset.UTC)
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.000'Z'"));
+            .format(FMT_ISO_MS_000Z);
         String patientId = java.util.UUID.randomUUID().toString();
 
         String identifierValue = rng.nextInt(100, 1000) + "-" + rng.nextInt(10, 100) + "-" + rng.nextInt(1000, 10000);

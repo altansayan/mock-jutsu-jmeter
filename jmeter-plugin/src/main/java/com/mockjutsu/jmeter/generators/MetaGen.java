@@ -18,6 +18,8 @@ public final class MetaGen {
 
     private static final Logger log = LoggerFactory.getLogger(MetaGen.class);
 
+    private static final DateTimeFormatter FMT_ISO_MICROS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+
     private static final String[] BROWSER_NAMES    = {"Chrome","Firefox","Safari","Edge","Opera"};
     private static final String[] BROWSER_ENGINES  = {"Blink","Gecko","WebKit","Blink","Blink"};
     private static final int[][] BROWSER_MAJOR_RANGE = {{120,126},{120,127},{16,18},{120,126},{105,110}};
@@ -117,7 +119,7 @@ public final class MetaGen {
     }
 
     private static String timestampIso() {
-        return java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"));
+        return java.time.LocalDateTime.now().format(FMT_ISO_MICROS);
     }
 
     // ── IPv4 ──────────────────────────────────────────────────────────────────

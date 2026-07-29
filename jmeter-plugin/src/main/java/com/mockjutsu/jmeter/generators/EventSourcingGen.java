@@ -1,10 +1,14 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Causal Event-Sourcing & CDC generator. Mirrors event_sourcing.py. */
 public final class EventSourcingGen {
     private EventSourcingGen() {}
+
+    private static final DateTimeFormatter FMT_ISO_DT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final DateTimeFormatter FMT_ISO_Z  = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     // ── Markov Chain — user journey ──────────────────────────────────────────
 
@@ -101,7 +105,7 @@ public final class EventSourcingGen {
     }
 
     private static String formatTs(java.time.ZonedDateTime ts, ThreadLocalRandom rng) {
-        String base = ts.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String base = ts.format(FMT_ISO_DT);
         return base + "." + String.format("%03d", rng.nextInt(1000)) + "Z";
     }
 
@@ -210,7 +214,7 @@ public final class EventSourcingGen {
             case "email" -> "user" + rng.nextInt(1000, 10000) + "@example.com";
             case "name" -> FULL_NAMES[rng.nextInt(FULL_NAMES.length)];
             case "ts" -> java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
-                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+                .format(FMT_ISO_Z);
             case "order_status" -> ORDER_STATUSES[rng.nextInt(ORDER_STATUSES.length)];
             case "pay_status" -> PAY_STATUSES[rng.nextInt(PAY_STATUSES.length)];
             case "pay_method" -> PAY_METHODS[rng.nextInt(PAY_METHODS.length)];

@@ -1,12 +1,20 @@
 package com.mockjutsu.jmeter.generators;
 
 import com.mockjutsu.jmeter.Randoms;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** CardPhysics — ISO 8583 bitmap, EMV ARQC/ATC/IAD, ATM session, POS receipt. Mirrors cardphysics.py. */
 public final class CardPhysicsGen {
     private CardPhysicsGen() {}
 
+
+    private static final DateTimeFormatter FMT_MMDDHHmmss = DateTimeFormatter.ofPattern("MMddHHmmss");
+    private static final DateTimeFormatter FMT_HHmmss     = DateTimeFormatter.ofPattern("HHmmss");
+    private static final DateTimeFormatter FMT_MMDD       = DateTimeFormatter.ofPattern("MMdd");
+    private static final DateTimeFormatter FMT_ISO_DT     = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final DateTimeFormatter FMT_DATE       = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter FMT_HH_MM_SS   = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     // Pre-computed ISO 8583 bitmaps (verified bit positions)
     private static final String BITMAP_AUTH_REQ  = makeBitmap(2,3,4,7,11,12,13,14,18,22,25,37,41,42,49);
@@ -94,9 +102,9 @@ public final class CardPhysicsGen {
         String ccy = CURRENCY.getOrDefault(locale, CURRENCY.get("TR"))[0];
         int amount = rng.nextInt(100, 10000000);
 
-        String mmddHHmmss = now.format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
-        String hhmmss = now.format(java.time.format.DateTimeFormatter.ofPattern("HHmmss"));
-        String mmdd = now.format(java.time.format.DateTimeFormatter.ofPattern("MMdd"));
+        String mmddHHmmss = now.format(FMT_MMDDHHmmss);
+        String hhmmss = now.format(FMT_HHmmss);
+        String mmdd = now.format(FMT_MMDD);
 
         return String.join("\n",
             "MTI:0100",
@@ -131,9 +139,9 @@ public final class CardPhysicsGen {
         String mid = "MOCKJM" + rng.nextInt(100000000, 1000000000);
         int amount = rng.nextInt(100, 10000000);
 
-        String mmddHHmmss = now.format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
-        String hhmmss = now.format(java.time.format.DateTimeFormatter.ofPattern("HHmmss"));
-        String mmdd = now.format(java.time.format.DateTimeFormatter.ofPattern("MMdd"));
+        String mmddHHmmss = now.format(FMT_MMDDHHmmss);
+        String hhmmss = now.format(FMT_HHmmss);
+        String mmdd = now.format(FMT_MMDD);
 
         return String.join("\n",
             "MTI:0110",
@@ -166,9 +174,9 @@ public final class CardPhysicsGen {
         String origTrace = String.format("%06d", rng.nextInt(1, 1000000));
         String acqId = "MOCKJ" + String.format("%06d", rng.nextInt(100000, 1000000));
 
-        String mmddHHmmss = now.format(java.time.format.DateTimeFormatter.ofPattern("MMddHHmmss"));
-        String hhmmss = now.format(java.time.format.DateTimeFormatter.ofPattern("HHmmss"));
-        String mmdd = now.format(java.time.format.DateTimeFormatter.ofPattern("MMdd"));
+        String mmddHHmmss = now.format(FMT_MMDDHHmmss);
+        String hhmmss = now.format(FMT_HHmmss);
+        String mmdd = now.format(FMT_MMDD);
         String de056 = "0100" + origTrace + mmddHHmmss + acqId;
 
         return String.join("\n",
@@ -205,7 +213,7 @@ public final class CardPhysicsGen {
         String tid = "MOCKJT" + rng.nextInt(10, 100);
         String authCode = "MOCKJ" + rng.nextInt(1, 10);
         String[] txTypes = {"CASH_WITHDRAWAL", "BALANCE_INQUIRY", "MINI_STATEMENT"};
-        String ts = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String ts = java.time.LocalDateTime.now().format(FMT_ISO_DT);
 
         return "{\"session_id\": \"" + sessionId + "\", \"terminal_id\": \"" + tid + "\"," +
             " \"terminal_location\": \"MOCKJ Bank Branch " + rng.nextInt(1, 100) + "\"," +
@@ -249,8 +257,8 @@ public final class CardPhysicsGen {
         lines.add(sep);
         lines.add(centerText("MOCKJ MERCHANT SERVICES", w));
         lines.add(sep);
-        lines.add("Date: " + now.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")) +
-            "  Time: " + now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
+        lines.add("Date: " + now.format(FMT_DATE) +
+            "  Time: " + now.format(FMT_HH_MM_SS));
         lines.add("MID : " + mid);
         lines.add("TID : " + tid);
         lines.add(dsh);

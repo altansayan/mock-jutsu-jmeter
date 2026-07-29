@@ -1,11 +1,15 @@
 package com.mockjutsu.jmeter.generators;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** UBL 2.1 E-Invoice and W3C XMLDSig generator. Mirrors ubl.py. */
 public final class UblGen {
     private UblGen() {}
+
+    private static final DateTimeFormatter FMT_DATE    = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter FMT_HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private static final String[] INVOICE_TYPES = {"SATIS", "IADE", "TEVKIFAT", "IHTIYAT", "ISTISNA"};
     private static final String[] CURRENCIES = {"TRY", "EUR", "USD", "GBP"};
@@ -45,8 +49,8 @@ public final class UblGen {
         java.time.ZonedDateTime now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC);
         String invoiceId = "INV-" + now.getYear() + "-" + String.format("%05d", rng.nextInt(1, 100000));
         String invoiceUuid = java.util.UUID.randomUUID().toString().toUpperCase(java.util.Locale.ROOT);
-        String issueDate = now.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String issueTime = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String issueDate = now.format(FMT_DATE);
+        String issueTime = now.format(FMT_HH_MM_SS);
 
         String invoiceType = INVOICE_TYPES[rng.nextInt(INVOICE_TYPES.length)];
         String currency    = CURRENCIES[rng.nextInt(CURRENCIES.length)];

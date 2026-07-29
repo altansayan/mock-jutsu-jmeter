@@ -1,11 +1,14 @@
 package com.mockjutsu.jmeter.generators;
 
 import java.util.UUID;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** FDR / Drone Telemetry — physics-constrained bounded random walk time series. Mirrors telemetry.py. */
 public final class TelemetryGen {
     private TelemetryGen() {}
+
+    private static final DateTimeFormatter FMT_ISO_DT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private static final String[] AIRCRAFT_TYPES = {"B737", "B777", "A320", "A350", "B787", "A380"};
     private static final String[] DRONE_MODELS = {"DJI-MAVIC", "DJI-PHANTOM", "DJI-MINI", "PARROT-ANAFI", "AUTEL-EVO"};
@@ -123,7 +126,7 @@ public final class TelemetryGen {
 
     private static String nowIso() {
         java.time.ZonedDateTime z = java.time.Instant.now().atZone(java.time.ZoneOffset.UTC);
-        String base = z.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String base = z.format(FMT_ISO_DT);
         int millis = z.getNano() / 1_000_000;
         return base + "." + String.format("%03d", millis) + "Z";
     }

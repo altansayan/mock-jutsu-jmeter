@@ -9,6 +9,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class PaymentsGen {
     private PaymentsGen() {}
 
+    private static final DateTimeFormatter FMT_YYMMDD   = DateTimeFormatter.ofPattern("yyMMdd");
+    private static final DateTimeFormatter FMT_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter FMT_ISO_DT   = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final DateTimeFormatter FMT_DATE     = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter FMT_HHmm     = DateTimeFormatter.ofPattern("HHmm");
+
     // ── Shared: MOCKJ fictional BIC codes ────────────────────────────────────
 
     private static final String[] MOCKJ_BICS = {
@@ -98,7 +104,7 @@ public final class PaymentsGen {
     private static String mt103(ThreadLocalRandom rng, String locale, boolean strict) {
         String loc = locale.toUpperCase(java.util.Locale.ROOT);
         String ccy = SWIFT_CCY.getOrDefault(loc, "USD");
-        String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyMMdd"));
+        String date = ZonedDateTime.now(ZoneOffset.UTC).format(FMT_YYMMDD);
         String amount = rng.nextInt(100, 10000000) + "," + String.format("%02d", rng.nextInt(100));
         String ref = truncate("MOCKJ-" + swiftRef(rng), 16);
 
@@ -143,8 +149,8 @@ public final class PaymentsGen {
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         String msgId = "MOCKJ-PAIN-" + randomHexUpper(rng, 4);
         String endToEndId = "MOCKJ-E2E-" + randomHexUpper(rng, 4);
-        String creationDt = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-        String reqExecutionDt = now.plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String creationDt = now.format(FMT_ISO_DT);
+        String reqExecutionDt = now.plusDays(1).format(FMT_DATE);
 
         String debtorCountry = PAIN001_COUNTRIES[rng.nextInt(PAIN001_COUNTRIES.length)];
         String creditorCountry = PAIN001_COUNTRIES[rng.nextInt(PAIN001_COUNTRIES.length)];
@@ -219,8 +225,8 @@ public final class PaymentsGen {
 
     private static String nachaAch(ThreadLocalRandom rng) {
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        String fileDate = now.format(DateTimeFormatter.ofPattern("yyMMdd"));
-        String fileTime = now.format(DateTimeFormatter.ofPattern("HHmm"));
+        String fileDate = now.format(FMT_YYMMDD);
+        String fileTime = now.format(FMT_HHmm);
 
         String odfiRouting = achRouting(rng);
         String rdfiRouting = achRouting(rng);
@@ -287,7 +293,7 @@ public final class PaymentsGen {
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         String msgId = "MOCKJ-SDD-" + randomHexUpper(rng, 4);
         String mandateRef = "UMR-MOCKJ-" + randomHexUpper(rng, 4);
-        String creationDt = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String creationDt = now.format(FMT_ISO_DT);
 
         String country = SEPA_COUNTRIES[rng.nextInt(SEPA_COUNTRIES.length)];
         String debtorIban = randomIban(rng, country);
@@ -296,8 +302,8 @@ public final class PaymentsGen {
         String creditorId = sepaCreditorId(rng, country);
         String amount = rng.nextInt(10, 5001) + "." + String.format("%02d", rng.nextInt(100));
 
-        String reqColltnDt = now.plusDays(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String todayDate = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String reqColltnDt = now.plusDays(5).format(FMT_DATE);
+        String todayDate = now.format(FMT_DATE);
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.008.001.08\">\n" +
@@ -361,7 +367,7 @@ public final class PaymentsGen {
     // ── Fedwire Funds Transfer ────────────────────────────────────────────────
 
     private static String fedwire(ThreadLocalRandom rng) {
-        String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String date = ZonedDateTime.now(ZoneOffset.UTC).format(FMT_YYYYMMDD);
         String senderRef = truncate("MOCKJ-" + swiftRef(rng), 16);
         String frbLineId = String.format("%08d", rng.nextInt(10000000, 100000000));
         String sequence = String.format("%06d", rng.nextInt(100000, 1000000));
