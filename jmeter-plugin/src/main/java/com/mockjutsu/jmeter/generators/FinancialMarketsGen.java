@@ -16,6 +16,11 @@ public final class FinancialMarketsGen {
     private static final DateTimeFormatter FMT_YYMMDD       = DateTimeFormatter.ofPattern("yyMMdd");
     private static final DateTimeFormatter FMT_FIX_TS       = DateTimeFormatter.ofPattern("yyyyMMdd-HH:mm:ss.SSS").withZone(java.time.ZoneOffset.UTC);
 
+    private static final ThreadLocal<javax.crypto.Mac> MAC_HMAC_SHA256 = ThreadLocal.withInitial(() -> {
+        try { return javax.crypto.Mac.getInstance("HmacSHA256"); }
+        catch (java.security.NoSuchAlgorithmException e) { throw new RuntimeException(e); }
+    });
+
     private static final char[]   ALPHA_NUM        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
     private static final String[] STOCK_TICKERS = {
@@ -337,7 +342,7 @@ public final class FinancialMarketsGen {
         Randoms.SECURE.get().nextBytes(key);
         byte[] sig;
         try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            javax.crypto.Mac mac = MAC_HMAC_SHA256.get();
             mac.init(new javax.crypto.spec.SecretKeySpec(key, "HmacSHA256"));
             sig = mac.doFinal((headerB64 + "." + payloadB64).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {

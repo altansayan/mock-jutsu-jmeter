@@ -20,6 +20,11 @@ public final class MetaGen {
 
     private static final DateTimeFormatter FMT_ISO_MICROS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
 
+    private static final ThreadLocal<javax.crypto.Mac> MAC_HMAC_SHA256 = ThreadLocal.withInitial(() -> {
+        try { return javax.crypto.Mac.getInstance("HmacSHA256"); }
+        catch (java.security.NoSuchAlgorithmException e) { throw new RuntimeException(e); }
+    });
+
     private static final String[] BROWSER_NAMES    = {"Chrome","Firefox","Safari","Edge","Opera"};
     private static final String[] BROWSER_ENGINES  = {"Blink","Gecko","WebKit","Blink","Blink"};
     private static final int[][] BROWSER_MAJOR_RANGE = {{120,126},{120,127},{16,18},{120,126},{105,110}};
@@ -294,7 +299,7 @@ public final class MetaGen {
             if (parts.length > 1 && !parts[1].isEmpty()) payload = parts[1];
         }
         try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            javax.crypto.Mac mac = MAC_HMAC_SHA256.get();
             mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] sig = mac.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(sig);
