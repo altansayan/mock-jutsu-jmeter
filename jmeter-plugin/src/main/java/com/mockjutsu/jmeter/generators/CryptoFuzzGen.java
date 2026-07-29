@@ -14,6 +14,11 @@ public final class CryptoFuzzGen {
 
     private static final Logger log = LoggerFactory.getLogger(CryptoFuzzGen.class);
 
+    private static final ThreadLocal<MessageDigest> MD_SHA256 = ThreadLocal.withInitial(() -> {
+        try { return MessageDigest.getInstance("SHA-256"); }
+        catch (java.security.NoSuchAlgorithmException e) { throw new RuntimeException(e); }
+    });
+
     private static final byte[] SECRET_KEY = "mock-jutsu-default-secret-key-2025".getBytes(StandardCharsets.UTF_8);
     private static final byte[] FAKE_PUBLIC_KEY =
         "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\n-----END PUBLIC KEY-----"
@@ -208,7 +213,7 @@ public final class CryptoFuzzGen {
 
     static byte[] hmacSha256(byte[] key, byte[] msg) throws Exception {
         int blockSize = 64;
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+        MessageDigest sha256 = MD_SHA256.get();
         byte[] k = key.length > blockSize ? sha256.digest(key) : key;
         byte[] keyPadded = new byte[blockSize];
         System.arraycopy(k, 0, keyPadded, 0, k.length);

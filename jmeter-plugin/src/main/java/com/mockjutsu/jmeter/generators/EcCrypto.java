@@ -13,6 +13,15 @@ import java.security.NoSuchAlgorithmException;
 final class EcCrypto {
     private EcCrypto() {}
 
+    private static final ThreadLocal<MessageDigest> MD_SHA256 = ThreadLocal.withInitial(() -> {
+        try { return MessageDigest.getInstance("SHA-256"); }
+        catch (NoSuchAlgorithmException e) { throw new RuntimeException(e); }
+    });
+    private static final ThreadLocal<MessageDigest> MD_SHA512 = ThreadLocal.withInitial(() -> {
+        try { return MessageDigest.getInstance("SHA-512"); }
+        catch (NoSuchAlgorithmException e) { throw new RuntimeException(e); }
+    });
+
     // ── secp256k1 curve parameters ───────────────────────────────────────────
     static final BigInteger SECP_P = new BigInteger(
         "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
@@ -213,7 +222,7 @@ final class EcCrypto {
 
     /** Derive an Ed25519 public key from a 32-byte private seed (RFC 8032). */
     static byte[] ed25519PublicKey(byte[] seed) throws NoSuchAlgorithmException {
-        MessageDigest sha512 = MessageDigest.getInstance("SHA-512");
+        MessageDigest sha512 = MD_SHA512.get();
         byte[] h = sha512.digest(seed);
         byte[] s = new byte[32];
         System.arraycopy(h, 0, s, 0, 32);
@@ -253,7 +262,7 @@ final class EcCrypto {
     }
 
     static byte[] sha256(byte[] data) throws NoSuchAlgorithmException {
-        return MessageDigest.getInstance("SHA-256").digest(data);
+        return MD_SHA256.get().digest(data);
     }
 
     static String base58Check(byte[] payload) throws NoSuchAlgorithmException {
