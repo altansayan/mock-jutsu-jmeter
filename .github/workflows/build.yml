@@ -40,6 +40,46 @@ jobs:
         working-directory: jmeter-plugin
         run: mvn -B test
 
+      - name: JUnit report
+        if: always()
+        run: |
+          python3 - <<'PYEOF'
+          import os, glob, re
+
+          report_dir = "jmeter-plugin/target/surefire-reports"
+          files = glob.glob(f"{report_dir}/*.txt")
+
+          total = errors = failures = skipped = 0
+          fail_rows = []
+
+          for path in sorted(files):
+              text = open(path).read()
+              m = re.search(r"Tests run:\s*(\d+),\s*Failures:\s*(\d+),\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+)", text)
+              if not m:
+                  continue
+              t, f, e, s = int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4))
+              total += t; failures += f; errors += e; skipped += s
+              if f + e > 0:
+                  suite = os.path.basename(path).replace(".txt", "")
+                  for line in text.splitlines():
+                      if line.startswith("FAILED") or line.startswith("ERROR"):
+                          fail_rows.append((suite, line.strip()))
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if summary:
+              with open(summary, "w") as s:
+                  ok = failures + errors == 0
+                  icon = "✅" if ok else "❌"
+                  s.write(f"## {icon} JUnit — Java ${{ matrix.java }}\n\n")
+                  s.write(f"| Tests | Passed | Failures | Errors | Skipped |\n")
+                  s.write(f"|---|---|---|---|---|\n")
+                  s.write(f"| {total} | {total-failures-errors-skipped} | {failures} | {errors} | {skipped} |\n")
+                  if fail_rows:
+                      s.write(f"\n### Failed\n\n| Suite | Detail |\n|---|---|\n")
+                      for suite, detail in fail_rows:
+                          s.write(f"| `{suite}` | {detail} |\n")
+          PYEOF
+
       - name: Package fat JAR
         working-directory: jmeter-plugin
         run: mvn -B package -DskipTests
