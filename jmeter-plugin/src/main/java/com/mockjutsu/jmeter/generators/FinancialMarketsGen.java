@@ -332,7 +332,7 @@ public final class FinancialMarketsGen {
         String payloadB64 = base64UrlNoPad(payloadJson);
 
         byte[] key = new byte[32];
-        Randoms.SECURE.nextBytes(key);
+        Randoms.SECURE.get().nextBytes(key);
         byte[] sig;
         try {
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");

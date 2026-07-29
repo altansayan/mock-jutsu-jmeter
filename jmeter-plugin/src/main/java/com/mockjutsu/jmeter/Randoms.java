@@ -3,19 +3,20 @@ package com.mockjutsu.jmeter;
 import java.security.SecureRandom;
 
 /**
- * Shared random sources — instantiated once per JVM, thread-safe.
+ * Shared random sources for all generators.
  *
- * Previously each generator class declared its own {@code static final SecureRandom SEC},
- * resulting in 9 separate instances that all seeded from the OS entropy source at class-load
- * time and competed for /dev/urandom under concurrent JMeter threads. A single shared
- * instance eliminates redundant seeding cost and reduces memory overhead.
- *
- * {@link SecureRandom} is documented as thread-safe; sharing across generators is safe.
+ * {@code SECURE} is a {@link ThreadLocal} so each JMeter thread owns its own
+ * {@link SecureRandom} instance. This eliminates the internal lock contention that
+ * occurs when multiple threads share a single {@code SecureRandom} — every
+ * {@code nextBytes()} call on a shared instance acquires a monitor, forming a queue
+ * under high concurrency. Per-thread instances have zero contention while retaining
+ * full cryptographic strength (each is independently seeded from OS entropy).
  */
 public final class Randoms {
 
     private Randoms() {}
 
-    /** Cryptographically strong random — shared across all generators. Thread-safe. */
-    public static final SecureRandom SECURE = new SecureRandom();
+    /** Cryptographically strong random — one instance per JMeter thread, zero contention. */
+    public static final ThreadLocal<SecureRandom> SECURE =
+        ThreadLocal.withInitial(SecureRandom::new);
 }

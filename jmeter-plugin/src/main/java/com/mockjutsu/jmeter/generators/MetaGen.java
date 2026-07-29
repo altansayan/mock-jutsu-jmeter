@@ -207,7 +207,7 @@ public final class MetaGen {
             "{\"sub\":\"%s\",\"iss\":\"https://auth.mockjutsu.dev\",\"aud\":\"mockjutsu-api\",\"iat\":%d,\"exp\":%d}",
             sub, iat, exp));
         byte[] sig = new byte[32];
-        Randoms.SECURE.nextBytes(sig);
+        Randoms.SECURE.get().nextBytes(sig);
         String signature = Base64.getUrlEncoder().withoutPadding().encodeToString(sig);
         return header + "." + payload + "." + signature;
     }
@@ -222,12 +222,12 @@ public final class MetaGen {
         String algo = algorithm.toLowerCase();
         // CRC variants — fixed output widths, no random bytes needed
         if ("crc32".equals(algo)) {
-            byte[] dummy = new byte[8]; Randoms.SECURE.nextBytes(dummy);
+            byte[] dummy = new byte[8]; Randoms.SECURE.get().nextBytes(dummy);
             java.util.zip.CRC32 crc = new java.util.zip.CRC32(); crc.update(dummy);
             return String.format("%08x", crc.getValue());
         }
         if ("adler32".equals(algo)) {
-            byte[] dummy = new byte[8]; Randoms.SECURE.nextBytes(dummy);
+            byte[] dummy = new byte[8]; Randoms.SECURE.get().nextBytes(dummy);
             java.util.zip.Adler32 a = new java.util.zip.Adler32(); a.update(dummy);
             return String.format("%08x", a.getValue());
         }
@@ -246,7 +246,7 @@ public final class MetaGen {
             default                           -> 32; // sha256
         };
         byte[] b = new byte[bytes];
-        Randoms.SECURE.nextBytes(b);
+        Randoms.SECURE.get().nextBytes(b);
         return HexFormat.of().formatHex(b);
     }
 

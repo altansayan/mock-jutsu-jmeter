@@ -335,7 +335,7 @@ public final class FinancialGen {
 
     private static String cavv() {
         byte[] bytes = new byte[20];
-        Randoms.SECURE.nextBytes(bytes);
+        Randoms.SECURE.get().nextBytes(bytes);
         return Base64.getEncoder().encodeToString(bytes).substring(0, 28);
     }
 

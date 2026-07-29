@@ -45,7 +45,7 @@ public final class OidcGen {
 
     private static KeyPair genP256KeyPair() throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-        kpg.initialize(new ECGenParameterSpec("secp256r1"), Randoms.SECURE);
+        kpg.initialize(new ECGenParameterSpec("secp256r1"), Randoms.SECURE.get());
         return kpg.generateKeyPair();
     }
 
@@ -65,7 +65,7 @@ public final class OidcGen {
         byte[] signing = (header + "." + payload).getBytes(StandardCharsets.UTF_8);
 
         Signature signer = Signature.getInstance("SHA256withECDSA");
-        signer.initSign(kp.getPrivate(), Randoms.SECURE);
+        signer.initSign(kp.getPrivate(), Randoms.SECURE.get());
         signer.update(signing);
         byte[] rawSig = derToRaw(signer.sign());
 
@@ -86,7 +86,7 @@ public final class OidcGen {
 
     private static String oidcToken(ThreadLocalRandom rng) throws Exception {
         byte[] secret = new byte[32];
-        Randoms.SECURE.nextBytes(secret);
+        Randoms.SECURE.get().nextBytes(secret);
         String claims = oidcClaimsJson(rng);
         String header = b64u("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
         String payload = b64u(claims.getBytes(StandardCharsets.UTF_8));

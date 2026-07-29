@@ -3,6 +3,7 @@ package com.mockjutsu.jmeter.generators;
 import com.mockjutsu.jmeter.Randoms;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +33,11 @@ public final class Fido2Gen {
 
     private static String webauthnCredential() {
         try {
-            String rpId = RP_IDS[Randoms.SECURE.nextInt(RP_IDS.length)];
+            String rpId = RP_IDS[ThreadLocalRandom.current().nextInt(RP_IDS.length)];
             String origin = ORIGINS.get(rpId);
             byte[] credId = randomBytes(32);
             byte[] challenge = randomBytes(32);
-            int counter = Randoms.SECURE.nextInt(1000);
+            int counter = ThreadLocalRandom.current().nextInt(1000);
             byte[] x = randomBytes(32);
             byte[] y = randomBytes(32);
 
@@ -64,11 +65,11 @@ public final class Fido2Gen {
 
     private static String fido2Assertion() {
         try {
-            String rpId = RP_IDS[Randoms.SECURE.nextInt(RP_IDS.length)];
+            String rpId = RP_IDS[ThreadLocalRandom.current().nextInt(RP_IDS.length)];
             String origin = ORIGINS.get(rpId);
             byte[] credId = randomBytes(32);
             byte[] challenge = randomBytes(32);
-            int counter = Randoms.SECURE.nextInt(99999) + 1;
+            int counter = ThreadLocalRandom.current().nextInt(99999) + 1;
             byte[] userId = randomBytes(16);
 
             String clientDataJson = "{\"type\":\"webauthn.get\",\"challenge\":\"" + b64url(challenge) +
@@ -152,7 +153,7 @@ public final class Fido2Gen {
 
     private static byte[] randomBytes(int n) {
         byte[] b = new byte[n];
-        Randoms.SECURE.nextBytes(b);
+        Randoms.SECURE.get().nextBytes(b);
         return b;
     }
 

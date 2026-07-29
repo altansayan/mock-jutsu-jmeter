@@ -56,7 +56,7 @@ public final class CardPhysicsGen {
 
     static String emvArqc() {
         byte[] b = new byte[8];
-        Randoms.SECURE.nextBytes(b);
+        Randoms.SECURE.get().nextBytes(b);
         StringBuilder sb = new StringBuilder(16);
         for (byte v : b) sb.append(String.format("%02X", v));
         return sb.toString();

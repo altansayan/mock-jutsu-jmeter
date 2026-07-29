@@ -86,7 +86,7 @@ public final class CryptoGen {
 
     static String btcAddress(ThreadLocalRandom rng) {
         byte[] pubkeyHash = new byte[20];
-        Randoms.SECURE.nextBytes(pubkeyHash);
+        Randoms.SECURE.get().nextBytes(pubkeyHash);
         try {
             byte[] versioned = new byte[21];
             versioned[0] = 0x00;
@@ -102,7 +102,7 @@ public final class CryptoGen {
 
     static String ethAddress() {
         byte[] raw = new byte[20];
-        Randoms.SECURE.nextBytes(raw);
+        Randoms.SECURE.get().nextBytes(raw);
         return EcCrypto.eip55(raw);
     }
 
@@ -114,7 +114,7 @@ public final class CryptoGen {
                 case 15 -> 160; case 18 -> 192; case 21 -> 224; case 24 -> 256; default -> 128;
             };
             byte[] entropy = new byte[entBits / 8];
-            Randoms.SECURE.nextBytes(entropy);
+            Randoms.SECURE.get().nextBytes(entropy);
             byte[] hash = EcCrypto.sha256(entropy);
             int csLen = entBits / 32;
 
@@ -143,7 +143,7 @@ public final class CryptoGen {
 
     private static String randomSecHex(int bytes) {
         byte[] b = new byte[bytes];
-        Randoms.SECURE.nextBytes(b);
+        Randoms.SECURE.get().nextBytes(b);
         StringBuilder sb = new StringBuilder(bytes * 2);
         for (byte v : b) sb.append(String.format("%02x", v));
         return sb.toString();

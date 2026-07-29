@@ -27,11 +27,11 @@ public final class WalletGen {
     private static String ethWallet() {
         try {
             byte[] privKey = new byte[32];
-            Randoms.SECURE.nextBytes(privKey);
+            Randoms.SECURE.get().nextBytes(privKey);
             // For mock purposes: random 64-byte "public key" (uncompressed x||y).
             // Address is correctly derived from its Keccak-256 hash — format is authentic.
             byte[] pubkeyBytes = new byte[64];
-            Randoms.SECURE.nextBytes(pubkeyBytes);
+            Randoms.SECURE.get().nextBytes(pubkeyBytes);
             byte[] kecc = EcCrypto.keccak256(pubkeyBytes);
             byte[] last20 = Arrays.copyOfRange(kecc, 12, 32);
             String address = EcCrypto.eip55(last20);
@@ -47,10 +47,10 @@ public final class WalletGen {
     private static String btcWallet() {
         try {
             byte[] privKey = new byte[32];
-            Randoms.SECURE.nextBytes(privKey);
+            Randoms.SECURE.get().nextBytes(privKey);
             // Random compressed public key (0x02/0x03 + 32 bytes) for mock purposes.
             byte[] compressed = new byte[33];
-            Randoms.SECURE.nextBytes(compressed);
+            Randoms.SECURE.get().nextBytes(compressed);
             compressed[0] = (byte) ((compressed[0] & 1) == 0 ? 0x02 : 0x03);
             byte[] h160 = EcCrypto.hash160(compressed);
             String address = EcCrypto.base58Check(concat(new byte[]{0x00}, h160));
@@ -68,10 +68,10 @@ public final class WalletGen {
     private static String solWallet() {
         try {
             byte[] privKey = new byte[32];
-            Randoms.SECURE.nextBytes(privKey);
+            Randoms.SECURE.get().nextBytes(privKey);
             // Random 32-byte public key for mock purposes (Ed25519 format).
             byte[] pubKey = new byte[32];
-            Randoms.SECURE.nextBytes(pubKey);
+            Randoms.SECURE.get().nextBytes(pubKey);
             String address = EcCrypto.base58Encode(pubKey);
             String keypair = EcCrypto.base58Encode(concat(privKey, pubKey));
             return "{\"private_key\":\"" + hex(privKey) +
