@@ -114,7 +114,7 @@ ${__mockjutsu_financial(cardnum:visa|mask)}           → 4532 01** **** 0366  (
 ${__mockjutsu_financial(cardnum:visa|TR|mask)}        → 4532 01** **** 0366
 ${__mockjutsu_financial(cardnum:visa|TR|myCard)}      → stores result in ${myCard}
 ${__mockjutsu_financial(cardnum:visa|TR|myCard|mask)} → masked + stored in ${myCard}
-${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})}     → XKM7291
+${__mockjutsu_meta(reverse_regex:[A-Z]{3}\d{4})}      → XKM7291
 ```
 
 ### Generic function (all types)
