@@ -2,9 +2,9 @@
 
 [![Build Status](https://github.com/altansayan/mock-jutsu-jmeter/actions/workflows/build.yml/badge.svg)](https://github.com/altansayan/mock-jutsu-jmeter/actions)
 [![Java](https://img.shields.io/badge/Java-17%2B-blue)](https://adoptium.net)
-[![JMeter](https://img.shields.io/badge/JMeter-5.6%2B-red)](https://jmeter.apache.org)
+[![JMeter](https://img.shields.io/badge/JMeter-5.5%2B-red)](https://jmeter.apache.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![JMeter Plugin](https://img.shields.io/badge/JMeter%20Plugin-v1.1.1-red?logo=apache&logoColor=white)](https://jmeter-plugins.org/?search=mock-jutsu)
+[![JMeter Plugin](https://img.shields.io/badge/JMeter%20Plugin-v1.1.2-red?logo=apache&logoColor=white)](https://jmeter-plugins.org/?search=mock-jutsu)
 
 Generate **5955-tested**, format-valid mock test data directly inside JMeter test plans — no Python, no subprocess, no external dependencies.
 
@@ -27,6 +27,17 @@ ${__mockjutsu_financial(cardnum:visa|TR|myCard)}    → stores result in ${myCar
 
 ---
 
+## Requirements
+
+| | Minimum | Tested up to |
+|--|---------|-------------|
+| **JMeter** | 5.5 | 5.6.3 |
+| **Java** | 17 | 21 |
+
+All 4205 tests pass on JMeter 5.5, 5.6, 5.6.1, 5.6.2, and 5.6.3.
+
+---
+
 ## Installation
 
 ### Method 1: JMeter Plugins Manager (recommended)
@@ -41,7 +52,7 @@ Official Plugin Page: [jmeter-plugins.org/?search=mock-jutsu](https://jmeter-plu
 
 ### Method 2: Manual Installation (Function Helper Dialog)
 
-1. Download `mock-jutsu-jmeter-1.1.1.jar` from [Releases](https://github.com/altansayan/mock-jutsu-jmeter/releases)
+1. Download `mock-jutsu-jmeter-1.1.2.jar` from [Releases](https://github.com/altansayan/mock-jutsu-jmeter/releases)
 2. Copy to `$JMETER_HOME/lib/ext/`
 3. Restart JMeter
 4. Open **Options → Function Helper Dialog** — search for `mockjutsu`
