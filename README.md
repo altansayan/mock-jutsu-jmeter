@@ -31,7 +31,7 @@ ${__mockjutsu_financial(cardnum:visa|TR|myCard)}    → stores result in ${myCar
 
 | | Minimum | Tested up to |
 |--|---------|-------------|
-| **JMeter** | 5.5 | 5.6.3 |
+| **JMeter** | 5.5+ | 5.6.3 |
 | **Java** | 17 | 21 |
 
 All 4205 tests pass on JMeter 5.5, 5.6, 5.6.1, 5.6.2, and 5.6.3.
