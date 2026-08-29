@@ -475,6 +475,41 @@ _This section will be updated with our sponsors._
 
 ---
 
+---
+
+## Troubleshooting
+
+### Plugin not loading after installation
+
+**Symptom:** Plugin installed to `lib/ext/` but functions don't appear in Function Helper Dialog after restart.
+
+**Cause:** JMeter is running with a Java version older than 17. This commonly happens on systems with multiple Java installations where `JAVA_HOME` points to an older version.
+
+**Fix — Windows (`jmeter.bat`):**
+
+Open `$JMETER_HOME/bin/jmeter.bat` and add the following line at the very top (before any other content):
+
+```bat
+SET JAVA_HOME=C:\path\to\java17
+```
+
+Replace `C:\path\to\java17` with your actual Java 17 installation path, for example:
+```bat
+SET JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.11.9-hotspot
+```
+
+**Fix — Linux/macOS (`jmeter`):**
+
+Open `$JMETER_HOME/bin/jmeter` and add at the top:
+
+```bash
+export JAVA_HOME=/path/to/java17
+```
+
+**Verify:** After the fix, open JMeter and check **Help → About Apache JMeter** — it should show Java 17+.
+
+---
+
 **If mock-jutsu saved you from debugging a "valid-looking but broken" test ID, please leave a ⭐!**
 
 Released under the [MIT License](LICENSE) • Copyright © 2026 [Altan Sezer Ayan — A.S.A](https://github.com/altansayan)
